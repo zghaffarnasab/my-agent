@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}صف جواب‌ها{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF1F4;
+    --surface: #FFFFFF;
+    --ink: #1B2433;
+    --muted: #5B6576;
+    --line: #D6DCE3;
+    --accent: #1F5F8B;
+    --accent-ink: #FFFFFF;
+    --danger: #A63D32;
+    --wait: #9A6413;
+    --wait-bg: #FBF1DE;
+    --ok-bg: #E3EFE6;
+    --ok-ink: #2D6A3E;
+    --err-bg: #F7E3E0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Vazirmatn", Tahoma, "Segoe UI", sans-serif;
+    font-size: 15px; line-height: 1.75;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 20px 64px; }
+  header.top {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    flex-wrap: wrap; margin-bottom: 24px;
+  }
+  header.top h1 { font-size: 22px; font-weight: 700; margin: 0; }
+  header.top h1 a { color: inherit; text-decoration: none; }
+  .account { color: var(--muted); font-size: 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  button, .btn {
+    font: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    padding: 8px 16px; border-radius: 8px; text-decoration: none; display: inline-block;
+  }
+  button:hover, .btn:hover { border-color: var(--muted); }
+  button:focus-visible, .btn:focus-visible, textarea:focus-visible, input:focus-visible, a:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px;
+  }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn-primary:hover { background: #174a6d; border-color: #174a6d; }
+  .btn-danger { color: var(--danger); }
+  .btn-link { border: none; background: none; color: var(--muted); padding: 4px 0; }
+  form.inline { display: inline; margin: 0; }
+  .flash { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+  .flash.ok { background: var(--ok-bg); color: var(--ok-ink); }
+  .flash.error { background: var(--err-bg); color: var(--danger); }
+  .ltr-auto { unicode-bidi: plaintext; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+<div class="wrap">
+  {% block body %}{% endblock %}
+</div>
+</body>
+</html>

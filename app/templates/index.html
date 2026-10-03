@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block head %}
+<style>
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 0; flex-wrap: wrap; }
+  .tabs a {
+    padding: 10px 14px; text-decoration: none; color: var(--muted); font-weight: 500;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .tabs a.active { color: var(--ink); border-bottom-color: var(--ink); }
+  .tabs .n { font-size: 12px; background: var(--line); color: var(--ink); border-radius: 10px; padding: 0 7px; margin-inline-start: 6px; }
+  .tabs a.active .n { background: var(--ink); color: var(--surface); }
+  .queue { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-top: none; border-radius: 0 0 10px 10px; }
+  .queue li + li { border-top: 1px solid var(--line); }
+  .queue a {
+    display: grid; grid-template-columns: 200px 1fr auto; gap: 4px 20px;
+    padding: 14px 20px; color: inherit; text-decoration: none; align-items: baseline;
+  }
+  .queue a:hover { background: #F6F8FA; }
+  .from { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .subj { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .draft { grid-column: 2 / 3; color: var(--muted); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .when { color: var(--muted); font-size: 13px; white-space: nowrap; direction: ltr; }
+  .err { color: var(--danger); }
+  .empty { background: var(--surface); border: 1px solid var(--line); border-top: none; border-radius: 0 0 10px 10px; padding: 48px 20px; text-align: center; color: var(--muted); }
+  .connect { background: var(--wait-bg); color: var(--wait); border-radius: 10px; padding: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  @media (max-width: 720px) {
+    .queue a { grid-template-columns: 1fr auto; }
+    .subj, .draft { grid-column: 1 / -1; }
+  }
+</style>
+{% endblock %}
+{% block body %}
+<header class="top">
+  <h1><a href="/">صف جواب‌ها</a></h1>
+  <div class="account">
+    {% if gmail %}
+      <span class="ltr-auto">{{ gmail }}</span>
+      <a href="/auth/google" onclick="return confirm('با وصل کردن یک حساب جیمیل دیگر، همه‌ی تسک‌های حساب فعلی پاک می‌شوند. ادامه می‌دهی؟')">تغییر حساب</a>
+      <form class="inline" method="post" action="/poll-now"><button type="submit">بررسی ایمیل‌های جدید</button></form>
+    {% endif %}
+    <form class="inline" method="post" action="/logout"><button class="btn-link" type="submit">خروج</button></form>
+  </div>
+</header>
+
+{% if flash %}<div class="flash {{ flash.kind }}">{{ flash.message }}</div>{% endif %}
+
+{% if not gmail %}
+<div class="connect">
+  <span>هنوز جیمیلی وصل نشده. بعد از اتصال، ایمیل‌های جدید خودکار خوانده و برایشان جواب نوشته می‌شود.</span>
+  <a class="btn btn-primary" href="/auth/google">اتصال جیمیل</a>
+</div>
+{% endif %}
+
+<nav class="tabs" aria-label="وضعیت تسک‌ها">
+  {% for s in statuses %}
+    <a href="/?status={{ s }}" class="{% if s == status %}active{% endif %}">
+      {{ STATUS_LABELS[s] }}{% if counts.get(s) %}<span class="n">{{ counts.get(s) }}</span>{% endif %}
+    </a>
+  {% endfor %}
+</nav>
+
+{% if tasks %}
+<ul class="queue">
+  {% for t in tasks %}
+  <li>
+    <a href="/tasks/{{ t.id }}">
+      <span class="from ltr-auto">{{ t.from_addr | sender }}</span>
+      <span class="subj ltr-auto">{{ t.subject or "(بدون موضوع)" }}</span>
+      <span class="when">{{ (t.sent_at if status == 'sent' else t.received_at) | dt }}</span>
+      {% if t.status == 'failed' %}
+        <span class="draft err">پیش‌نویس نوشته نشد؛ باز کن و دوباره امتحان کن.</span>
+      {% else %}
+        <span class="draft ltr-auto">{{ t.draft_body[:180] }}</span>
+      {% endif %}
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="empty">
+  {% if status == 'pending' %}
+    جوابی منتظر تأیید نیست. ایمیل‌های جدید هر چند دقیقه یک‌بار بررسی می‌شوند.
+  {% else %}
+    چیزی در این بخش نیست.
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

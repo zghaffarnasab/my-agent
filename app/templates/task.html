@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}{{ task.subject or "تسک" }}{% endblock %}
+{% block head %}
+<style>
+  .grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 24px; align-items: start; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  .panel h2 { font-size: 15px; font-weight: 700; margin: 0; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+  .meta { padding: 14px 20px 0; font-size: 14px; color: var(--muted); }
+  .meta dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; }
+  .meta dt { color: var(--muted); }
+  .meta dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+  .body { padding: 16px 20px 20px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 60vh; overflow-y: auto; }
+  details { margin: 0 20px 16px; font-size: 14px; }
+  details summary { cursor: pointer; color: var(--muted); }
+  details pre { white-space: pre-wrap; font-family: inherit; background: var(--bg); padding: 12px; border-radius: 8px; max-height: 300px; overflow-y: auto; }
+  .editor { position: sticky; top: 16px; }
+  .editor textarea {
+    display: block; width: 100%; min-height: 380px; resize: vertical;
+    border: none; padding: 20px; font: inherit; font-size: 16px; line-height: 1.9;
+    color: var(--ink); background: var(--surface); unicode-bidi: plaintext;
+  }
+  .editor textarea:focus { outline: none; background: #FBFCFD; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 14px 20px; border-top: 1px solid var(--line); }
+  .actions .spacer { flex: 1; }
+  .rewrite { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--line); background: #F7F9FB; border-radius: 0 0 10px 10px; }
+  .rewrite input { flex: 1; min-width: 0; font: inherit; font-size: 14px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  .badge { font-size: 12px; font-weight: 500; padding: 2px 10px; border-radius: 10px; background: var(--wait-bg); color: var(--wait); margin-inline-start: 8px; vertical-align: middle; }
+  .badge.sent { background: var(--ok-bg); color: var(--ok-ink); }
+  .badge.rejected, .badge.failed { background: var(--err-bg); color: var(--danger); }
+  .hint { font-size: 12px; color: var(--muted); }
+  .readonly { padding: 20px; white-space: pre-wrap; unicode-bidi: plaintext; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .editor { position: static; } }
+</style>
+{% endblock %}
+{% block body %}
+<header class="top">
+  <h1><a href="/">صف جواب‌ها</a></h1>
+  <div class="account">
+    <a href="/">بازگشت به فهرست</a>
+    {% if next_task %}<a href="/tasks/{{ next_task.id }}">تسک بعدی</a>{% endif %}
+  </div>
+</header>
+
+{% if flash %}<div class="flash {{ flash.kind }}">{{ flash.message }}</div>{% endif %}
+{% if task.error %}<div class="flash error ltr-auto">{{ task.error }}</div>{% endif %}
+
+<div class="grid">
+  <!-- Draft (first in RTL = right side) -->
+  <section class="panel editor" aria-labelledby="draft-h">
+    <h2 id="draft-h">جواب پیشنهادی <span class="badge {{ task.status }}">{{ STATUS_LABELS[task.status] }}</span></h2>
+
+    {% if task.status in ['pending', 'failed'] %}
+    <form method="post" id="draft-form" action="/tasks/{{ task.id }}/send">
+      <textarea name="draft_body" id="draft_body" dir="auto" aria-label="متن جواب">{{ task.draft_body }}</textarea>
+      <div class="actions">
+        {% if task.status == 'pending' %}
+        <button class="btn-primary" type="submit" id="send-btn"
+          formaction="/tasks/{{ task.id }}/send"
+          onclick='return confirm({{ ("این جواب برای " ~ (task.reply_to | sender) ~ " ارسال شود؟") | tojson }})'>تأیید و ارسال</button>
+        {% endif %}
+        <button type="submit" formaction="/tasks/{{ task.id }}/save">ذخیره تغییرات</button>
+        <span class="spacer"></span>
+        <span class="hint">Ctrl + Enter برای ارسال</span>
+      </div>
+      <div class="rewrite">
+        <input name="instruction" placeholder="مثلاً: کوتاه‌ترش کن، رسمی‌تر بنویس، بگو تا جمعه جواب می‌دم" aria-label="دستور برای بازنویسی">
+        <button type="submit" formaction="/tasks/{{ task.id }}/regenerate" formnovalidate>بازنویسی</button>
+      </div>
+    </form>
+    <div style="padding: 0 20px 14px;">
+      <form class="inline" method="post" action="/tasks/{{ task.id }}/reject">
+        <button class="btn-link btn-danger" type="submit">رد کردن؛ لازم نیست جواب بدهم</button>
+      </form>
+    </div>
+    {% else %}
+      <div class="readonly">{{ task.draft_body }}</div>
+      {% if task.status == 'rejected' %}
+      <div class="actions">
+        <form class="inline" method="post" action="/tasks/{{ task.id }}/restore"><button type="submit">برگرداندن به صف</button></form>
+      </div>
+      {% elif task.sent_at %}
+      <div class="actions"><span class="hint">ارسال‌شده در <span dir="ltr">{{ task.sent_at | dt }}</span></span></div>
+      {% endif %}
+    {% endif %}
+  </section>
+
+  <!-- Original email -->
+  <section class="panel" aria-labelledby="orig-h">
+    <h2 id="orig-h">ایمیل دریافتی</h2>
+    <div class="meta">
+      <dl>
+        <dt>از</dt><dd class="ltr-auto">{{ task.from_addr }}</dd>
+        {% if task.reply_to != task.from_addr %}<dt>جواب به</dt><dd class="ltr-auto">{{ task.reply_to }}</dd>{% endif %}
+        <dt>موضوع</dt><dd class="ltr-auto">{{ task.subject or "(بدون موضوع)" }}</dd>
+        <dt>زمان</dt><dd dir="ltr" style="text-align:right">{{ task.received_at | dt }}</dd>
+      </dl>
+    </div>
+    <div class="body ltr-auto">{{ task.original_body }}</div>
+    {% if task.thread_context %}
+    <details>
+      <summary>پیام‌های قبلی این گفتگو</summary>
+      <pre class="ltr-auto">{{ task.thread_context }}</pre>
+    </details>
+    {% endif %}
+  </section>
+</div>
+
+<script>
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      var btn = document.getElementById('send-btn');
+      if (btn) { e.preventDefault(); btn.click(); }
+    }
+  });
+</script>
+{% endblock %}

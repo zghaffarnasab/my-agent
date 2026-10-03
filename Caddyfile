@@ -1,0 +1,4 @@
+# Replace with your own domain (its DNS A record must point to the EC2 public IP)
+mail.example.com {
+    reverse_proxy web:8000
+}

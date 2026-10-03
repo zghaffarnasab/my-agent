@@ -1,0 +1,37 @@
+services:
+  web:
+    build: .
+    env_file: .env
+    volumes:
+      - appdata:/data
+    ports:
+      - "127.0.0.1:8000:8000"   # only reachable through Caddy (or locally)
+    restart: always
+
+  worker:
+    build: .
+    command: ["python", "-m", "app.worker"]
+    env_file: .env
+    volumes:
+      - appdata:/data
+    restart: always
+    depends_on:
+      - web
+
+  # HTTPS reverse proxy with automatic Let's Encrypt certificates.
+  # Comment this out for local development.
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    restart: always
+    depends_on:
+      - web
+
+volumes:
+  appdata:
+  caddy_data:
