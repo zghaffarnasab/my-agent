@@ -41,6 +41,7 @@
     border-radius: 8px; background: var(--surface); color: var(--ink); unicode-bidi: plaintext;
   }
   .ev-card textarea { min-height: 56px; resize: vertical; }
+  .ev-card input[type=date], .ev-card input[type=time] { direction: ltr; unicode-bidi: normal; text-align: left; }
   .ev-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 10px; }
   .ev-row label { margin-top: 10px; }
   .ev-note { font-size: 13px; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
@@ -162,11 +163,11 @@
 
         <div class="ev-row">
           <div><label for="d{{ ev.id }}">تاریخ ({{ ev.date | dayhead }})</label>
-            <input type="date" id="d{{ ev.id }}" name="date" value="{{ ev.date }}" required></div>
+            <input type="date" dir="ltr" id="d{{ ev.id }}" name="date" value="{{ ev.date }}" required></div>
           <div><label for="s{{ ev.id }}">شروع</label>
-            <input type="time" id="s{{ ev.id }}" name="start_time" value="{{ ev.start_time }}"></div>
+            <input type="time" dir="ltr" id="s{{ ev.id }}" name="start_time" value="{{ ev.start_time }}"></div>
           <div><label for="e{{ ev.id }}">پایان</label>
-            <input type="time" id="e{{ ev.id }}" name="end_time" value="{{ ev.end_time }}"></div>
+            <input type="time" dir="ltr" id="e{{ ev.id }}" name="end_time" value="{{ ev.end_time }}"></div>
         </div>
         {% if not ev.start_time %}<div class="ev-note warn">ساعت مشخص نشده؛ اگر خالی بماند، رویداد تمام‌روز ثبت می‌شود.</div>{% endif %}
 

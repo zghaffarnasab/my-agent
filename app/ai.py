@@ -73,6 +73,10 @@ Rules:
   and mention it in "ambiguity". Online meetings use the owner's zone unless stated otherwise.
 - If no end time or duration is given, leave end_time empty.
 - title: short, e.g. "Meeting with Sara (Promethee Films)". Same language as the email.
+- "ambiguity": ONLY when the date, time, end time or time zone is genuinely uncertain
+  (ambiguous date format, missing year, time zone guessed from a place, unclear AM/PM).
+  Write it in Persian (Farsi), one short sentence. Do NOT comment on names, signatures,
+  whether the meeting is confirmed, or how you computed the end time. Otherwise leave it empty.
 
 Respond with ONLY a JSON object, no markdown, in exactly this shape:
 {{"events": [{{"title": "", "date": "YYYY-MM-DD", "start_time": "HH:MM or empty", "end_time": "HH:MM or empty",
