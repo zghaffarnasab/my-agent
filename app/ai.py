@@ -50,3 +50,60 @@ def draft_reply(*, from_addr: str, subject: str, body: str, thread_context: str 
     )
     text = "".join(block.text for block in response.content if block.type == "text")
     return text.strip()
+
+
+# ---------- Event extraction ----------
+
+EXTRACT_PROMPT = """You find meetings, appointments, calls and events with a concrete date in an email.
+
+Context:
+- The email was {when} (reference time, in the owner's time zone {tz}). Today's weekday then: {weekday}.
+- The owner's time zone is {tz}.
+- This email was {direction}.
+
+Rules:
+- Only include events that are being proposed, agreed or announced with a specific day.
+  Ignore vague mentions ("let's meet sometime"), past events and pure deadlines.
+- Dates like 13.09 or 13/09 are day.month (European style) unless the text clearly uses US style.
+  If a date could be read both ways (e.g. 03.04), choose day.month and explain in "ambiguity".
+- If the year is missing, use the next occurrence on or after the reference date.
+- Resolve relative dates ("next Tuesday", "tomorrow") against the reference date.
+- Time zone: if the place or text implies a different time zone than the owner's
+  (e.g. a meeting in Berkeley, California), use that IANA zone (e.g. America/Los_Angeles)
+  and mention it in "ambiguity". Online meetings use the owner's zone unless stated otherwise.
+- If no end time or duration is given, leave end_time empty.
+- title: short, e.g. "Meeting with Sara (Promethee Films)". Same language as the email.
+
+Respond with ONLY a JSON object, no markdown, in exactly this shape:
+{{"events": [{{"title": "", "date": "YYYY-MM-DD", "start_time": "HH:MM or empty", "end_time": "HH:MM or empty",
+  "timezone": "IANA zone", "location": "", "description": "one short sentence", "ambiguity": "empty if clear"}}]}}
+If there are no events, respond with {{"events": []}}"""
+
+
+def extract_events(*, text: str, subject: str, from_addr: str, reference, outgoing: bool) -> list[dict]:
+    """Return a list of event dicts found in an email. `reference` is an aware datetime."""
+    import json
+    from zoneinfo import ZoneInfo
+
+    local = reference.astimezone(ZoneInfo(config.TIMEZONE))
+    system = EXTRACT_PROMPT.format(
+        when=("sent" if outgoing else "received") + " on " + local.strftime("%Y-%m-%d %H:%M"),
+        weekday=local.strftime("%A"),
+        tz=config.TIMEZONE,
+        direction="written BY the owner as a reply (events the owner proposes or confirms)"
+        if outgoing else "received BY the owner",
+    )
+    response = client.messages.create(
+        model=config.CLAUDE_MODEL,
+        max_tokens=1200,
+        system=system,
+        messages=[{"role": "user", "content": f"From: {from_addr}\nSubject: {subject}\n\n{text[:12000]}"}],
+    )
+    raw = "".join(b.text for b in response.content if b.type == "text").strip()
+    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        start, end = raw.find("{"), raw.rfind("}")
+        data = json.loads(raw[start:end + 1]) if start != -1 and end > start else {"events": []}
+    return [e for e in data.get("events", []) if isinstance(e, dict)]

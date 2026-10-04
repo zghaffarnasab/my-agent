@@ -57,11 +57,28 @@ def load_credentials() -> Credentials | None:
         row = db.get(GoogleCredential, 1)
         if row is None:
             return None
-        creds = Credentials.from_authorized_user_info(json.loads(row.token_json), config.GMAIL_SCOPES)
+        # No scopes argument: keep exactly what was granted, so older Gmail-only tokens still refresh
+        creds = Credentials.from_authorized_user_info(json.loads(row.token_json))
     if creds.expired and creds.refresh_token:
         creds.refresh(Request())
         save_credentials(creds)
     return creds
+
+
+def granted_scopes() -> set[str]:
+    with SessionLocal() as db:
+        row = db.get(GoogleCredential, 1)
+        if row is None:
+            return set()
+        info = json.loads(row.token_json)
+    scopes = info.get("scopes") or []
+    if isinstance(scopes, str):
+        scopes = scopes.split()
+    return set(scopes)
+
+
+def has_calendar_access() -> bool:
+    return config.CALENDAR_SCOPE in granted_scopes()
 
 
 def connected_email() -> str | None:

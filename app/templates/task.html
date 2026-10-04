@@ -29,6 +29,28 @@
   .badge.rejected, .badge.failed { background: var(--err-bg); color: var(--danger); }
   .hint { font-size: 12px; color: var(--muted); }
   .readonly { padding: 20px; white-space: pre-wrap; unicode-bidi: plaintext; }
+  .events { margin-top: 24px; scroll-margin-top: 16px; }
+  .events > h2 { font-size: 16px; margin: 0 0 12px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+  .ev-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; }
+  .ev-card.added { border-color: #BFD9C6; background: #F6FBF7; }
+  .ev-src { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .ev-card label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  .ev-card input[type=text], .ev-card input[type=date], .ev-card input[type=time], .ev-card textarea {
+    width: 100%; font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--line);
+    border-radius: 8px; background: var(--surface); color: var(--ink); unicode-bidi: plaintext;
+  }
+  .ev-card textarea { min-height: 56px; resize: vertical; }
+  .ev-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 10px; }
+  .ev-row label { margin-top: 10px; }
+  .ev-note { font-size: 13px; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
+  .ev-note.warn { background: var(--wait-bg); color: var(--wait); }
+  .ev-note.clash { background: var(--err-bg); color: var(--danger); }
+  .ev-check { display: flex !important; gap: 8px; align-items: center; color: var(--ink) !important; font-size: 13px !important; margin-top: 12px !important; }
+  .ev-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .ev-done { font-size: 14px; }
+  .ev-done strong { display: block; font-size: 15px; margin-bottom: 4px; }
+  .ev-jump { display: inline-block; margin: 0 20px 16px; font-size: 14px; }
   @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .editor { position: static; } }
 </style>
 {% endblock %}
@@ -96,6 +118,8 @@
       </dl>
     </div>
     <div class="body ltr-auto">{{ task.original_body }}</div>
+    {% set open_events = suggestions | selectattr("status", "equalto", "suggested") | list %}
+    {% if open_events %}<a class="ev-jump" href="#events">{{ open_events | length }} قرار در این گفتگو پیدا شد؛ افزودن به تقویم ↓</a>{% endif %}
     {% if task.thread_context %}
     <details>
       <summary>پیام‌های قبلی این گفتگو</summary>
@@ -105,9 +129,87 @@
   </section>
 </div>
 
+<section class="events" id="events" aria-labelledby="ev-h">
+  <h2 id="ev-h">قرارها و رویدادها
+    <form class="inline" method="post" action="/tasks/{{ task.id }}/find-events">
+      <button type="submit" class="btn-link">بررسی دوباره‌ی این ایمیل</button>
+    </form>
+  </h2>
+
+  {% if not suggestions %}
+    <p style="color:var(--muted);font-size:14px;margin:0;">قراری با تاریخ مشخص در این ایمیل پیدا نشد.</p>
+  {% else %}
+  <div class="ev-grid">
+    {% for ev in suggestions %}
+      {% if ev.status == 'added' %}
+      <div class="ev-card added">
+        <div class="ev-src">{{ "از جواب تو" if ev.source == 'outgoing' else "از ایمیل دریافتی" }}</div>
+        <div class="ev-done">
+          <strong class="ltr-auto">{{ ev.title }}</strong>
+          {{ ev.date | dayhead }}{% if ev.start_time %}، ساعت <span dir="ltr">{{ ev.start_time }}{% if ev.end_time %}–{{ ev.end_time }}{% endif %}</span>{% endif %}
+          {% if ev.timezone != owner_tz %}<span class="ltr-auto">({{ ev.timezone }})</span>{% endif %}
+          {% if ev.location %}<br><span class="ltr-auto">{{ ev.location }}</span>{% endif %}
+        </div>
+        <div class="ev-actions">✓ در تقویم ثبت شد
+          {% if ev.html_link %}<a href="{{ ev.html_link }}" target="_blank" rel="noopener">مشاهده در Google Calendar</a>{% endif %}</div>
+      </div>
+      {% else %}
+      <form class="ev-card" method="post" action="/events/{{ ev.id }}/add">
+        <div class="ev-src">{{ "از جواب تو" if ev.source == 'outgoing' else "از ایمیل دریافتی" }}</div>
+
+        <label for="t{{ ev.id }}">عنوان</label>
+        <input type="text" id="t{{ ev.id }}" name="title" value="{{ ev.title }}" dir="auto" required>
+
+        <div class="ev-row">
+          <div><label for="d{{ ev.id }}">تاریخ ({{ ev.date | dayhead }})</label>
+            <input type="date" id="d{{ ev.id }}" name="date" value="{{ ev.date }}" required></div>
+          <div><label for="s{{ ev.id }}">شروع</label>
+            <input type="time" id="s{{ ev.id }}" name="start_time" value="{{ ev.start_time }}"></div>
+          <div><label for="e{{ ev.id }}">پایان</label>
+            <input type="time" id="e{{ ev.id }}" name="end_time" value="{{ ev.end_time }}"></div>
+        </div>
+        {% if not ev.start_time %}<div class="ev-note warn">ساعت مشخص نشده؛ اگر خالی بماند، رویداد تمام‌روز ثبت می‌شود.</div>{% endif %}
+
+        <label for="z{{ ev.id }}">منطقه‌ی زمانی</label>
+        <input type="text" id="z{{ ev.id }}" name="tz" value="{{ ev.timezone }}" dir="ltr" list="tzlist">
+        {% if ev.timezone != owner_tz %}<div class="ev-note warn">توجه: ساعت این قرار به وقت <span dir="ltr">{{ ev.timezone }}</span> است، نه وقت محلی تو. تقویم خودش آن را به وقت تو نشان می‌دهد.</div>{% endif %}
+
+        <label for="l{{ ev.id }}">مکان</label>
+        <input type="text" id="l{{ ev.id }}" name="location" value="{{ ev.location }}" dir="auto">
+
+        <label for="n{{ ev.id }}">توضیح</label>
+        <textarea id="n{{ ev.id }}" name="description" dir="auto">{{ ev.description }}</textarea>
+
+        {% if ev.ambiguity %}<div class="ev-note warn"><strong>لطفاً چک کن:</strong> <span class="ltr-auto">{{ ev.ambiguity }}</span></div>{% endif %}
+        {% for c in conflicts.get(ev.id, []) %}
+          <div class="ev-note clash">تداخل: در این زمان «<span class="ltr-auto">{{ c.title }}</span>» را داری ({{ c.start.strftime("%H:%M") }}).</div>
+        {% endfor %}
+
+        <label class="ev-check"><input type="checkbox" name="invite" value="1">
+          برای <span class="ltr-auto">{{ task.reply_to | sender }}</span> هم دعوت‌نامه‌ی تقویم بفرست</label>
+
+        <div class="ev-actions">
+          {% if calendar_ok %}
+            <button class="btn-primary" type="submit">افزودن به تقویم</button>
+          {% else %}
+            <a class="btn btn-primary" href="/auth/google">اول تقویم را فعال کن</a>
+          {% endif %}
+          <button type="submit" formaction="/events/{{ ev.id }}/dismiss" formnovalidate class="btn-link">لازم نیست</button>
+        </div>
+      </form>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+  <datalist id="tzlist">
+    {% for z in ["Europe/Berlin","Europe/London","Europe/Paris","Asia/Tehran","Asia/Dubai","America/New_York","America/Chicago","America/Los_Angeles","Asia/Tokyo","UTC"] %}<option value="{{ z }}">{% endfor %}
+  </datalist>
+</section>
+
 <script>
   document.addEventListener('keydown', function (e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    var inDraft = document.activeElement && document.activeElement.closest && document.activeElement.closest('#draft-form');
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && inDraft) {
       var btn = document.getElementById('send-btn');
       if (btn) { e.preventDefault(); btn.click(); }
     }

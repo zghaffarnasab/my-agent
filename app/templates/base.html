@@ -56,6 +56,9 @@
   .flash.ok { background: var(--ok-bg); color: var(--ok-ink); }
   .flash.error { background: var(--err-bg); color: var(--danger); }
   .ltr-auto { unicode-bidi: plaintext; }
+  footer.app-foot { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line);
+    font-size: 13px; color: var(--muted); display: flex; gap: 12px; justify-content: center; }
+  footer.app-foot a { color: var(--muted); }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 {% block head %}{% endblock %}
@@ -63,6 +66,10 @@
 <body>
 <div class="wrap">
   {% block body %}{% endblock %}
+  <footer class="app-foot">
+    <span>نسخه‌ی <span dir="ltr">{{ APP_VERSION }}</span></span>
+    {% if request and request.session.get("auth") %}<a href="/changelog">تاریخچه‌ی تغییرات</a>{% endif %}
+  </footer>
 </div>
 </body>
 </html>

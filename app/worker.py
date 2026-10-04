@@ -8,7 +8,7 @@ from email.utils import parseaddr
 
 from sqlalchemy import select
 
-from app import ai, config, gmail_client
+from app import ai, config, events, gmail_client
 from app.db import SessionLocal, Task, TaskStatus, init_db
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [worker] %(levelname)s %(message)s")
@@ -65,6 +65,11 @@ def process_new_emails() -> int:
         with SessionLocal() as db:
             db.add(task)
             db.commit()
+
+        if task.status != TaskStatus.SKIPPED:
+            n = events.extract_for_task(task, source="incoming", text=email.body, reference=email.received_at)
+            if n:
+                log.info("Found %d event(s) in %s", n, message_id)
 
     return created
 

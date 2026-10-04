@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}تاریخچه‌ی تغییرات{% endblock %}
+{% block head %}
+<style>
+  .log { max-width: 720px; }
+  .rel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 22px; margin-bottom: 16px; }
+  .rel-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  .rel-ver { font-weight: 700; font-size: 17px; direction: ltr; }
+  .rel-title { font-weight: 500; }
+  .rel-date { color: var(--muted); font-size: 13px; direction: ltr; margin-inline-start: auto; }
+  .rel-now { font-size: 12px; background: var(--ok-bg); color: var(--ok-ink); border-radius: 10px; padding: 1px 10px; }
+  .rel ul { margin: 8px 0 0; padding-inline-start: 20px; }
+  .rel li { margin: 4px 0; }
+</style>
+{% endblock %}
+{% block body %}
+<header class="top">
+  <h1><a href="/">صف جواب‌ها</a></h1>
+  <div class="account"><a href="/">بازگشت به داشبورد</a></div>
+</header>
+
+<div class="log">
+  <h2 style="font-size:18px;margin:0 0 16px;">تاریخچه‌ی تغییرات</h2>
+  {% for rel in changelog %}
+  <article class="rel">
+    <div class="rel-head">
+      <span class="rel-ver">{{ rel.version }}</span>
+      <span class="rel-title">{{ rel.title }}</span>
+      {% if rel.version == APP_VERSION %}<span class="rel-now">نسخه‌ی فعلی</span>{% endif %}
+      <span class="rel-date">{{ rel.date }}</span>
+    </div>
+    <ul>{% for c in rel.changes %}<li>{{ c }}</li>{% endfor %}</ul>
+  </article>
+  {% endfor %}
+</div>
+{% endblock %}

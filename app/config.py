@@ -22,11 +22,18 @@ DATABASE_URL = _get("DATABASE_URL", "sqlite:////data/app.db")
 # --- Google OAuth (Web application client) ---
 GOOGLE_CLIENT_ID = _get("GOOGLE_CLIENT_ID", required=True)
 GOOGLE_CLIENT_SECRET = _get("GOOGLE_CLIENT_SECRET", required=True)
-GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]  # read + label + send
+GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.modify"          # read + label + send
+CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events"    # read + create events
+GMAIL_SCOPES = [GMAIL_SCOPE, CALENDAR_SCOPE]  # everything requested when connecting
 
 # --- Anthropic ---
 ANTHROPIC_API_KEY = _get("ANTHROPIC_API_KEY", required=True)
 CLAUDE_MODEL = _get("CLAUDE_MODEL", "claude-sonnet-5-5")
+
+# --- Calendar ---
+TIMEZONE = _get("TIMEZONE", "Europe/Berlin")   # your own time zone (IANA name)
+CALENDAR_ID = _get("CALENDAR_ID", "primary")
+UPCOMING_DAYS = int(_get("UPCOMING_DAYS", "7"))
 
 # --- Worker ---
 POLL_INTERVAL_SECONDS = int(_get("POLL_INTERVAL_SECONDS", "180"))

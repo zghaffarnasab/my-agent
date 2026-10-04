@@ -23,6 +23,19 @@
   .err { color: var(--danger); }
   .empty { background: var(--surface); border: 1px solid var(--line); border-top: none; border-radius: 0 0 10px 10px; padding: 48px 20px; text-align: center; color: var(--muted); }
   .connect { background: var(--wait-bg); color: var(--wait); border-radius: 10px; padding: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .upcoming { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 28px; }
+  .upcoming h2 { font-size: 15px; margin: 0; padding: 12px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; }
+  .upcoming h2 a { font-weight: 400; font-size: 13px; }
+  .days { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .day { padding: 12px 20px; border-top: 1px solid var(--line); }
+  .day h3 { font-size: 13px; color: var(--muted); font-weight: 500; margin: 0 0 6px; }
+  .day.today h3 { color: var(--accent); font-weight: 700; }
+  .ev { display: flex; gap: 10px; font-size: 14px; padding: 2px 0; color: inherit; text-decoration: none; }
+  .ev:hover .ev-title { text-decoration: underline; }
+  .ev-time { direction: ltr; color: var(--muted); min-width: 44px; font-variant-numeric: tabular-nums; }
+  .ev-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .up-empty { padding: 16px 20px; color: var(--muted); font-size: 14px; }
+  .tag-ev { font-size: 12px; background: #E4EEF5; color: var(--accent); border-radius: 10px; padding: 0 8px; margin-inline-start: 8px; font-weight: 500; }
   @media (max-width: 720px) {
     .queue a { grid-template-columns: 1fr auto; }
     .subj, .draft { grid-column: 1 / -1; }
@@ -51,6 +64,40 @@
 </div>
 {% endif %}
 
+{% if gmail and not calendar_ok %}
+<div class="connect">
+  <span>برای دیدن برنامه‌های تقویم و افزودن قرارها، یک بار دیگر حساب گوگل را وصل کن تا اجازه‌ی تقویم هم داده شود.</span>
+  <a class="btn btn-primary" href="/auth/google">فعال کردن تقویم</a>
+</div>
+{% endif %}
+
+{% if calendar_ok %}
+<section class="upcoming" aria-labelledby="up-h">
+  <h2 id="up-h">برنامه‌های {{ upcoming_days }} روز آینده
+    <a href="https://calendar.google.com" target="_blank" rel="noopener">باز کردن Google Calendar</a></h2>
+  {% if upcoming_error %}
+    <div class="up-empty" style="color:var(--danger)">خواندن تقویم ناموفق بود: <span class="ltr-auto">{{ upcoming_error }}</span></div>
+  {% elif not upcoming %}
+    <div class="up-empty">برنامه‌ای در این روزها نداری.</div>
+  {% else %}
+    <div class="days">
+    {% for day, items in upcoming | groupby("day") %}
+      {% set head = day | dayhead %}
+      <div class="day {% if head.startswith('امروز') %}today{% endif %}">
+        <h3>{{ head }}</h3>
+        {% for e in items %}
+          <a class="ev" href="{{ e.link }}" target="_blank" rel="noopener">
+            <span class="ev-time">{{ "تمام روز" if e.all_day else e.start.strftime("%H:%M") }}</span>
+            <span class="ev-title ltr-auto">{{ e.title }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% endfor %}
+    </div>
+  {% endif %}
+</section>
+{% endif %}
+
 <nav class="tabs" aria-label="وضعیت تسک‌ها">
   {% for s in statuses %}
     <a href="/?status={{ s }}" class="{% if s == status %}active{% endif %}">
@@ -65,7 +112,7 @@
   <li>
     <a href="/tasks/{{ t.id }}">
       <span class="from ltr-auto">{{ t.from_addr | sender }}</span>
-      <span class="subj ltr-auto">{{ t.subject or "(بدون موضوع)" }}</span>
+      <span class="subj"><span class="ltr-auto">{{ t.subject or "(بدون موضوع)" }}</span>{% if t.id in tasks_with_events %}<span class="tag-ev">قرار</span>{% endif %}</span>
       <span class="when">{{ (t.sent_at if status == 'sent' else t.received_at) | dt }}</span>
       {% if t.status == 'failed' %}
         <span class="draft err">پیش‌نویس نوشته نشد؛ باز کن و دوباره امتحان کن.</span>

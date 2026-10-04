@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Integer, String, Text, create_engine
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 from app.config import DATABASE_URL
@@ -51,6 +51,35 @@ class Task(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class EventStatus:
+    SUGGESTED = "suggested"
+    ADDED = "added"
+    DISMISSED = "dismissed"
+
+
+class EventSuggestion(Base):
+    """A meeting/appointment found in an email, waiting for you to add it to Google Calendar."""
+    __tablename__ = "event_suggestions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id", ondelete="CASCADE"), index=True)
+    source: Mapped[str] = mapped_column(String(16), default="incoming")   # incoming | outgoing
+
+    title: Mapped[str] = mapped_column(String(512), default="")
+    date: Mapped[str] = mapped_column(String(10), default="")             # YYYY-MM-DD
+    start_time: Mapped[str] = mapped_column(String(5), default="")        # HH:MM, empty = all-day
+    end_time: Mapped[str] = mapped_column(String(5), default="")
+    timezone: Mapped[str] = mapped_column(String(64), default="")
+    location: Mapped[str] = mapped_column(String(512), default="")
+    description: Mapped[str] = mapped_column(Text, default="")
+    ambiguity: Mapped[str] = mapped_column(Text, default="")              # why it needs a second look
+
+    status: Mapped[str] = mapped_column(String(16), default=EventStatus.SUGGESTED, index=True)
+    google_event_id: Mapped[str] = mapped_column(String(256), default="")
+    html_link: Mapped[str] = mapped_column(String(1024), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class GoogleCredential(Base):

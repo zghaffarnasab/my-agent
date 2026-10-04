@@ -2,6 +2,7 @@ import asyncio
 import os
 import secrets
 from datetime import timezone
+from zoneinfo import ZoneInfo
 from email.utils import parseaddr
 
 from fastapi import BackgroundTasks, FastAPI, Form, HTTPException, Request
@@ -10,15 +11,16 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import delete, func, select, update
 from starlette.middleware.sessions import SessionMiddleware
 
-from app import ai, config, gmail_client
-from app.db import SessionLocal, Task, TaskStatus, init_db, utcnow
+from app import ai, calendar_client, config, events, gmail_client
+from app.version import CHANGELOG, VERSION
+from app.db import EventStatus, EventSuggestion, SessionLocal, Task, TaskStatus, init_db, utcnow
 
 # Allow plain-http OAuth only for local development
 if config.BASE_URL.startswith("http://localhost") or config.BASE_URL.startswith("http://127.0.0.1"):
     os.environ.setdefault("OAUTHLIB_INSECURE_TRANSPORT", "1")
 os.environ.setdefault("OAUTHLIB_RELAX_TOKEN_SCOPE", "1")
 
-app = FastAPI(title="Gmail AI Assistant")
+app = FastAPI(title="Gmail AI Assistant", version=VERSION)
 app.add_middleware(
     SessionMiddleware,
     secret_key=config.SECRET_KEY,
@@ -43,7 +45,7 @@ def fmt_date(value):
         return ""
     if value.tzinfo is None:
         value = value.replace(tzinfo=timezone.utc)
-    return value.astimezone().strftime("%Y-%m-%d %H:%M")
+    return value.astimezone(ZoneInfo(config.TIMEZONE)).strftime("%Y-%m-%d %H:%M")
 
 
 def sender_name(from_addr: str) -> str:
@@ -51,9 +53,28 @@ def sender_name(from_addr: str) -> str:
     return name or addr
 
 
+FA_WEEKDAYS = ["دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه", "یکشنبه"]
+
+
+def day_heading(d):
+    """'امروز'، 'فردا' or weekday + date, for the upcoming list and event cards."""
+    from datetime import date as _date, datetime as _dt, timedelta as _td
+    if isinstance(d, str):
+        d = _date.fromisoformat(d)
+    today = _dt.now(ZoneInfo(config.TIMEZONE)).date()
+    label = FA_WEEKDAYS[d.weekday()]
+    if d == today:
+        label = "امروز، " + label
+    elif d == today + _td(days=1):
+        label = "فردا، " + label
+    return f"{label} {d.strftime('%d.%m')}"
+
+
+templates.env.filters["dayhead"] = day_heading
 templates.env.filters["dt"] = fmt_date
 templates.env.filters["sender"] = sender_name
 templates.env.globals["STATUS_LABELS"] = STATUS_LABELS
+templates.env.globals["APP_VERSION"] = VERSION
 
 
 @app.on_event("startup")
@@ -96,7 +117,13 @@ def get_task_or_404(db, task_id: int) -> Task:
 
 @app.get("/health")
 def health():
-    return {"ok": True}
+    return {"ok": True, "version": VERSION}
+
+
+@app.get("/changelog", response_class=HTMLResponse)
+def changelog(request: Request):
+    require_login(request)
+    return templates.TemplateResponse(request, "changelog.html", {"changelog": CHANGELOG})
 
 
 # ---------- Login ----------
@@ -155,6 +182,7 @@ def auth_callback(request: Request):
     if previous and previous.lower() != email.lower():
         # Switched to another Gmail account: old tasks belong to the old mailbox and can't be sent from the new one
         with SessionLocal() as db:
+            db.execute(delete(EventSuggestion))
             db.execute(delete(Task))
             db.commit()
     gmail_client.save_credentials(creds, email=email)
@@ -178,12 +206,28 @@ def index(request: Request, status: str = TaskStatus.PENDING):
                 select(Task.status, func.count()).where(Task.status.in_(VISIBLE_STATUSES)).group_by(Task.status)
             ).all()
         )
+        tasks_with_events = set(db.scalars(
+            select(EventSuggestion.task_id).where(EventSuggestion.status == EventStatus.SUGGESTED)
+        ))
+    gmail = gmail_client.connected_email()
+    calendar_ok = bool(gmail) and gmail_client.has_calendar_access()
+    upcoming, upcoming_error = [], None
+    if calendar_ok:
+        try:
+            upcoming = calendar_client.upcoming()
+        except Exception as exc:
+            upcoming_error = str(exc)[:300]
     return templates.TemplateResponse(request, "index.html", {
+        "calendar_ok": calendar_ok,
+        "upcoming": upcoming,
+        "upcoming_error": upcoming_error,
+        "upcoming_days": config.UPCOMING_DAYS,
+        "tasks_with_events": tasks_with_events,
         "tasks": tasks,
         "status": status,
         "counts": counts,
         "statuses": VISIBLE_STATUSES,
-        "gmail": gmail_client.connected_email(),
+        "gmail": gmail,
         "flash": pop_flash(request),
     })
 
@@ -205,7 +249,25 @@ def task_detail(request: Request, task_id: int):
         next_task = db.scalars(
             select(Task).where(Task.status == TaskStatus.PENDING, Task.id != task_id).order_by(Task.id).limit(1)
         ).first()
+        suggestions = db.scalars(
+            select(EventSuggestion).where(EventSuggestion.task_id == task_id,
+                                          EventSuggestion.status != EventStatus.DISMISSED)
+            .order_by(EventSuggestion.date, EventSuggestion.start_time)
+        ).all()
+    calendar_ok = gmail_client.has_calendar_access()
+    conflicts = {}
+    if calendar_ok:
+        for sug in suggestions:
+            if sug.status == EventStatus.SUGGESTED:
+                try:
+                    conflicts[sug.id] = calendar_client.conflicts(sug)
+                except Exception:
+                    conflicts[sug.id] = []
     return templates.TemplateResponse(request, "task.html", {
+        "suggestions": suggestions,
+        "conflicts": conflicts,
+        "calendar_ok": calendar_ok,
+        "owner_tz": config.TIMEZONE,
         "task": task,
         "next_task": next_task,
         "flash": pop_flash(request),
@@ -263,6 +325,10 @@ def send_task(request: Request, task_id: int, draft_body: str = Form(...)):
         ).first()
 
     if new_status == TaskStatus.SENT:
+        found = events.extract_for_task(task, source="outgoing", text=draft_body, reference=utcnow())
+        if found:
+            flash(request, "جواب ارسال شد. در جوابت قرار ملاقاتی پیدا شد؛ اگر خواستی به تقویم اضافه‌اش کن.")
+            return RedirectResponse(f"/tasks/{task_id}#events", status_code=303)
         flash(request, "جواب ارسال شد.")
         return RedirectResponse(f"/tasks/{next_task.id}" if next_task else "/", status_code=303)
     flash(request, error, "error")
@@ -332,3 +398,82 @@ def restore_task(request: Request, task_id: int):
             task.status = TaskStatus.PENDING
             db.commit()
     return RedirectResponse(f"/tasks/{task_id}", status_code=303)
+
+
+# ---------- Calendar ----------
+
+def _get_suggestion(db, event_id: int) -> EventSuggestion:
+    sug = db.get(EventSuggestion, event_id)
+    if sug is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return sug
+
+
+@app.post("/tasks/{task_id}/find-events")
+def find_events(request: Request, task_id: int):
+    """Manually look for events, e.g. for emails that arrived before this feature existed."""
+    require_login(request)
+    with SessionLocal() as db:
+        task = get_task_or_404(db, task_id)
+    n = events.extract_for_task(task, source="incoming", text=task.original_body)
+    if task.status == TaskStatus.SENT and task.draft_body:
+        n += events.extract_for_task(task, source="outgoing", text=task.draft_body,
+                                     reference=task.sent_at or utcnow())
+    flash(request, f"{n} قرار پیدا شد." if n else "قرار تازه‌ای در این ایمیل پیدا نشد.")
+    return RedirectResponse(f"/tasks/{task_id}#events", status_code=303)
+
+
+@app.post("/events/{event_id}/add")
+def add_event(
+    request: Request,
+    event_id: int,
+    title: str = Form(""),
+    date: str = Form(...),
+    start_time: str = Form(""),
+    end_time: str = Form(""),
+    tz: str = Form(""),
+    location: str = Form(""),
+    description: str = Form(""),
+    invite: str = Form(""),
+):
+    require_login(request)
+    with SessionLocal() as db:
+        sug = _get_suggestion(db, event_id)
+        task = db.get(Task, sug.task_id)
+        if sug.status != EventStatus.SUGGESTED:
+            flash(request, "این رویداد قبلاً اضافه یا رد شده است.", "error")
+            return RedirectResponse(f"/tasks/{sug.task_id}#events", status_code=303)
+        # apply your edits from the card
+        sug.title, sug.date = title.strip(), date.strip()
+        sug.start_time, sug.end_time = start_time.strip(), end_time.strip()
+        sug.timezone = events._clean_tz(tz.strip())
+        sug.location, sug.description = location.strip(), description.strip()
+        try:
+            duplicate = calendar_client.find_duplicate(sug)
+            if duplicate:
+                created, note = duplicate, "این رویداد از قبل در تقویمت بود."
+            else:
+                guests = gmail_client.addresses_in(task.reply_to) if (invite and task) else None
+                created = calendar_client.create_event(sug, invite=guests)
+                note = "به تقویم اضافه شد" + (" و دعوت‌نامه ارسال شد." if guests else ".")
+            sug.status = EventStatus.ADDED
+            sug.google_event_id = created.get("id", "")
+            sug.html_link = created.get("htmlLink", "")
+            flash(request, note)
+        except Exception as exc:
+            flash(request, f"افزودن به تقویم ناموفق بود: {exc}", "error")
+        db.commit()
+        task_id = sug.task_id
+    return RedirectResponse(f"/tasks/{task_id}#events", status_code=303)
+
+
+@app.post("/events/{event_id}/dismiss")
+def dismiss_event(request: Request, event_id: int):
+    require_login(request)
+    with SessionLocal() as db:
+        sug = _get_suggestion(db, event_id)
+        if sug.status == EventStatus.SUGGESTED:
+            sug.status = EventStatus.DISMISSED
+            db.commit()
+        task_id = sug.task_id
+    return RedirectResponse(f"/tasks/{task_id}#events", status_code=303)
