@@ -2,3 +2,6 @@
 __pycache__/
 *.db
 .DS_Store
+samples/
+.venv/
+CLAUDE.local.md
