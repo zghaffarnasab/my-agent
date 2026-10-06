@@ -24,12 +24,6 @@
   .actions .spacer { flex: 1; }
   .rewrite { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--line); background: #F7F9FB; border-radius: 0 0 10px 10px; }
   .rewrite input { flex: 1; min-width: 0; font: inherit; font-size: 14px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-  .badge { font-size: 12px; font-weight: 500; padding: 2px 10px; border-radius: 10px; background: var(--wait-bg); color: var(--wait); margin-inline-start: 8px; vertical-align: middle; }
-  .badge.sent { background: var(--ok-bg); color: var(--ok-ink); }
-  .badge.rejected, .badge.failed { background: var(--err-bg); color: var(--danger); }
-  .badge.info, .badge.done { background: #E4EEF5; color: var(--accent); }
-  .ev-card.cancelled { border-color: #E3C3BE; background: #FCF6F5; }
-  .ev-card.cancelled .ev-title-line { text-decoration: line-through; color: var(--muted); }
   .info-list { margin: 0; padding: 0 20px 16px; list-style: none; }
   .info-list li { padding: 4px 0; overflow-wrap: anywhere; }
   .info-h { font-size: 13px; color: var(--muted); font-weight: 500; padding: 8px 20px 0; margin: 0; }
@@ -37,31 +31,12 @@
   .readonly { padding: 20px; white-space: pre-wrap; unicode-bidi: plaintext; }
   .events { margin-top: 24px; scroll-margin-top: 16px; }
   .events > h2 { font-size: 16px; margin: 0 0 12px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-  .ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
-  .ev-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; }
-  .ev-card.added { border-color: #BFD9C6; background: #F6FBF7; }
-  .ev-src { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
-  .ev-card label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
-  .ev-card input[type=text], .ev-card input[type=date], .ev-card input[type=time], .ev-card textarea {
-    width: 100%; font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--line);
-    border-radius: 8px; background: var(--surface); color: var(--ink); unicode-bidi: plaintext;
-  }
-  .ev-card textarea { min-height: 56px; resize: vertical; }
-  .ev-card input[type=date], .ev-card input[type=time] { direction: ltr; unicode-bidi: normal; text-align: start; }
-  .ev-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 10px; }
-  .ev-row label { margin-top: 10px; }
-  .ev-note { font-size: 13px; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
-  .ev-note.warn { background: var(--wait-bg); color: var(--wait); }
-  .ev-note.clash { background: var(--err-bg); color: var(--danger); }
-  .ev-check { display: flex !important; gap: 8px; align-items: center; color: var(--ink) !important; font-size: 13px !important; margin-top: 12px !important; }
-  .ev-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-  .ev-done { font-size: 14px; }
-  .ev-done strong { display: block; font-size: 15px; margin-bottom: 4px; }
   .ev-jump { display: inline-block; margin: 0 20px 16px; font-size: 14px; }
   @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .editor { position: static; } }
 </style>
 {% endblock %}
 {% block body %}
+{% from "_event_card.html" import event_card, tz_datalist with context %}
 <header class="top">
   <h1><a href="/">{{ t("app.name") }}</a></h1>
   <div class="account">
@@ -93,6 +68,14 @@
       {% for r in task.related %}<li>{% if r.url %}<a class="ltr-auto" href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.title }}</a>{% else %}<span class="ltr-auto">{{ r.title }}</span>{% endif %}</li>{% endfor %}
     </ul>
     {% endif %}
+    <div class="actions">
+      {% if task.status == 'done' %}
+        <form class="inline" method="post" action="/tasks/{{ task.id }}/undone"><button type="submit">{{ t("action.restore_info") }}</button></form>
+      {% else %}
+        <form class="inline" method="post" action="/tasks/{{ task.id }}/done"><input type="hidden" name="next" value="/?tab=other"><button type="submit">{{ t("action.done") }}</button></form>
+      {% endif %}
+      <form class="inline" method="post" action="/tasks/{{ task.id }}/draft-anyway"><button type="submit" class="btn-link">{{ t("action.draft_anyway") }}</button></form>
+    </div>
   </section>
   {% else %}
   <!-- Draft (first in RTL = right side) -->
@@ -177,89 +160,11 @@
   {% else %}
   <div class="ev-grid">
     {% for ev in suggestions %}
-      {% if ev.status == 'cancelled' %}
-      <div class="ev-card cancelled">
-        <div class="ev-src">{{ t("ev.src_outgoing") if ev.source == 'outgoing' else t("ev.src_incoming") }}
-          <span class="badge failed">{{ t("ev.cancelled_badge") }}</span></div>
-        <div class="ev-done">
-          <strong class="ltr-auto ev-title-line">{{ ev.title }}</strong>
-          {{ ev.date | dayhead }}{% if ev.end_date %} – {{ ev.end_date | dayhead }}{% endif %}{% if ev.start_time %}{{ t("ev.at_time", time=(ev.start_time ~ ("–" ~ ev.end_time if ev.end_time else ""))) }}{% endif %}
-        </div>
-        <div class="ev-note clash">{{ t("ev.cancelled_note") }}</div>
-        {% if ev.url %}<div class="ev-actions"><a class="btn" href="{{ ev.url }}" target="_blank" rel="noopener noreferrer">{{ t("ev.open_link") }}</a></div>{% endif %}
-      </div>
-      {% elif ev.status == 'added' %}
-      <div class="ev-card added">
-        <div class="ev-src">{{ t("ev.src_outgoing") if ev.source == 'outgoing' else t("ev.src_incoming") }}</div>
-        <div class="ev-done">
-          <strong class="ltr-auto">{{ ev.title }}</strong>
-          {{ ev.date | dayhead }}{% if ev.end_date %} – {{ ev.end_date | dayhead }}{% endif %}{% if ev.start_time %}{{ t("ev.at_time", time=(ev.start_time ~ ("–" ~ ev.end_time if ev.end_time else ""))) }}{% endif %}
-          {% if ev.timezone != owner_tz %}<span class="ltr-auto">({{ ev.timezone }})</span>{% endif %}
-          {% if ev.location %}<br><span class="ltr-auto">{{ ev.location }}</span>{% endif %}
-        </div>
-        <div class="ev-actions">{{ t("ev.added") }}
-          {% if ev.html_link %}<a href="{{ ev.html_link }}" target="_blank" rel="noopener">{{ t("ev.view_in_gcal") }}</a>{% endif %}</div>
-      </div>
-      {% else %}
-      <form class="ev-card" method="post" action="/events/{{ ev.id }}/add">
-        <div class="ev-src">{{ t("ev.src_outgoing") if ev.source == 'outgoing' else t("ev.src_incoming") }}</div>
-
-        <label for="t{{ ev.id }}">{{ t("ev.label_title") }}</label>
-        <input type="text" id="t{{ ev.id }}" name="title" value="{{ ev.title }}" dir="auto" required>
-
-        <div class="ev-row">
-          <div><label for="d{{ ev.id }}">{{ t("ev.label_date", day=(ev.date | dayhead)) }}</label>
-            <input type="date" dir="ltr" id="d{{ ev.id }}" name="date" value="{{ ev.date }}" required></div>
-          <div><label for="s{{ ev.id }}">{{ t("ev.label_start") }}</label>
-            <input type="time" dir="ltr" id="s{{ ev.id }}" name="start_time" value="{{ ev.start_time }}"></div>
-          <div><label for="e{{ ev.id }}">{{ t("ev.label_end") }}</label>
-            <input type="time" dir="ltr" id="e{{ ev.id }}" name="end_time" value="{{ ev.end_time }}"></div>
-        </div>
-        {% if not ev.start_time %}<div class="ev-note warn">{{ t("ev.no_time_note") }}</div>{% endif %}
-
-        <label for="ed{{ ev.id }}">{{ t("ev.label_end_date") }}</label>
-        <input type="date" dir="ltr" id="ed{{ ev.id }}" name="end_date" value="{{ ev.end_date }}">
-
-        <label for="z{{ ev.id }}">{{ t("ev.label_tz") }}</label>
-        <input type="text" id="z{{ ev.id }}" name="tz" value="{{ ev.timezone }}" dir="ltr" list="tzlist">
-        {% if ev.timezone != owner_tz %}<div class="ev-note warn">{{ t("ev.tz_note", tz=ev.timezone) }}</div>{% endif %}
-
-        <label for="l{{ ev.id }}">{{ t("ev.label_location") }}</label>
-        <input type="text" id="l{{ ev.id }}" name="location" value="{{ ev.location }}" dir="auto">
-
-        <label for="n{{ ev.id }}">{{ t("ev.label_description") }}</label>
-        <textarea id="n{{ ev.id }}" name="description" dir="auto">{{ ev.description }}</textarea>
-
-        {% if ev.warning_codes or ev.ambiguity %}
-        <div class="ev-note warn"><strong>{{ t("ev.check_label") }}</strong>
-          {% for code in ev.warning_codes %}<div>{{ t("warning." ~ code) }}</div>{% endfor %}
-          {% if not ev.warning_codes and ev.ambiguity %}<span class="ltr-auto">{{ ev.ambiguity }}</span>{% endif %}
-        </div>
-        {% endif %}
-        {% for c in conflicts.get(ev.id, []) %}
-          <div class="ev-note clash">{{ t("ev.clash", title=(c.title or t("dash.untitled")), time=c.start.strftime("%H:%M")) }}</div>
-        {% endfor %}
-
-        <label class="ev-check"><input type="checkbox" name="invite" value="1">
-          {{ t("ev.invite_check", name=(task.reply_to | sender)) }}</label>
-
-        <div class="ev-actions">
-          {% if ev.url %}<a class="btn" href="{{ ev.url }}" target="_blank" rel="noopener noreferrer">{{ t("ev.open_link") }}</a>{% endif %}
-          {% if calendar_ok %}
-            <button class="btn-primary" type="submit">{{ t("ev.add_btn") }}</button>
-          {% else %}
-            <a class="btn btn-primary" href="/auth/google">{{ t("ev.enable_first") }}</a>
-          {% endif %}
-          <button type="submit" formaction="/events/{{ ev.id }}/dismiss" formnovalidate class="btn-link">{{ t("ev.dismiss") }}</button>
-        </div>
-      </form>
-      {% endif %}
+      {{ event_card(ev, task, conflicts) }}
     {% endfor %}
   </div>
   {% endif %}
-  <datalist id="tzlist">
-    {% for z in ["Europe/London","Europe/Berlin","Europe/Paris","Asia/Tehran","Asia/Dubai","America/New_York","America/Chicago","America/Los_Angeles","Asia/Tokyo","UTC"] %}<option value="{{ z }}">{% endfor %}
-  </datalist>
+  {{ tz_datalist() }}
 </section>
 
 <script>

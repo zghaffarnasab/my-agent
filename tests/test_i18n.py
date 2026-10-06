@@ -45,6 +45,8 @@ def test_dynamic_key_families_exist():
         assert f"status.{status}" in known
     for i in range(7):
         assert f"weekday.{i}" in known
+    for tab in ("reply", "events", "other", "sent", "rejected"):
+        assert f"tab.{tab}" in known
     from app.validation import CATEGORIES, WARNING_CODES
     for category in CATEGORIES:
         assert f"category.{category}" in known

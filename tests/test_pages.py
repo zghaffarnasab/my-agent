@@ -13,22 +13,6 @@ ISOLATES = re.compile("[⁦-⁩]")
 
 
 @pytest.fixture()
-def client(monkeypatch):
-    monkeypatch.setattr(gmail_client, "connected_email", lambda: "owner@example.com")
-    monkeypatch.setattr(gmail_client, "has_calendar_access", lambda: True)
-    soon = datetime.now(timezone.utc) + timedelta(days=1)
-    monkeypatch.setattr(calendar_client, "upcoming", lambda *a, **k: [
-        calendar_client.UpcomingEvent("Dentist", soon, soon + timedelta(hours=1), soon.date(), False, "", "https://example.com/e"),
-        calendar_client.UpcomingEvent("", None, None, soon.date(), True, "", ""),
-    ])
-    monkeypatch.setattr(calendar_client, "conflicts", lambda s: [
-        calendar_client.UpcomingEvent("Dentist", soon, None, soon.date(), False, "", "")])
-    c = TestClient(main.app)
-    assert c.post("/login", data={"password": "test-password"}, follow_redirects=False).status_code == 303
-    return c
-
-
-@pytest.fixture()
 def task_id():
     with SessionLocal() as db:
         task = Task(gmail_message_id=f"m-{datetime.now().timestamp()}", thread_id="t1",

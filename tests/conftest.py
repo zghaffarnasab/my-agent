@@ -42,3 +42,26 @@ def _clean_tables():
         db.query(EventSuggestion).delete()
         db.query(Task).delete()
         db.commit()
+
+
+@pytest.fixture()
+def client(monkeypatch):
+    """A logged-in browser with fake Gmail/Calendar data (no real API calls)."""
+    from datetime import datetime, timedelta, timezone
+
+    from fastapi.testclient import TestClient
+
+    from app import calendar_client, gmail_client, main
+
+    monkeypatch.setattr(gmail_client, "connected_email", lambda: "owner@example.com")
+    monkeypatch.setattr(gmail_client, "has_calendar_access", lambda: True)
+    soon = datetime.now(timezone.utc) + timedelta(days=1)
+    monkeypatch.setattr(calendar_client, "upcoming", lambda *a, **k: [
+        calendar_client.UpcomingEvent("Dentist", soon, soon + timedelta(hours=1), soon.date(), False, "", "https://example.com/e"),
+        calendar_client.UpcomingEvent("", None, None, soon.date(), True, "", ""),
+    ])
+    monkeypatch.setattr(calendar_client, "conflicts", lambda s: [
+        calendar_client.UpcomingEvent("Dentist", soon, None, soon.date(), False, "", "")])
+    c = TestClient(main.app)
+    assert c.post("/login", data={"password": "test-password"}, follow_redirects=False).status_code == 303
+    return c

@@ -16,6 +16,13 @@
     padding: 14px 20px; color: inherit; text-decoration: none; align-items: baseline;
   }
   .queue a:hover { background: #F6F8FA; }
+  .queue li.row { display: grid; grid-template-columns: 1fr auto; align-items: center; }
+  .row-actions { display: flex; gap: 8px; align-items: center; padding-inline-end: 20px; }
+  .row-actions button { white-space: nowrap; }
+  .day-head { font-size: 14px; color: var(--muted); font-weight: 700; margin: 22px 0 10px; }
+  .day-head.today { color: var(--accent); }
+  .ev-wrap { padding-top: 4px; }
+  .archived-link { margin: 16px 4px 0; font-size: 14px; }
   .from { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .subj { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .draft { grid-column: 2 / 3; color: var(--muted); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -39,10 +46,14 @@
   @media (max-width: 720px) {
     .queue a { grid-template-columns: 1fr auto; }
     .subj, .draft { grid-column: 1 / -1; }
+    .queue li.row { grid-template-columns: 1fr; }
+    .row-actions { padding: 0 20px 12px; flex-wrap: wrap; }
+    .ev-grid { grid-template-columns: 1fr; }
   }
 </style>
 {% endblock %}
 {% block body %}
+{% from "_event_card.html" import event_card, tz_datalist with context %}
 <header class="top">
   <h1><a href="/">{{ t("app.name") }}</a></h1>
   <div class="account">
@@ -100,39 +111,69 @@
 {% endif %}
 
 <nav class="tabs" aria-label="{{ t('status.tabs_label') }}">
-  {% for s in statuses %}
-    <a href="/?status={{ s }}" class="{% if s == status %}active{% endif %}">
-      {{ t("status." ~ s) }}{% if counts.get(s) %}<span class="n">{{ counts.get(s) }}</span>{% endif %}
+  {% for key in tabs %}
+    <a href="/?tab={{ key }}" class="{% if key == tab %}active{% endif %}"{% if key == tab %} aria-current="page"{% endif %}>
+      {{ t("tab." ~ key) }}{% if tab_counts[key] %}<span class="n">{{ tab_counts[key] }}</span>{% endif %}
     </a>
   {% endfor %}
 </nav>
 
-{% if tasks %}
+{% if tab == 'events' %}
+  {% if event_days %}
+  <div class="ev-wrap">
+    {% for day, group in event_days %}
+      <h3 class="day-head{% if day | is_today %} today{% endif %}">{{ day | dayhead }}</h3>
+      <div class="ev-grid">
+        {% for ev, ev_task in group %}{{ event_card(ev, ev_task, conflicts, "/?tab=events", true) }}{% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+  {{ tz_datalist() }}
+  {% else %}
+  <div class="empty">{{ t("dash.empty_events") }}</div>
+  {% endif %}
+{% elif tasks %}
 <ul class="queue">
   {% for item in tasks %}
-  <li>
+  <li class="row">
     <a href="/tasks/{{ item.id }}">
       <span class="from ltr-auto">{{ item.from_addr | sender }}</span>
       <span class="subj"><span class="ltr-auto">{{ item.subject or t("dash.no_subject") }}</span>{% if item.id in tasks_with_events %}<span class="tag-ev">{{ t("dash.tag_event") }}</span>{% endif %}</span>
-      <span class="when">{{ (item.sent_at if status == 'sent' else item.received_at) | dt }}</span>
+      <span class="when">{{ (item.sent_at if tab == 'sent' else item.received_at) | dt }}</span>
       {% if item.status == 'failed' %}
         <span class="draft err">{{ t("dash.draft_failed") }}</span>
       {% elif item.status in ['info', 'done'] %}
-        <span class="draft ltr-auto">{% if item.category %}{{ t("category." ~ item.category) }}: {% endif %}{{ item.summary }}</span>
+        <span class="draft ltr-auto">{% if item.category %}<strong>{{ t("category." ~ item.category) }}</strong> · {% endif %}{{ item.summary }}</span>
       {% else %}
         <span class="draft ltr-auto">{{ item.draft_body[:180] }}</span>
       {% endif %}
     </a>
+    {% if tab == 'other' %}
+    <div class="row-actions">
+      {% if item.status == 'done' %}
+        <form class="inline" method="post" action="/tasks/{{ item.id }}/undone"><button type="submit">{{ t("action.restore_info") }}</button></form>
+      {% else %}
+        <form class="inline" method="post" action="/tasks/{{ item.id }}/done"><button type="submit">{{ t("action.done") }}</button></form>
+        <form class="inline" method="post" action="/tasks/{{ item.id }}/draft-anyway"><button type="submit" class="btn-link">{{ t("action.draft_anyway") }}</button></form>
+      {% endif %}
+    </div>
+    {% endif %}
   </li>
   {% endfor %}
 </ul>
 {% else %}
 <div class="empty">
-  {% if status == 'pending' %}
-    {{ t("dash.empty_pending") }}
-  {% else %}
-    {{ t("dash.empty_other") }}
-  {% endif %}
+  {% if tab == 'reply' %}{{ t("dash.empty_pending") }}
+  {% elif tab == 'other' %}{{ t("dash.empty_other_mail") }}
+  {% else %}{{ t("dash.empty_other") }}{% endif %}
 </div>
+{% endif %}
+
+{% if tab == 'other' %}
+  {% if show_archived %}
+    <p class="archived-link"><a href="/?tab=other">{{ t("dash.hide_done") }}</a></p>
+  {% elif archived_count %}
+    <p class="archived-link"><a href="/?tab=other&archived=1">{{ t("dash.show_done", n=archived_count) }}</a></p>
+  {% endif %}
 {% endif %}
 {% endblock %}

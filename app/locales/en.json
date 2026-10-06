@@ -149,5 +149,22 @@
   "ev.label_end_date": "End date (optional, for multi-day events)",
   "ev.open_link": "Open invite link",
   "ev.cancelled_badge": "Cancelled",
-  "ev.cancelled_note": "The email says this event was cancelled, so it cannot be added to the calendar."
+  "ev.cancelled_note": "The email says this event was cancelled, so it cannot be added to the calendar.",
+  "tab.reply": "Needs reply",
+  "tab.events": "Events",
+  "tab.other": "Other mail",
+  "tab.sent": "Sent",
+  "tab.rejected": "Rejected",
+  "action.done": "Done",
+  "action.restore_info": "Move back to Other mail",
+  "action.draft_anyway": "Draft a reply anyway",
+  "dash.empty_events": "No upcoming events were found in your emails.",
+  "dash.empty_other_mail": "No other mail. Emails that need no reply show up here with a short summary.",
+  "dash.show_done": "Show archived mail ({n})",
+  "dash.hide_done": "Back to Other mail",
+  "ev.from_task": "Email: {subject}",
+  "flash.marked_done": "Marked as done. It is archived here only; the email in Gmail is untouched.",
+  "flash.restored_other": "Moved back to Other mail.",
+  "flash.draft_ready": "A reply draft is ready. Review it before sending.",
+  "flash.draft_failed": "Could not write the draft: {error}"
 }

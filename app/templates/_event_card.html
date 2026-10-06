@@ -1,0 +1,90 @@
+{# One event card (edit and add to the calendar). Used on the task page and on the Events tab. #}
+{% macro event_card(ev, task, conflicts, next_url="", show_source=false) %}
+{% if ev.status == 'cancelled' %}
+<div class="ev-card cancelled">
+  <div class="ev-src">{{ t("ev.src_outgoing") if ev.source == 'outgoing' else t("ev.src_incoming") }}
+    <span class="badge failed">{{ t("ev.cancelled_badge") }}</span></div>
+  <div class="ev-done">
+    <strong class="ltr-auto ev-title-line">{{ ev.title }}</strong>
+    {{ ev.date | dayhead }}{% if ev.end_date %} – {{ ev.end_date | dayhead }}{% endif %}{% if ev.start_time %}{{ t("ev.at_time", time=(ev.start_time ~ ("–" ~ ev.end_time if ev.end_time else ""))) }}{% endif %}
+  </div>
+  <div class="ev-note clash">{{ t("ev.cancelled_note") }}</div>
+  {% if ev.url %}<div class="ev-actions"><a class="btn" href="{{ ev.url }}" target="_blank" rel="noopener noreferrer">{{ t("ev.open_link") }}</a></div>{% endif %}
+</div>
+{% elif ev.status == 'added' %}
+<div class="ev-card added">
+  <div class="ev-src">{{ t("ev.src_outgoing") if ev.source == 'outgoing' else t("ev.src_incoming") }}</div>
+  <div class="ev-done">
+    <strong class="ltr-auto">{{ ev.title }}</strong>
+    {{ ev.date | dayhead }}{% if ev.end_date %} – {{ ev.end_date | dayhead }}{% endif %}{% if ev.start_time %}{{ t("ev.at_time", time=(ev.start_time ~ ("–" ~ ev.end_time if ev.end_time else ""))) }}{% endif %}
+    {% if ev.timezone != owner_tz %}<span class="ltr-auto">({{ ev.timezone }})</span>{% endif %}
+    {% if ev.location %}<br><span class="ltr-auto">{{ ev.location }}</span>{% endif %}
+  </div>
+  <div class="ev-actions">{{ t("ev.added") }}
+    {% if ev.html_link %}<a href="{{ ev.html_link }}" target="_blank" rel="noopener">{{ t("ev.view_in_gcal") }}</a>{% endif %}</div>
+</div>
+{% else %}
+<form class="ev-card" method="post" action="/events/{{ ev.id }}/add">
+  {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+  <div class="ev-src">{{ t("ev.src_outgoing") if ev.source == 'outgoing' else t("ev.src_incoming") }}
+    {% if show_source and task %}· <a class="ltr-auto" href="/tasks/{{ task.id }}">{{ t("ev.from_task", subject=(task.subject or t("dash.no_subject"))) }}</a>{% endif %}</div>
+
+  <label for="t{{ ev.id }}">{{ t("ev.label_title") }}</label>
+  <input type="text" id="t{{ ev.id }}" name="title" value="{{ ev.title }}" dir="auto" required>
+
+  <div class="ev-row">
+    <div><label for="d{{ ev.id }}">{{ t("ev.label_date", day=(ev.date | dayhead)) }}</label>
+      <input type="date" dir="ltr" id="d{{ ev.id }}" name="date" value="{{ ev.date }}" required></div>
+    <div><label for="s{{ ev.id }}">{{ t("ev.label_start") }}</label>
+      <input type="time" dir="ltr" id="s{{ ev.id }}" name="start_time" value="{{ ev.start_time }}"></div>
+    <div><label for="e{{ ev.id }}">{{ t("ev.label_end") }}</label>
+      <input type="time" dir="ltr" id="e{{ ev.id }}" name="end_time" value="{{ ev.end_time }}"></div>
+  </div>
+  {% if not ev.start_time %}<div class="ev-note warn">{{ t("ev.no_time_note") }}</div>{% endif %}
+
+  <label for="ed{{ ev.id }}">{{ t("ev.label_end_date") }}</label>
+  <input type="date" dir="ltr" id="ed{{ ev.id }}" name="end_date" value="{{ ev.end_date }}">
+
+  <label for="z{{ ev.id }}">{{ t("ev.label_tz") }}</label>
+  <input type="text" id="z{{ ev.id }}" name="tz" value="{{ ev.timezone }}" dir="ltr" list="tzlist">
+  {% if ev.timezone != owner_tz %}<div class="ev-note warn">{{ t("ev.tz_note", tz=ev.timezone) }}</div>{% endif %}
+
+  <label for="l{{ ev.id }}">{{ t("ev.label_location") }}</label>
+  <input type="text" id="l{{ ev.id }}" name="location" value="{{ ev.location }}" dir="auto">
+
+  <label for="n{{ ev.id }}">{{ t("ev.label_description") }}</label>
+  <textarea id="n{{ ev.id }}" name="description" dir="auto">{{ ev.description }}</textarea>
+
+  {% if ev.warning_codes or ev.ambiguity %}
+  <div class="ev-note warn"><strong>{{ t("ev.check_label") }}</strong>
+    {% for code in ev.warning_codes %}<div>{{ t("warning." ~ code) }}</div>{% endfor %}
+    {% if not ev.warning_codes and ev.ambiguity %}<span class="ltr-auto">{{ ev.ambiguity }}</span>{% endif %}
+  </div>
+  {% endif %}
+  {% for c in conflicts.get(ev.id, []) %}
+    <div class="ev-note clash">{{ t("ev.clash", title=(c.title or t("dash.untitled")), time=c.start.strftime("%H:%M")) }}</div>
+  {% endfor %}
+
+  {% if task and not task.is_forward and not task.is_bulk %}
+  <label class="ev-check"><input type="checkbox" name="invite" value="1">
+    {{ t("ev.invite_check", name=(task.reply_to | sender)) }}</label>
+  {% endif %}
+
+  <div class="ev-actions">
+    {% if ev.url %}<a class="btn" href="{{ ev.url }}" target="_blank" rel="noopener noreferrer">{{ t("ev.open_link") }}</a>{% endif %}
+    {% if calendar_ok %}
+      <button class="btn-primary" type="submit">{{ t("ev.add_btn") }}</button>
+    {% else %}
+      <a class="btn btn-primary" href="/auth/google">{{ t("ev.enable_first") }}</a>
+    {% endif %}
+    <button type="submit" formaction="/events/{{ ev.id }}/dismiss" formnovalidate class="btn-link">{{ t("ev.dismiss") }}</button>
+  </div>
+</form>
+{% endif %}
+{% endmacro %}
+
+{% macro tz_datalist() %}
+<datalist id="tzlist">
+  {% for z in ["Europe/London","Europe/Berlin","Europe/Paris","Asia/Tehran","Asia/Dubai","America/New_York","America/Chicago","America/Los_Angeles","Asia/Tokyo","UTC"] %}<option value="{{ z }}">{% endfor %}
+</datalist>
+{% endmacro %}

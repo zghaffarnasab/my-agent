@@ -54,6 +54,11 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
 - Forwards and bulk mail never get an automatic draft, whatever the model says (enforced in `validation.clean_classification`).
 - Never fetch or open links from emails; they are only displayed (`rel="noopener noreferrer"`).
 
+## Dashboard (since 1.6.0)
+- Tabs: `reply` (pending + failed) | `events` (suggested events not yet over, all emails, by date) | `other` (info; `?archived=1` shows done) | `sent` | `rejected`. Old `/?status=` links map to them.
+- The event card is one macro (`app/templates/_event_card.html`) used on the task page and the Events tab; forms carry a `next` field so the user returns to the tab they came from (`_safe_next` blocks outside redirects).
+- "Done" only changes our database (Gmail is never modified). "Draft a reply anyway" creates a normal `pending` draft that still needs approval.
+
 ## Rules for every change
 1. **Versioning:** bump `VERSION` in `app/version.py` and add a changelog entry at the TOP of
    `CHANGELOG`. PATCH = small fix, MINOR = new feature, MAJOR = needs extra setup.
@@ -85,7 +90,6 @@ Never suggest `docker compose down -v` (deletes all data).
 - The mailbox owner is probably in the UK; do not assume Europe/Berlin (set the time zone on the Settings page).
 
 ## Roadmap
-- Dashboard tabs for the new kinds of email (1.6.0): Needs reply | Events | Other mail | Sent | Rejected, Done/Archive button, "Draft a reply anyway".
 - Calendar phase 2: take calendar conflicts into account when drafting replies
   (propose another time instead of accepting a busy slot).
 - More tools may be added to the same server later.

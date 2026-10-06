@@ -59,6 +59,32 @@
   .flash.ok { background: var(--ok-bg); color: var(--ok-ink); }
   .flash.error { background: var(--err-bg); color: var(--danger); }
   .ltr-auto { unicode-bidi: plaintext; }
+  .badge { font-size: 12px; font-weight: 500; padding: 2px 10px; border-radius: 10px; background: var(--wait-bg); color: var(--wait); margin-inline-start: 8px; vertical-align: middle; }
+  .badge.sent { background: var(--ok-bg); color: var(--ok-ink); }
+  .badge.rejected, .badge.failed { background: var(--err-bg); color: var(--danger); }
+  .badge.info, .badge.done { background: #E4EEF5; color: var(--accent); }
+  .ev-card.cancelled { border-color: #E3C3BE; background: #FCF6F5; }
+  .ev-card.cancelled .ev-title-line { text-decoration: line-through; color: var(--muted); }
+  .ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 16px; }
+  .ev-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; }
+  .ev-card.added { border-color: #BFD9C6; background: #F6FBF7; }
+  .ev-src { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .ev-card label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  .ev-card input[type=text], .ev-card input[type=date], .ev-card input[type=time], .ev-card textarea {
+    width: 100%; font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--line);
+    border-radius: 8px; background: var(--surface); color: var(--ink); unicode-bidi: plaintext;
+  }
+  .ev-card textarea { min-height: 56px; resize: vertical; }
+  .ev-card input[type=date], .ev-card input[type=time] { direction: ltr; unicode-bidi: normal; text-align: start; }
+  .ev-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 10px; }
+  .ev-row label { margin-top: 10px; }
+  .ev-note { font-size: 13px; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
+  .ev-note.warn { background: var(--wait-bg); color: var(--wait); }
+  .ev-note.clash { background: var(--err-bg); color: var(--danger); }
+  .ev-check { display: flex !important; gap: 8px; align-items: center; color: var(--ink) !important; font-size: 13px !important; margin-top: 12px !important; }
+  .ev-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .ev-done { font-size: 14px; }
+  .ev-done strong { display: block; font-size: 15px; margin-bottom: 4px; }
   .lang-switch { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
   .lang-switch button { padding: 2px 4px; }
   .lang-switch button.active { color: var(--ink); font-weight: 700; }

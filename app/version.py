@@ -8,9 +8,35 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.5.0"
+VERSION = "1.6.0"
 
 CHANGELOG = [
+    {
+        "version": "1.6.0",
+        "date": "2026-10-06",
+        "title": {
+            "en": "Dashboard tabs: Needs reply, Events, Other mail",
+            "fa": "تب‌های داشبورد: نیازمند جواب، رویدادها، سایر ایمیل‌ها",
+        },
+        "changes": {
+            "en": [
+                "The dashboard now has five tabs with counts: Needs reply, Events, Other mail, Sent and Rejected.",
+                "New Events tab: all upcoming events found in any email, sorted by date. Each one is the usual editable card with an end date, location, an \"Open invite link\" button, a link back to its email and calendar conflict warnings. Adding or dismissing an event brings you back to this tab.",
+                "New Other mail tab: emails that need no reply, each with its category and a one-line summary. \"Done\" archives it here only (Gmail is not touched), and \"Draft a reply anyway\" writes a draft that still waits for your approval. Archived mail can be shown and moved back.",
+                "A failed draft now appears under Needs reply, and the old links to the previous tabs still work.",
+                "A calendar invitation is never offered for events that come from newsletters or forwarded emails.",
+                "The event cards fit narrow phone screens.",
+            ],
+            "fa": [
+                "داشبورد حالا پنج تب با شمارنده دارد: نیازمند جواب، رویدادها، سایر ایمیل‌ها، ارسال‌شده و ردشده.",
+                "تب تازه‌ی رویدادها: همه‌ی رویدادهای آینده که در هر ایمیلی پیدا شده، مرتب‌شده بر اساس تاریخ. هر کدام همان کارت قابل‌ویرایش است با تاریخ پایان، مکان، دکمه‌ی «باز کردن لینک دعوت»، لینک به ایمیل مربوط و هشدار تداخل تقویم. بعد از افزودن یا رد کردن یک رویداد به همین تب برمی‌گردی.",
+                "تب تازه‌ی سایر ایمیل‌ها: ایمیل‌هایی که جواب نمی‌خواهند، هرکدام با دسته و خلاصه‌ی یک‌خطی. «انجام شد» فقط همین‌جا بایگانی می‌کند (جیمیل دست‌نخورده می‌ماند) و «با این حال جواب بنویس» پیش‌نویسی می‌نویسد که باز هم منتظر تأیید تو می‌ماند. ایمیل‌های بایگانی‌شده را می‌شود دید و برگرداند.",
+                "پیش‌نویس ناموفق حالا زیر «نیازمند جواب» دیده می‌شود و لینک‌های قدیمی تب‌های قبلی هم کار می‌کنند.",
+                "برای رویدادهایی که از خبرنامه یا ایمیل فورواردشده آمده‌اند دیگر پیشنهاد دعوت‌نامه‌ی تقویم داده نمی‌شود.",
+                "کارت‌های رویداد روی صفحه‌ی باریک موبایل جا می‌شوند.",
+            ],
+        },
+    },
     {
         "version": "1.5.0",
         "date": "2026-10-06",
