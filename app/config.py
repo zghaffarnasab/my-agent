@@ -30,8 +30,11 @@ GMAIL_SCOPES = [GMAIL_SCOPE, CALENDAR_SCOPE]  # everything requested when connec
 ANTHROPIC_API_KEY = _get("ANTHROPIC_API_KEY", required=True)
 CLAUDE_MODEL = _get("CLAUDE_MODEL", "claude-sonnet-5-5")
 
+# --- Language ---
+DEFAULT_LANGUAGE = _get("DEFAULT_LANGUAGE", "en")   # "en" or "fa"; can be changed on the Settings page
+
 # --- Calendar ---
-TIMEZONE = _get("TIMEZONE", "Europe/Berlin")   # your own time zone (IANA name)
+TIMEZONE = _get("TIMEZONE", "Europe/Berlin")   # fallback time zone (IANA name); Settings page overrides it
 CALENDAR_ID = _get("CALENDAR_ID", "primary")
 UPCOMING_DAYS = int(_get("UPCOMING_DAYS", "7"))
 

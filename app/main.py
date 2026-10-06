@@ -8,10 +8,11 @@ from email.utils import parseaddr
 from fastapi import BackgroundTasks, FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from jinja2 import pass_context
 from sqlalchemy import delete, func, select, update
 from starlette.middleware.sessions import SessionMiddleware
 
-from app import ai, calendar_client, config, events, gmail_client
+from app import ai, calendar_client, config, events, gmail_client, i18n, settings
 from app.version import CHANGELOG, VERSION
 from app.db import EventStatus, EventSuggestion, SessionLocal, Task, TaskStatus, init_db, utcnow
 
@@ -28,16 +29,34 @@ app.add_middleware(
     https_only=config.BASE_URL.startswith("https://"),
     max_age=60 * 60 * 24 * 14,
 )
-templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
+LANG_COOKIE = "lang"
+TIMEZONE_CHOICES = [
+    "Europe/London", "Europe/Berlin", "Europe/Paris", "Asia/Tehran", "Asia/Dubai",
+    "America/New_York", "America/Chicago", "America/Los_Angeles", "Asia/Tokyo", "UTC",
+]
+
+
+def current_lang(request: Request) -> str:
+    """Language of this visitor: cookie, else the app's configured language."""
+    cookie = request.cookies.get(LANG_COOKIE)
+    return cookie if cookie in i18n.SUPPORTED else settings.get_language()
+
+
+def i18n_context(request: Request) -> dict:
+    lang = current_lang(request)
+    return {
+        "lang": lang,
+        "dir": i18n.DIRECTION[lang],
+        "t": lambda key, **params: i18n.translate(lang, key, **params),
+    }
+
+
+templates = Jinja2Templates(
+    directory=os.path.join(os.path.dirname(__file__), "templates"),
+    context_processors=[i18n_context],
+)
 
 VISIBLE_STATUSES = [TaskStatus.PENDING, TaskStatus.FAILED, TaskStatus.SENT, TaskStatus.REJECTED]
-STATUS_LABELS = {
-    TaskStatus.PENDING: "منتظر تأیید",
-    TaskStatus.FAILED: "خطا در نوشتن",
-    TaskStatus.SENT: "ارسال‌شده",
-    TaskStatus.REJECTED: "ردشده",
-    TaskStatus.SENDING: "در حال ارسال",
-}
 
 
 def fmt_date(value):
@@ -45,7 +64,7 @@ def fmt_date(value):
         return ""
     if value.tzinfo is None:
         value = value.replace(tzinfo=timezone.utc)
-    return value.astimezone(ZoneInfo(config.TIMEZONE)).strftime("%Y-%m-%d %H:%M")
+    return value.astimezone(ZoneInfo(settings.get_timezone())).strftime("%Y-%m-%d %H:%M")
 
 
 def sender_name(from_addr: str) -> str:
@@ -53,27 +72,41 @@ def sender_name(from_addr: str) -> str:
     return name or addr
 
 
-FA_WEEKDAYS = ["دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه", "یکشنبه"]
+def _as_date(d):
+    from datetime import date as _date
+    return _date.fromisoformat(d) if isinstance(d, str) else d
 
 
-def day_heading(d):
-    """'امروز'، 'فردا' or weekday + date, for the upcoming list and event cards."""
-    from datetime import date as _date, datetime as _dt, timedelta as _td
-    if isinstance(d, str):
-        d = _date.fromisoformat(d)
-    today = _dt.now(ZoneInfo(config.TIMEZONE)).date()
-    label = FA_WEEKDAYS[d.weekday()]
+def _today():
+    from datetime import datetime as _dt
+    return _dt.now(ZoneInfo(settings.get_timezone())).date()
+
+
+@pass_context
+def day_heading(ctx, d):
+    """'Today, Monday 05.10', 'Tomorrow, ...' or weekday + date, for the upcoming list and event cards."""
+    from datetime import timedelta as _td
+    lang = ctx.get("lang", "en")
+    d = _as_date(d)
+    weekday = i18n.translate(lang, f"weekday.{d.weekday()}")
+    today = _today()
     if d == today:
-        label = "امروز، " + label
+        label = i18n.translate(lang, "day.today", weekday=weekday)
     elif d == today + _td(days=1):
-        label = "فردا، " + label
+        label = i18n.translate(lang, "day.tomorrow", weekday=weekday)
+    else:
+        label = weekday
     return f"{label} {d.strftime('%d.%m')}"
 
 
+def is_today(d) -> bool:
+    return _as_date(d) == _today()
+
+
 templates.env.filters["dayhead"] = day_heading
+templates.env.filters["is_today"] = is_today
 templates.env.filters["dt"] = fmt_date
 templates.env.filters["sender"] = sender_name
-templates.env.globals["STATUS_LABELS"] = STATUS_LABELS
 templates.env.globals["APP_VERSION"] = VERSION
 
 
@@ -98,8 +131,9 @@ def require_login(request: Request):
         raise LoginRequired()
 
 
-def flash(request: Request, message: str, kind: str = "ok"):
-    request.session["flash"] = {"message": message, "kind": kind}
+def flash(request: Request, key: str, kind: str = "ok", **params):
+    """Store a message KEY (not text), so it is shown in the language of the next page."""
+    request.session["flash"] = {"key": key, "params": {k: str(v) for k, v in params.items()}, "kind": kind}
 
 
 def pop_flash(request: Request):
@@ -139,7 +173,7 @@ async def login(request: Request, password: str = Form(...)):
         request.session["auth"] = True
         return RedirectResponse("/", status_code=303)
     await asyncio.sleep(1.5)  # slow down brute force
-    return templates.TemplateResponse(request, "login.html", {"error": "رمز عبور درست نیست."}, status_code=401)
+    return templates.TemplateResponse(request, "login.html", {"error": "login.error"}, status_code=401)
 
 
 @app.post("/logout")
@@ -165,7 +199,7 @@ def auth_callback(request: Request):
     require_login(request)
     state = request.session.pop("oauth_state", None)
     if not state or request.query_params.get("state") != state:
-        flash(request, "اتصال به جیمیل ناموفق بود. دوباره امتحان کن.", "error")
+        flash(request, "flash.gmail_connect_failed", "error")
         return RedirectResponse("/", status_code=303)
 
     flow = gmail_client.make_flow(state=state)
@@ -186,7 +220,7 @@ def auth_callback(request: Request):
             db.execute(delete(Task))
             db.commit()
     gmail_client.save_credentials(creds, email=email)
-    flash(request, f"جیمیل {email} وصل شد. ایمیل‌های جدید چند دقیقه دیگر اینجا ظاهر می‌شوند.")
+    flash(request, "flash.gmail_connected", email=email)
     return RedirectResponse("/", status_code=303)
 
 
@@ -237,7 +271,7 @@ def poll_now(request: Request, background: BackgroundTasks):
     require_login(request)
     from app.worker import process_new_emails
     background.add_task(process_new_emails)
-    flash(request, "بررسی صندوق شروع شد. چند ثانیه دیگر صفحه را تازه کن.")
+    flash(request, "flash.poll_started")
     return RedirectResponse("/", status_code=303)
 
 
@@ -267,7 +301,7 @@ def task_detail(request: Request, task_id: int):
         "suggestions": suggestions,
         "conflicts": conflicts,
         "calendar_ok": calendar_ok,
-        "owner_tz": config.TIMEZONE,
+        "owner_tz": settings.get_timezone(),
         "task": task,
         "next_task": next_task,
         "flash": pop_flash(request),
@@ -278,7 +312,7 @@ def task_detail(request: Request, task_id: int):
 def send_task(request: Request, task_id: int, draft_body: str = Form(...)):
     require_login(request)
     if not draft_body.strip():
-        flash(request, "متن جواب خالی است.", "error")
+        flash(request, "flash.reply_empty", "error")
         return RedirectResponse(f"/tasks/{task_id}", status_code=303)
 
     with SessionLocal() as db:
@@ -290,7 +324,7 @@ def send_task(request: Request, task_id: int, draft_body: str = Form(...)):
         ).rowcount
         db.commit()
         if not claimed:
-            flash(request, "این تسک قبلاً ارسال یا رد شده است.", "error")
+            flash(request, "flash.task_already_done", "error")
             return RedirectResponse(f"/tasks/{task_id}", status_code=303)
         task = db.get(Task, task_id)
 
@@ -311,7 +345,7 @@ def send_task(request: Request, task_id: int, draft_body: str = Form(...)):
             pass
         new_status, error = TaskStatus.SENT, ""
     except Exception as exc:
-        new_status, error = TaskStatus.PENDING, f"ارسال ناموفق: {exc}"
+        new_status, error = TaskStatus.PENDING, str(exc)
 
     with SessionLocal() as db:
         task = db.get(Task, task_id)
@@ -327,11 +361,11 @@ def send_task(request: Request, task_id: int, draft_body: str = Form(...)):
     if new_status == TaskStatus.SENT:
         found = events.extract_for_task(task, source="outgoing", text=draft_body, reference=utcnow())
         if found:
-            flash(request, "جواب ارسال شد. در جوابت قرار ملاقاتی پیدا شد؛ اگر خواستی به تقویم اضافه‌اش کن.")
+            flash(request, "flash.reply_sent_with_events")
             return RedirectResponse(f"/tasks/{task_id}#events", status_code=303)
-        flash(request, "جواب ارسال شد.")
+        flash(request, "flash.reply_sent")
         return RedirectResponse(f"/tasks/{next_task.id}" if next_task else "/", status_code=303)
-    flash(request, error, "error")
+    flash(request, "flash.send_failed", "error", error=error)
     return RedirectResponse(f"/tasks/{task_id}", status_code=303)
 
 
@@ -341,7 +375,7 @@ def regenerate_task(request: Request, task_id: int, instruction: str = Form(""),
     with SessionLocal() as db:
         task = get_task_or_404(db, task_id)
         if task.status not in (TaskStatus.PENDING, TaskStatus.FAILED):
-            flash(request, "فقط تسک‌های منتظر را می‌شود دوباره نوشت.", "error")
+            flash(request, "flash.regen_only_pending", "error")
             return RedirectResponse(f"/tasks/{task_id}", status_code=303)
         try:
             task.draft_body = ai.draft_reply(
@@ -354,10 +388,10 @@ def regenerate_task(request: Request, task_id: int, instruction: str = Form(""),
             )
             task.status = TaskStatus.PENDING
             task.error = ""
-            flash(request, "پیش‌نویس تازه آماده شد.")
+            flash(request, "flash.regen_ok")
         except Exception as exc:
             task.error = str(exc)[:2000]
-            flash(request, f"نوشتن دوباره ناموفق بود: {exc}", "error")
+            flash(request, "flash.regen_failed", "error", error=exc)
         db.commit()
     return RedirectResponse(f"/tasks/{task_id}", status_code=303)
 
@@ -370,7 +404,7 @@ def save_task(request: Request, task_id: int, draft_body: str = Form(...)):
         if task.status in (TaskStatus.PENDING, TaskStatus.FAILED):
             task.draft_body = draft_body
             db.commit()
-            flash(request, "تغییرات ذخیره شد.")
+            flash(request, "flash.saved")
     return RedirectResponse(f"/tasks/{task_id}", status_code=303)
 
 
@@ -385,7 +419,7 @@ def reject_task(request: Request, task_id: int):
         next_task = db.scalars(
             select(Task).where(Task.status == TaskStatus.PENDING).order_by(Task.id).limit(1)
         ).first()
-    flash(request, "تسک رد شد. ایمیل در جیمیل دست‌نخورده باقی ماند.")
+    flash(request, "flash.rejected")
     return RedirectResponse(f"/tasks/{next_task.id}" if next_task else "/", status_code=303)
 
 
@@ -398,6 +432,53 @@ def restore_task(request: Request, task_id: int):
             task.status = TaskStatus.PENDING
             db.commit()
     return RedirectResponse(f"/tasks/{task_id}", status_code=303)
+
+
+# ---------- Language and settings ----------
+
+def _safe_next(value: str) -> str:
+    """Only allow redirects to a path on this site."""
+    return value if value.startswith("/") and not value.startswith("//") and "\\" not in value else "/"
+
+
+def _set_lang_cookie(response, lang: str):
+    response.set_cookie(LANG_COOKIE, lang, max_age=60 * 60 * 24 * 365, samesite="lax",
+                        httponly=True, secure=config.BASE_URL.startswith("https://"))
+
+
+@app.post("/language")
+def switch_language(lang: str = Form(...), next: str = Form("/")):
+    response = RedirectResponse(_safe_next(next), status_code=303)
+    if lang in i18n.SUPPORTED:
+        _set_lang_cookie(response, lang)
+    return response
+
+
+@app.get("/settings", response_class=HTMLResponse)
+def settings_page(request: Request):
+    require_login(request)
+    return templates.TemplateResponse(request, "settings.html", {
+        "flash": pop_flash(request),
+        "app_language": settings.get_language(),
+        "saved_timezone": settings.get("timezone"),
+        "fallback_timezone": config.TIMEZONE,
+        "timezones": TIMEZONE_CHOICES,
+    })
+
+
+@app.post("/settings")
+def save_settings(request: Request, language: str = Form(...), tz: str = Form("")):
+    require_login(request)
+    tz = tz.strip()
+    if language not in i18n.SUPPORTED or (tz and not settings.is_valid_timezone(tz)):
+        flash(request, "flash.settings_bad_tz", "error")
+        return RedirectResponse("/settings", status_code=303)
+    settings.set("language", language)
+    settings.set("timezone", tz)
+    flash(request, "flash.settings_saved")
+    response = RedirectResponse("/settings", status_code=303)
+    _set_lang_cookie(response, language)
+    return response
 
 
 # ---------- Calendar ----------
@@ -419,7 +500,10 @@ def find_events(request: Request, task_id: int):
     if task.status == TaskStatus.SENT and task.draft_body:
         n += events.extract_for_task(task, source="outgoing", text=task.draft_body,
                                      reference=task.sent_at or utcnow())
-    flash(request, f"{n} قرار پیدا شد." if n else "قرار تازه‌ای در این ایمیل پیدا نشد.")
+    if n:
+        flash(request, "flash.events_found", n=n)
+    else:
+        flash(request, "flash.events_none")
     return RedirectResponse(f"/tasks/{task_id}#events", status_code=303)
 
 
@@ -441,7 +525,7 @@ def add_event(
         sug = _get_suggestion(db, event_id)
         task = db.get(Task, sug.task_id)
         if sug.status != EventStatus.SUGGESTED:
-            flash(request, "این رویداد قبلاً اضافه یا رد شده است.", "error")
+            flash(request, "flash.event_already", "error")
             return RedirectResponse(f"/tasks/{sug.task_id}#events", status_code=303)
         # apply your edits from the card
         sug.title, sug.date = title.strip(), date.strip()
@@ -451,17 +535,17 @@ def add_event(
         try:
             duplicate = calendar_client.find_duplicate(sug)
             if duplicate:
-                created, note = duplicate, "این رویداد از قبل در تقویمت بود."
+                created, note = duplicate, "flash.event_duplicate"
             else:
                 guests = gmail_client.addresses_in(task.reply_to) if (invite and task) else None
                 created = calendar_client.create_event(sug, invite=guests)
-                note = "به تقویم اضافه شد" + (" و دعوت‌نامه ارسال شد." if guests else ".")
+                note = "flash.event_added_invited" if guests else "flash.event_added"
             sug.status = EventStatus.ADDED
             sug.google_event_id = created.get("id", "")
             sug.html_link = created.get("htmlLink", "")
             flash(request, note)
         except Exception as exc:
-            flash(request, f"افزودن به تقویم ناموفق بود: {exc}", "error")
+            flash(request, "flash.event_add_failed", "error", error=exc)
         db.commit()
         task_id = sug.task_id
     return RedirectResponse(f"/tasks/{task_id}#events", status_code=303)

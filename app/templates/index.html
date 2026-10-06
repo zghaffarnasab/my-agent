@@ -44,51 +44,52 @@
 {% endblock %}
 {% block body %}
 <header class="top">
-  <h1><a href="/">صف جواب‌ها</a></h1>
+  <h1><a href="/">{{ t("app.name") }}</a></h1>
   <div class="account">
+    {% include "_header_tools.html" %}
     {% if gmail %}
       <span class="ltr-auto">{{ gmail }}</span>
-      <a href="/auth/google" onclick="return confirm('با وصل کردن یک حساب جیمیل دیگر، همه‌ی تسک‌های حساب فعلی پاک می‌شوند. ادامه می‌دهی؟')">تغییر حساب</a>
-      <form class="inline" method="post" action="/poll-now"><button type="submit">بررسی ایمیل‌های جدید</button></form>
+      <a href="/auth/google" onclick='return confirm({{ t("dash.change_account_confirm") | tojson }})'>{{ t("nav.change_account") }}</a>
+      <form class="inline" method="post" action="/poll-now"><button type="submit">{{ t("nav.check_mail") }}</button></form>
     {% endif %}
-    <form class="inline" method="post" action="/logout"><button class="btn-link" type="submit">خروج</button></form>
+    <a href="/settings">{{ t("nav.settings") }}</a>
+    <form class="inline" method="post" action="/logout"><button class="btn-link" type="submit">{{ t("nav.logout") }}</button></form>
   </div>
 </header>
 
-{% if flash %}<div class="flash {{ flash.kind }}">{{ flash.message }}</div>{% endif %}
+{% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
 
 {% if not gmail %}
 <div class="connect">
-  <span>هنوز جیمیلی وصل نشده. بعد از اتصال، ایمیل‌های جدید خودکار خوانده و برایشان جواب نوشته می‌شود.</span>
-  <a class="btn btn-primary" href="/auth/google">اتصال جیمیل</a>
+  <span>{{ t("dash.connect_none") }}</span>
+  <a class="btn btn-primary" href="/auth/google">{{ t("dash.connect_btn") }}</a>
 </div>
 {% endif %}
 
 {% if gmail and not calendar_ok %}
 <div class="connect">
-  <span>برای دیدن برنامه‌های تقویم و افزودن قرارها، یک بار دیگر حساب گوگل را وصل کن تا اجازه‌ی تقویم هم داده شود.</span>
-  <a class="btn btn-primary" href="/auth/google">فعال کردن تقویم</a>
+  <span>{{ t("dash.calendar_enable_text") }}</span>
+  <a class="btn btn-primary" href="/auth/google">{{ t("dash.calendar_enable_btn") }}</a>
 </div>
 {% endif %}
 
 {% if calendar_ok %}
 <section class="upcoming" aria-labelledby="up-h">
-  <h2 id="up-h">برنامه‌های {{ upcoming_days }} روز آینده
-    <a href="https://calendar.google.com" target="_blank" rel="noopener">باز کردن Google Calendar</a></h2>
+  <h2 id="up-h">{{ t("dash.upcoming_title", days=upcoming_days) }}
+    <a href="https://calendar.google.com" target="_blank" rel="noopener">{{ t("dash.open_calendar") }}</a></h2>
   {% if upcoming_error %}
-    <div class="up-empty" style="color:var(--danger)">خواندن تقویم ناموفق بود: <span class="ltr-auto">{{ upcoming_error }}</span></div>
+    <div class="up-empty" style="color:var(--danger)">{{ t("dash.calendar_error") }} <span class="ltr-auto" dir="ltr">{{ upcoming_error }}</span></div>
   {% elif not upcoming %}
-    <div class="up-empty">برنامه‌ای در این روزها نداری.</div>
+    <div class="up-empty">{{ t("dash.nothing_upcoming") }}</div>
   {% else %}
     <div class="days">
     {% for day, items in upcoming | groupby("day") %}
-      {% set head = day | dayhead %}
-      <div class="day {% if head.startswith('امروز') %}today{% endif %}">
-        <h3>{{ head }}</h3>
+      <div class="day {% if day | is_today %}today{% endif %}">
+        <h3>{{ day | dayhead }}</h3>
         {% for e in items %}
           <a class="ev" href="{{ e.link }}" target="_blank" rel="noopener">
-            <span class="ev-time">{{ "تمام روز" if e.all_day else e.start.strftime("%H:%M") }}</span>
-            <span class="ev-title ltr-auto">{{ e.title }}</span>
+            <span class="ev-time">{{ t("dash.all_day") if e.all_day else e.start.strftime("%H:%M") }}</span>
+            <span class="ev-title ltr-auto">{{ e.title or t("dash.untitled") }}</span>
           </a>
         {% endfor %}
       </div>
@@ -98,26 +99,26 @@
 </section>
 {% endif %}
 
-<nav class="tabs" aria-label="وضعیت تسک‌ها">
+<nav class="tabs" aria-label="{{ t('status.tabs_label') }}">
   {% for s in statuses %}
     <a href="/?status={{ s }}" class="{% if s == status %}active{% endif %}">
-      {{ STATUS_LABELS[s] }}{% if counts.get(s) %}<span class="n">{{ counts.get(s) }}</span>{% endif %}
+      {{ t("status." ~ s) }}{% if counts.get(s) %}<span class="n">{{ counts.get(s) }}</span>{% endif %}
     </a>
   {% endfor %}
 </nav>
 
 {% if tasks %}
 <ul class="queue">
-  {% for t in tasks %}
+  {% for item in tasks %}
   <li>
-    <a href="/tasks/{{ t.id }}">
-      <span class="from ltr-auto">{{ t.from_addr | sender }}</span>
-      <span class="subj"><span class="ltr-auto">{{ t.subject or "(بدون موضوع)" }}</span>{% if t.id in tasks_with_events %}<span class="tag-ev">قرار</span>{% endif %}</span>
-      <span class="when">{{ (t.sent_at if status == 'sent' else t.received_at) | dt }}</span>
-      {% if t.status == 'failed' %}
-        <span class="draft err">پیش‌نویس نوشته نشد؛ باز کن و دوباره امتحان کن.</span>
+    <a href="/tasks/{{ item.id }}">
+      <span class="from ltr-auto">{{ item.from_addr | sender }}</span>
+      <span class="subj"><span class="ltr-auto">{{ item.subject or t("dash.no_subject") }}</span>{% if item.id in tasks_with_events %}<span class="tag-ev">{{ t("dash.tag_event") }}</span>{% endif %}</span>
+      <span class="when">{{ (item.sent_at if status == 'sent' else item.received_at) | dt }}</span>
+      {% if item.status == 'failed' %}
+        <span class="draft err">{{ t("dash.draft_failed") }}</span>
       {% else %}
-        <span class="draft ltr-auto">{{ t.draft_body[:180] }}</span>
+        <span class="draft ltr-auto">{{ item.draft_body[:180] }}</span>
       {% endif %}
     </a>
   </li>
@@ -126,9 +127,9 @@
 {% else %}
 <div class="empty">
   {% if status == 'pending' %}
-    جوابی منتظر تأیید نیست. ایمیل‌های جدید هر چند دقیقه یک‌بار بررسی می‌شوند.
+    {{ t("dash.empty_pending") }}
   {% else %}
-    چیزی در این بخش نیست.
+    {{ t("dash.empty_other") }}
   {% endif %}
 </div>
 {% endif %}

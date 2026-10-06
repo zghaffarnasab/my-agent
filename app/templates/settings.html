@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ t("settings.title") }}{% endblock %}
+{% block head %}
+<style>
+  .box { max-width: 560px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px 24px; }
+  .box label { display: block; font-weight: 500; margin: 16px 0 4px; }
+  .box label:first-child { margin-top: 0; }
+  .box select, .box input[type=text] { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+  .box input[type=text] { direction: ltr; text-align: start; }
+  .help { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+</style>
+{% endblock %}
+{% block body %}
+<header class="top">
+  <h1><a href="/">{{ t("app.name") }}</a></h1>
+  <div class="account">{% include "_header_tools.html" %}<a href="/">{{ t("nav.back_to_dashboard") }}</a></div>
+</header>
+
+{% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
+
+<h2 style="font-size:18px;margin:0 0 16px;">{{ t("settings.title") }}</h2>
+<form class="box" method="post" action="/settings">
+  <label for="language">{{ t("settings.language") }}</label>
+  <select id="language" name="language">
+    <option value="en" {% if app_language == 'en' %}selected{% endif %}>English</option>
+    <option value="fa" {% if app_language == 'fa' %}selected{% endif %}>فارسی</option>
+  </select>
+  <p class="help">{{ t("settings.language_help") }}</p>
+
+  <label for="tz">{{ t("settings.timezone") }}</label>
+  <input type="text" id="tz" name="tz" value="{{ saved_timezone }}" list="tzlist" dir="ltr" placeholder="{{ fallback_timezone }}">
+  <datalist id="tzlist">{% for z in timezones %}<option value="{{ z }}">{% endfor %}</datalist>
+  <p class="help">{{ t("settings.timezone_help") }} {{ t("settings.timezone_default", tz=fallback_timezone) }}</p>
+
+  <div style="margin-top:20px;"><button class="btn-primary" type="submit">{{ t("settings.save") }}</button></div>
+</form>
+{% endblock %}

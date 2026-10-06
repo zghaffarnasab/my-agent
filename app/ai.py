@@ -1,6 +1,6 @@
 import anthropic
 
-from app import config
+from app import config, i18n, settings
 
 client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
 
@@ -65,22 +65,28 @@ Rules:
 - Only include events that are being proposed, agreed or announced with a specific day.
   Ignore vague mentions ("let's meet sometime"), past events and pure deadlines.
 - Dates like 13.09 or 13/09 are day.month (European style) unless the text clearly uses US style.
-  If a date could be read both ways (e.g. 03.04), choose day.month and explain in "ambiguity".
-- If the year is missing, use the next occurrence on or after the reference date.
+  If a date could be read both ways (e.g. 03.04), choose day.month and add the warning date_format_ambiguous.
+- If the year is missing, use the next occurrence on or after the reference date and add the warning year_missing.
 - Resolve relative dates ("next Tuesday", "tomorrow") against the reference date.
 - Time zone: if the place or text implies a different time zone than the owner's
   (e.g. a meeting in Berkeley, California), use that IANA zone (e.g. America/Los_Angeles)
-  and mention it in "ambiguity". Online meetings use the owner's zone unless stated otherwise.
+  and add the warning timezone_guessed. Online meetings use the owner's zone unless stated otherwise.
 - If no end time or duration is given, leave end_time empty.
-- title: short, e.g. "Meeting with Sara (Promethee Films)". Same language as the email.
-- "ambiguity": ONLY when the date, time, end time or time zone is genuinely uncertain
-  (ambiguous date format, missing year, time zone guessed from a place, unclear AM/PM).
-  Write it in Persian (Farsi), one short sentence. Do NOT comment on names, signatures,
-  whether the meeting is confirmed, or how you computed the end time. Otherwise leave it empty.
+- title: short, e.g. "Meeting with Sara (Acme Films)". Same language as the email.
+- description: one short sentence, written in {language}.
+- "warnings": a list of codes, chosen ONLY from this fixed list, for things the owner should double-check:
+    date_format_ambiguous (e.g. 03.04 could be 3 April or 4 March),
+    year_missing (the year was not given and you guessed it),
+    timezone_guessed (the time zone was inferred from a place),
+    conflicting_times (the text gives different dates or times for the same event),
+    location_hidden (the exact location is not shown, e.g. "register to see location"),
+    am_pm_unclear, multi_day_unclear.
+  Use an empty list when nothing is uncertain. NEVER write free text in "warnings".
+  Do not add warnings about names, signatures, or whether the meeting is confirmed.
 
 Respond with ONLY a JSON object, no markdown, in exactly this shape:
 {{"events": [{{"title": "", "date": "YYYY-MM-DD", "start_time": "HH:MM or empty", "end_time": "HH:MM or empty",
-  "timezone": "IANA zone", "location": "", "description": "one short sentence", "ambiguity": "empty if clear"}}]}}
+  "timezone": "IANA zone", "location": "", "description": "one short sentence", "warnings": []}}]}}
 If there are no events, respond with {{"events": []}}"""
 
 
@@ -89,11 +95,12 @@ def extract_events(*, text: str, subject: str, from_addr: str, reference, outgoi
     import json
     from zoneinfo import ZoneInfo
 
-    local = reference.astimezone(ZoneInfo(config.TIMEZONE))
+    local = reference.astimezone(ZoneInfo(settings.get_timezone()))
     system = EXTRACT_PROMPT.format(
         when=("sent" if outgoing else "received") + " on " + local.strftime("%Y-%m-%d %H:%M"),
         weekday=local.strftime("%A"),
-        tz=config.TIMEZONE,
+        tz=settings.get_timezone(),
+        language=i18n.LANGUAGE_NAMES[settings.get_language()],
         direction="written BY the owner as a reply (events the owner proposes or confirms)"
         if outgoing else "received BY the owner",
     )

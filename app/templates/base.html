@@ -1,12 +1,14 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="{{ lang }}" dir="{{ dir }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}صف جواب‌ها{% endblock %}</title>
+<title>{% block title %}{{ t("app.name") }}{% endblock %}</title>
+{% if lang == 'fa' %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+{% endif %}
 <style>
   :root {
     --bg: #EEF1F4;
@@ -26,9 +28,10 @@
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--ink);
-    font-family: "Vazirmatn", Tahoma, "Segoe UI", sans-serif;
-    font-size: 15px; line-height: 1.75;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 15px; line-height: 1.6;
   }
+  html[lang="fa"] body { font-family: "Vazirmatn", Tahoma, "Segoe UI", sans-serif; line-height: 1.75; }
   a { color: var(--accent); }
   .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 20px 64px; }
   header.top {
@@ -56,6 +59,9 @@
   .flash.ok { background: var(--ok-bg); color: var(--ok-ink); }
   .flash.error { background: var(--err-bg); color: var(--danger); }
   .ltr-auto { unicode-bidi: plaintext; }
+  .lang-switch { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+  .lang-switch button { padding: 2px 4px; }
+  .lang-switch button.active { color: var(--ink); font-weight: 700; }
   footer.app-foot { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line);
     font-size: 13px; color: var(--muted); display: flex; gap: 12px; justify-content: center; }
   footer.app-foot a { color: var(--muted); }
@@ -67,8 +73,8 @@
 <div class="wrap">
   {% block body %}{% endblock %}
   <footer class="app-foot">
-    <span>نسخه‌ی <span dir="ltr">{{ APP_VERSION }}</span></span>
-    {% if request and request.session.get("auth") %}<a href="/changelog">تاریخچه‌ی تغییرات</a>{% endif %}
+    <span>{{ t("app.version", version=APP_VERSION) }}</span>
+    {% if request and request.session.get("auth") %}<a href="/changelog">{{ t("nav.changelog") }}</a>{% endif %}
   </footer>
 </div>
 </body>

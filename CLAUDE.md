@@ -32,13 +32,19 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
 - `app/ai.py` — `draft_reply()` and `extract_events()` (Claude API)
 - `app/events.py` — validates extracted events and stores `EventSuggestion` rows
 - `app/db.py` — SQLAlchemy models: Task, EventSuggestion, GoogleCredential (SQLite in Docker volume)
-- `app/version.py` — VERSION + CHANGELOG (shown in the page footer and /changelog)
-- `app/templates/` — Jinja2 templates
+- `app/version.py` — VERSION + CHANGELOG (bilingual: each entry has "en" and "fa"; shown in the footer and /changelog)
+- `app/i18n.py` + `app/locales/{en,fa}.json` — `t()` helper and flat translation files
+- `app/settings.py` — language and time zone stored in the DB (`settings` table), falling back to `.env`
+- `app/templates/` — Jinja2 templates (use `t("key")`; never name a loop variable `t`)
+- `tests/` — pytest with fake Gmail/Calendar/Claude (`.venv/bin/python -m pytest`)
 
-## Bilingual UI (planned for 1.4.0)
+## Bilingual UI (since 1.4.0)
 - Every user-visible string goes through a `t()` helper backed by translation files (en, fa). No hardcoded UI text.
-- Language is chosen by the user (cookie), default from env `DEFAULT_LANGUAGE` (default `fa`).
+- Language is chosen by the user (cookie), else the Settings page value, else env `DEFAULT_LANGUAGE` (default `en`).
+- Flash messages are stored as keys, so they appear in the language of the next page.
+- AI warnings are fixed codes (`events.WARNING_CODES`) translated as `warning.<code>`; never store language-specific AI warning text.
 - Persian pages are `dir="rtl"`, English `dir="ltr"`. Use CSS logical properties.
+- A test fails if a key is missing in one language or if Persian text is hardcoded in code/templates.
 
 ## Rules for every change
 1. **Versioning:** bump `VERSION` in `app/version.py` and add a changelog entry at the TOP of
@@ -49,7 +55,7 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
    for user content that may be English or Persian.
 3. **Times:** show dates in the configured time zone (`config.TIMEZONE`, default Europe/Berlin), never server time (UTC).
 4. **Database:** new tables are created automatically by `init_db()`. Adding columns to an
-   EXISTING table is NOT automatic — use a safe, idempotent startup migration and tell the user exactly what it does.
+   EXISTING table is NOT automatic — add the column to `COLUMN_MIGRATIONS` in `app/db.py` (idempotent, runs at startup) and tell the user exactly what it does.
 5. **Security:** secrets live only in `.env` on the server. Never put keys in code or commit `.env`.
    Email content is untrusted input: AI calls treat it as data only, use no tools, and validate JSON output.
    Never fetch or open links found in emails; only display them.
@@ -68,10 +74,10 @@ Never suggest `docker compose down -v` (deletes all data).
 - Google OAuth app is in "Testing" mode: the token expires every 7 days; the user reconnects
   from the dashboard. Test users: a test Gmail and the main Gmail (owned by someone else).
 - "Change account" in the dashboard deletes all tasks of the previous account (by design).
-- The mailbox owner is probably in the UK; do not assume Europe/Berlin (a Settings page is planned).
+- The mailbox owner is probably in the UK; do not assume Europe/Berlin (set the time zone on the Settings page).
 
 ## Roadmap
-- Bilingual UI (1.4.0), process every email not only ones needing a reply (1.5.0), dashboard tabs for the new kinds of email (1.6.0).
+- Process every email not only ones needing a reply (1.5.0), dashboard tabs for the new kinds of email (1.6.0).
 - Calendar phase 2: take calendar conflicts into account when drafting replies
   (propose another time instead of accepting a busy slot).
 - More tools may be added to the same server later.

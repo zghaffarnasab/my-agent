@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 
 from googleapiclient.discovery import build
 
-from app import config, gmail_client
+from app import config, gmail_client, settings
 
 
 def _service():
@@ -16,9 +16,9 @@ def _service():
 
 def _tz(name: str | None) -> ZoneInfo:
     try:
-        return ZoneInfo(name or config.TIMEZONE)
+        return ZoneInfo(name or settings.get_timezone())
     except Exception:
-        return ZoneInfo(config.TIMEZONE)
+        return ZoneInfo(settings.get_timezone())
 
 
 # ---------- Reading ----------
@@ -39,10 +39,10 @@ def _parse_event(item: dict, local_tz: ZoneInfo) -> UpcomingEvent:
     if "dateTime" in start:
         s = datetime.fromisoformat(start["dateTime"]).astimezone(local_tz)
         e = datetime.fromisoformat(end["dateTime"]).astimezone(local_tz) if "dateTime" in end else None
-        return UpcomingEvent(item.get("summary", "(بدون عنوان)"), s, e, s.date(), False,
+        return UpcomingEvent(item.get("summary", ""), s, e, s.date(), False,
                              item.get("location", ""), item.get("htmlLink", ""))
     d = date.fromisoformat(start["date"])
-    return UpcomingEvent(item.get("summary", "(بدون عنوان)"), None, None, d, True,
+    return UpcomingEvent(item.get("summary", ""), None, None, d, True,
                          item.get("location", ""), item.get("htmlLink", ""))
 
 

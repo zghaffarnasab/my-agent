@@ -1,0 +1,7 @@
+{# Language switcher, shown in every page header. Remembered in a cookie. #}
+<form class="inline lang-switch" method="post" action="/language" aria-label="{{ t('nav.language') }}">
+  <input type="hidden" name="next" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
+  <button class="btn-link{% if lang == 'en' %} active{% endif %}" type="submit" name="lang" value="en" lang="en" {% if lang == 'en' %}aria-current="true"{% endif %}>English</button>
+  <span aria-hidden="true">|</span>
+  <button class="btn-link{% if lang == 'fa' %} active{% endif %}" type="submit" name="lang" value="fa" lang="fa" {% if lang == 'fa' %}aria-current="true"{% endif %}>فارسی</button>
+</form>

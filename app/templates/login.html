@@ -1,15 +1,16 @@
 {% extends "base.html" %}
-{% block title %}ورود{% endblock %}
+{% block title %}{{ t("login.title") }}{% endblock %}
 {% block body %}
 <div style="max-width:360px;margin:12vh auto 0;">
-  <h1 style="font-size:22px;margin:0 0 4px;">صف جواب‌ها</h1>
-  <p style="color:var(--muted);margin:0 0 24px;">برای دیدن پیش‌نویس‌ها رمز داشبورد را وارد کن.</p>
-  {% if error %}<div class="flash error">{{ error }}</div>{% endif %}
+  <div style="text-align:end;margin-bottom:8px;">{% include "_header_tools.html" %}</div>
+  <h1 style="font-size:22px;margin:0 0 4px;">{{ t("app.name") }}</h1>
+  <p style="color:var(--muted);margin:0 0 24px;">{{ t("login.prompt") }}</p>
+  {% if error %}<div class="flash error">{{ t(error) }}</div>{% endif %}
   <form method="post" action="/login">
-    <label for="password" style="display:block;font-size:14px;margin-bottom:6px;">رمز عبور</label>
+    <label for="password" style="display:block;font-size:14px;margin-bottom:6px;">{{ t("login.password") }}</label>
     <input id="password" name="password" type="password" required autofocus autocomplete="current-password"
       style="width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-bottom:16px;">
-    <button class="btn-primary" type="submit" style="width:100%;">ورود</button>
+    <button class="btn-primary" type="submit" style="width:100%;">{{ t("login.submit") }}</button>
   </form>
 </div>
 {% endblock %}

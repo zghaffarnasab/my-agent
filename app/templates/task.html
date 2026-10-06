@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ task.subject or "تسک" }}{% endblock %}
+{% block title %}{{ task.subject or t("task.fallback_title") }}{% endblock %}
 {% block head %}
 <style>
   .grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 24px; align-items: start; }
@@ -41,7 +41,7 @@
     border-radius: 8px; background: var(--surface); color: var(--ink); unicode-bidi: plaintext;
   }
   .ev-card textarea { min-height: 56px; resize: vertical; }
-  .ev-card input[type=date], .ev-card input[type=time] { direction: ltr; unicode-bidi: normal; text-align: left; }
+  .ev-card input[type=date], .ev-card input[type=time] { direction: ltr; unicode-bidi: normal; text-align: start; }
   .ev-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 10px; }
   .ev-row label { margin-top: 10px; }
   .ev-note { font-size: 13px; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
@@ -57,73 +57,74 @@
 {% endblock %}
 {% block body %}
 <header class="top">
-  <h1><a href="/">صف جواب‌ها</a></h1>
+  <h1><a href="/">{{ t("app.name") }}</a></h1>
   <div class="account">
-    <a href="/">بازگشت به فهرست</a>
-    {% if next_task %}<a href="/tasks/{{ next_task.id }}">تسک بعدی</a>{% endif %}
+    {% include "_header_tools.html" %}
+    <a href="/">{{ t("nav.back_to_list") }}</a>
+    {% if next_task %}<a href="/tasks/{{ next_task.id }}">{{ t("nav.next_task") }}</a>{% endif %}
   </div>
 </header>
 
-{% if flash %}<div class="flash {{ flash.kind }}">{{ flash.message }}</div>{% endif %}
+{% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
 {% if task.error %}<div class="flash error ltr-auto">{{ task.error }}</div>{% endif %}
 
 <div class="grid">
   <!-- Draft (first in RTL = right side) -->
   <section class="panel editor" aria-labelledby="draft-h">
-    <h2 id="draft-h">جواب پیشنهادی <span class="badge {{ task.status }}">{{ STATUS_LABELS[task.status] }}</span></h2>
+    <h2 id="draft-h">{{ t("task.suggested_reply") }} <span class="badge {{ task.status }}">{{ t("status." ~ task.status) }}</span></h2>
 
     {% if task.status in ['pending', 'failed'] %}
     <form method="post" id="draft-form" action="/tasks/{{ task.id }}/send">
-      <textarea name="draft_body" id="draft_body" dir="auto" aria-label="متن جواب">{{ task.draft_body }}</textarea>
+      <textarea name="draft_body" id="draft_body" dir="auto" aria-label="{{ t('task.reply_aria') }}">{{ task.draft_body }}</textarea>
       <div class="actions">
         {% if task.status == 'pending' %}
         <button class="btn-primary" type="submit" id="send-btn"
           formaction="/tasks/{{ task.id }}/send"
-          onclick='return confirm({{ ("این جواب برای " ~ (task.reply_to | sender) ~ " ارسال شود؟") | tojson }})'>تأیید و ارسال</button>
+          onclick='return confirm({{ t("task.send_confirm", name=(task.reply_to | sender)) | tojson }})'>{{ t("task.send_btn") }}</button>
         {% endif %}
-        <button type="submit" formaction="/tasks/{{ task.id }}/save">ذخیره تغییرات</button>
+        <button type="submit" formaction="/tasks/{{ task.id }}/save">{{ t("task.save_btn") }}</button>
         <span class="spacer"></span>
-        <span class="hint">Ctrl + Enter برای ارسال</span>
+        <span class="hint">{{ t("task.send_hint") }}</span>
       </div>
       <div class="rewrite">
-        <input name="instruction" placeholder="مثلاً: کوتاه‌ترش کن، رسمی‌تر بنویس، بگو تا جمعه جواب می‌دم" aria-label="دستور برای بازنویسی">
-        <button type="submit" formaction="/tasks/{{ task.id }}/regenerate" formnovalidate>بازنویسی</button>
+        <input name="instruction" placeholder="{{ t('task.rewrite_placeholder') }}" aria-label="{{ t('task.rewrite_aria') }}">
+        <button type="submit" formaction="/tasks/{{ task.id }}/regenerate" formnovalidate>{{ t("task.rewrite_btn") }}</button>
       </div>
     </form>
     <div style="padding: 0 20px 14px;">
       <form class="inline" method="post" action="/tasks/{{ task.id }}/reject">
-        <button class="btn-link btn-danger" type="submit">رد کردن؛ لازم نیست جواب بدهم</button>
+        <button class="btn-link btn-danger" type="submit">{{ t("task.reject_btn") }}</button>
       </form>
     </div>
     {% else %}
       <div class="readonly">{{ task.draft_body }}</div>
       {% if task.status == 'rejected' %}
       <div class="actions">
-        <form class="inline" method="post" action="/tasks/{{ task.id }}/restore"><button type="submit">برگرداندن به صف</button></form>
+        <form class="inline" method="post" action="/tasks/{{ task.id }}/restore"><button type="submit">{{ t("task.restore_btn") }}</button></form>
       </div>
       {% elif task.sent_at %}
-      <div class="actions"><span class="hint">ارسال‌شده در <span dir="ltr">{{ task.sent_at | dt }}</span></span></div>
+      <div class="actions"><span class="hint">{{ t("task.sent_at", time=(task.sent_at | dt)) }}</span></div>
       {% endif %}
     {% endif %}
   </section>
 
   <!-- Original email -->
   <section class="panel" aria-labelledby="orig-h">
-    <h2 id="orig-h">ایمیل دریافتی</h2>
+    <h2 id="orig-h">{{ t("task.original") }}</h2>
     <div class="meta">
       <dl>
-        <dt>از</dt><dd class="ltr-auto">{{ task.from_addr }}</dd>
-        {% if task.reply_to != task.from_addr %}<dt>جواب به</dt><dd class="ltr-auto">{{ task.reply_to }}</dd>{% endif %}
-        <dt>موضوع</dt><dd class="ltr-auto">{{ task.subject or "(بدون موضوع)" }}</dd>
-        <dt>زمان</dt><dd dir="ltr" style="text-align:right">{{ task.received_at | dt }}</dd>
+        <dt>{{ t("task.from") }}</dt><dd class="ltr-auto">{{ task.from_addr }}</dd>
+        {% if task.reply_to != task.from_addr %}<dt>{{ t("task.reply_to") }}</dt><dd class="ltr-auto">{{ task.reply_to }}</dd>{% endif %}
+        <dt>{{ t("task.subject") }}</dt><dd class="ltr-auto">{{ task.subject or t("dash.no_subject") }}</dd>
+        <dt>{{ t("task.time") }}</dt><dd><span dir="ltr">{{ task.received_at | dt }}</span></dd>
       </dl>
     </div>
     <div class="body ltr-auto">{{ task.original_body }}</div>
     {% set open_events = suggestions | selectattr("status", "equalto", "suggested") | list %}
-    {% if open_events %}<a class="ev-jump" href="#events">{{ open_events | length }} قرار در این گفتگو پیدا شد؛ افزودن به تقویم ↓</a>{% endif %}
+    {% if open_events %}<a class="ev-jump" href="#events">{{ t("task.events_jump", n=(open_events | length)) }}</a>{% endif %}
     {% if task.thread_context %}
     <details>
-      <summary>پیام‌های قبلی این گفتگو</summary>
+      <summary>{{ t("task.earlier_messages") }}</summary>
       <pre class="ltr-auto">{{ task.thread_context }}</pre>
     </details>
     {% endif %}
@@ -131,71 +132,76 @@
 </div>
 
 <section class="events" id="events" aria-labelledby="ev-h">
-  <h2 id="ev-h">قرارها و رویدادها
+  <h2 id="ev-h">{{ t("ev.section") }}
     <form class="inline" method="post" action="/tasks/{{ task.id }}/find-events">
-      <button type="submit" class="btn-link">بررسی دوباره‌ی این ایمیل</button>
+      <button type="submit" class="btn-link">{{ t("ev.recheck") }}</button>
     </form>
   </h2>
 
   {% if not suggestions %}
-    <p style="color:var(--muted);font-size:14px;margin:0;">قراری با تاریخ مشخص در این ایمیل پیدا نشد.</p>
+    <p style="color:var(--muted);font-size:14px;margin:0;">{{ t("ev.none") }}</p>
   {% else %}
   <div class="ev-grid">
     {% for ev in suggestions %}
       {% if ev.status == 'added' %}
       <div class="ev-card added">
-        <div class="ev-src">{{ "از جواب تو" if ev.source == 'outgoing' else "از ایمیل دریافتی" }}</div>
+        <div class="ev-src">{{ t("ev.src_outgoing") if ev.source == 'outgoing' else t("ev.src_incoming") }}</div>
         <div class="ev-done">
           <strong class="ltr-auto">{{ ev.title }}</strong>
-          {{ ev.date | dayhead }}{% if ev.start_time %}، ساعت <span dir="ltr">{{ ev.start_time }}{% if ev.end_time %}–{{ ev.end_time }}{% endif %}</span>{% endif %}
+          {{ ev.date | dayhead }}{% if ev.start_time %}{{ t("ev.at_time", time=(ev.start_time ~ ("–" ~ ev.end_time if ev.end_time else ""))) }}{% endif %}
           {% if ev.timezone != owner_tz %}<span class="ltr-auto">({{ ev.timezone }})</span>{% endif %}
           {% if ev.location %}<br><span class="ltr-auto">{{ ev.location }}</span>{% endif %}
         </div>
-        <div class="ev-actions">✓ در تقویم ثبت شد
-          {% if ev.html_link %}<a href="{{ ev.html_link }}" target="_blank" rel="noopener">مشاهده در Google Calendar</a>{% endif %}</div>
+        <div class="ev-actions">{{ t("ev.added") }}
+          {% if ev.html_link %}<a href="{{ ev.html_link }}" target="_blank" rel="noopener">{{ t("ev.view_in_gcal") }}</a>{% endif %}</div>
       </div>
       {% else %}
       <form class="ev-card" method="post" action="/events/{{ ev.id }}/add">
-        <div class="ev-src">{{ "از جواب تو" if ev.source == 'outgoing' else "از ایمیل دریافتی" }}</div>
+        <div class="ev-src">{{ t("ev.src_outgoing") if ev.source == 'outgoing' else t("ev.src_incoming") }}</div>
 
-        <label for="t{{ ev.id }}">عنوان</label>
+        <label for="t{{ ev.id }}">{{ t("ev.label_title") }}</label>
         <input type="text" id="t{{ ev.id }}" name="title" value="{{ ev.title }}" dir="auto" required>
 
         <div class="ev-row">
-          <div><label for="d{{ ev.id }}">تاریخ ({{ ev.date | dayhead }})</label>
+          <div><label for="d{{ ev.id }}">{{ t("ev.label_date", day=(ev.date | dayhead)) }}</label>
             <input type="date" dir="ltr" id="d{{ ev.id }}" name="date" value="{{ ev.date }}" required></div>
-          <div><label for="s{{ ev.id }}">شروع</label>
+          <div><label for="s{{ ev.id }}">{{ t("ev.label_start") }}</label>
             <input type="time" dir="ltr" id="s{{ ev.id }}" name="start_time" value="{{ ev.start_time }}"></div>
-          <div><label for="e{{ ev.id }}">پایان</label>
+          <div><label for="e{{ ev.id }}">{{ t("ev.label_end") }}</label>
             <input type="time" dir="ltr" id="e{{ ev.id }}" name="end_time" value="{{ ev.end_time }}"></div>
         </div>
-        {% if not ev.start_time %}<div class="ev-note warn">ساعت مشخص نشده؛ اگر خالی بماند، رویداد تمام‌روز ثبت می‌شود.</div>{% endif %}
+        {% if not ev.start_time %}<div class="ev-note warn">{{ t("ev.no_time_note") }}</div>{% endif %}
 
-        <label for="z{{ ev.id }}">منطقه‌ی زمانی</label>
+        <label for="z{{ ev.id }}">{{ t("ev.label_tz") }}</label>
         <input type="text" id="z{{ ev.id }}" name="tz" value="{{ ev.timezone }}" dir="ltr" list="tzlist">
-        {% if ev.timezone != owner_tz %}<div class="ev-note warn">توجه: ساعت این قرار به وقت <span dir="ltr">{{ ev.timezone }}</span> است، نه وقت محلی تو. تقویم خودش آن را به وقت تو نشان می‌دهد.</div>{% endif %}
+        {% if ev.timezone != owner_tz %}<div class="ev-note warn">{{ t("ev.tz_note", tz=ev.timezone) }}</div>{% endif %}
 
-        <label for="l{{ ev.id }}">مکان</label>
+        <label for="l{{ ev.id }}">{{ t("ev.label_location") }}</label>
         <input type="text" id="l{{ ev.id }}" name="location" value="{{ ev.location }}" dir="auto">
 
-        <label for="n{{ ev.id }}">توضیح</label>
+        <label for="n{{ ev.id }}">{{ t("ev.label_description") }}</label>
         <textarea id="n{{ ev.id }}" name="description" dir="auto">{{ ev.description }}</textarea>
 
-        {% if ev.ambiguity %}<div class="ev-note warn"><strong>لطفاً چک کن:</strong> <span class="ltr-auto">{{ ev.ambiguity }}</span></div>{% endif %}
+        {% if ev.warning_codes or ev.ambiguity %}
+        <div class="ev-note warn"><strong>{{ t("ev.check_label") }}</strong>
+          {% for code in ev.warning_codes %}<div>{{ t("warning." ~ code) }}</div>{% endfor %}
+          {% if not ev.warning_codes and ev.ambiguity %}<span class="ltr-auto">{{ ev.ambiguity }}</span>{% endif %}
+        </div>
+        {% endif %}
         {% for c in conflicts.get(ev.id, []) %}
-          <div class="ev-note clash">تداخل: در این زمان «<span class="ltr-auto">{{ c.title }}</span>» را داری ({{ c.start.strftime("%H:%M") }}).</div>
+          <div class="ev-note clash">{{ t("ev.clash", title=(c.title or t("dash.untitled")), time=c.start.strftime("%H:%M")) }}</div>
         {% endfor %}
 
         <label class="ev-check"><input type="checkbox" name="invite" value="1">
-          برای <span class="ltr-auto">{{ task.reply_to | sender }}</span> هم دعوت‌نامه‌ی تقویم بفرست</label>
+          {{ t("ev.invite_check", name=(task.reply_to | sender)) }}</label>
 
         <div class="ev-actions">
           {% if calendar_ok %}
-            <button class="btn-primary" type="submit">افزودن به تقویم</button>
+            <button class="btn-primary" type="submit">{{ t("ev.add_btn") }}</button>
           {% else %}
-            <a class="btn btn-primary" href="/auth/google">اول تقویم را فعال کن</a>
+            <a class="btn btn-primary" href="/auth/google">{{ t("ev.enable_first") }}</a>
           {% endif %}
-          <button type="submit" formaction="/events/{{ ev.id }}/dismiss" formnovalidate class="btn-link">لازم نیست</button>
+          <button type="submit" formaction="/events/{{ ev.id }}/dismiss" formnovalidate class="btn-link">{{ t("ev.dismiss") }}</button>
         </div>
       </form>
       {% endif %}
@@ -203,7 +209,7 @@
   </div>
   {% endif %}
   <datalist id="tzlist">
-    {% for z in ["Europe/Berlin","Europe/London","Europe/Paris","Asia/Tehran","Asia/Dubai","America/New_York","America/Chicago","America/Los_Angeles","Asia/Tokyo","UTC"] %}<option value="{{ z }}">{% endfor %}
+    {% for z in ["Europe/London","Europe/Berlin","Europe/Paris","Asia/Tehran","Asia/Dubai","America/New_York","America/Chicago","America/Los_Angeles","Asia/Tokyo","UTC"] %}<option value="{{ z }}">{% endfor %}
   </datalist>
 </section>
 

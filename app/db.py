@@ -1,9 +1,13 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, create_engine
+import logging
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 from app.config import DATABASE_URL
+
+log = logging.getLogger(__name__)
 
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, connect_args=connect_args, pool_pre_ping=True)
@@ -74,12 +78,17 @@ class EventSuggestion(Base):
     timezone: Mapped[str] = mapped_column(String(64), default="")
     location: Mapped[str] = mapped_column(String(512), default="")
     description: Mapped[str] = mapped_column(Text, default="")
-    ambiguity: Mapped[str] = mapped_column(Text, default="")              # why it needs a second look
+    ambiguity: Mapped[str] = mapped_column(Text, default="")              # legacy free text (before 1.4.0)
+    warnings: Mapped[str] = mapped_column(Text, default="")               # comma-separated warning codes
 
     status: Mapped[str] = mapped_column(String(16), default=EventStatus.SUGGESTED, index=True)
     google_event_id: Mapped[str] = mapped_column(String(256), default="")
     html_link: Mapped[str] = mapped_column(String(1024), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    @property
+    def warning_codes(self) -> list[str]:
+        return [c for c in (self.warnings or "").split(",") if c]
 
 
 class GoogleCredential(Base):
@@ -92,5 +101,38 @@ class GoogleCredential(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
 
+class Setting(Base):
+    """Simple key/value settings edited on the Settings page (language, time zone)."""
+    __tablename__ = "settings"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[str] = mapped_column(Text, default="")
+
+
+# Columns added after the first release. create_all() never alters existing tables,
+# so each one is added here, only if it is missing. Safe to run on every start.
+COLUMN_MIGRATIONS = [
+    ("event_suggestions", "warnings", "TEXT NOT NULL DEFAULT ''"),
+]
+
+
+def migrate() -> None:
+    for table, column, ddl in COLUMN_MIGRATIONS:
+        def present() -> bool:
+            insp = inspect(engine)
+            return table in insp.get_table_names() and column in {c["name"] for c in insp.get_columns(table)}
+
+        if present() or table not in inspect(engine).get_table_names():
+            continue
+        try:
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}"))
+            log.info("Migration: added column %s.%s", table, column)
+        except Exception:
+            if not present():   # the web app and the worker may start at the same time
+                raise
+
+
 def init_db() -> None:
     Base.metadata.create_all(engine)
+    migrate()

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}تاریخچه‌ی تغییرات{% endblock %}
+{% block title %}{{ t("changelog.title") }}{% endblock %}
 {% block head %}
 <style>
   .log { max-width: 720px; }
@@ -15,21 +15,21 @@
 {% endblock %}
 {% block body %}
 <header class="top">
-  <h1><a href="/">صف جواب‌ها</a></h1>
-  <div class="account"><a href="/">بازگشت به داشبورد</a></div>
+  <h1><a href="/">{{ t("app.name") }}</a></h1>
+  <div class="account">{% include "_header_tools.html" %}<a href="/">{{ t("nav.back_to_dashboard") }}</a></div>
 </header>
 
 <div class="log">
-  <h2 style="font-size:18px;margin:0 0 16px;">تاریخچه‌ی تغییرات</h2>
+  <h2 style="font-size:18px;margin:0 0 16px;">{{ t("changelog.title") }}</h2>
   {% for rel in changelog %}
   <article class="rel">
     <div class="rel-head">
       <span class="rel-ver">{{ rel.version }}</span>
-      <span class="rel-title">{{ rel.title }}</span>
-      {% if rel.version == APP_VERSION %}<span class="rel-now">نسخه‌ی فعلی</span>{% endif %}
+      <span class="rel-title">{{ rel.title[lang] }}</span>
+      {% if rel.version == APP_VERSION %}<span class="rel-now">{{ t("changelog.current") }}</span>{% endif %}
       <span class="rel-date">{{ rel.date }}</span>
     </div>
-    <ul>{% for c in rel.changes %}<li>{{ c }}</li>{% endfor %}</ul>
+    <ul>{% for c in rel.changes[lang] %}<li>{{ c }}</li>{% endfor %}</ul>
   </article>
   {% endfor %}
 </div>

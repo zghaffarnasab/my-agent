@@ -1,0 +1,21 @@
+{
+  "description": "Anonymized copy of a forwarded event-platform invitation (all names, addresses and links are fake).",
+  "from_addr": "Alex Forwarder <forwarder@example.com>",
+  "subject": "Fwd: You are invited to Example Capital : Winter Summit Pre Meet",
+  "received": "2026-10-05T00:14:40+01:00",
+  "body": "---------- Forwarded message ---------\nFrom: Sam Host <usr-abc123@user.events.example.com>\nDate: Sun, Oct 4, 2026 at 11:01 AM\nSubject: You are invited to Example Capital : Winter Summit Pre Meet\nTo: <forwarder@example.com>\n\nWe kick start the summit with a pre meet priot to flying out. Get involved if you…\n<https://events.example.com/abc123>\nSam Host\nYou’re invited to\nExample Capital : Winter Summit Pre Meet\n\nNOV\n17\nTuesday, November 17\n5:00 PM - Nov 19, 8:00 PM GMT\nRegister to see location\nLondon, United Kingdom\n\nWe meet for drinks between 5 and 8pm on 17th November and then break out\nfor a private dinner at 8pm for more intimate conversations. Learn more at\nexample-capital.test <https://events.example.com/def456>\n\nUse code SAVE10 for a discount.\n\nThe Calendar\nOther Summit Meetup <https://events.example.com/other1>\nAnother Side Event <https://events.example.com/other2>\n",
+  "model_reply": {
+    "events": [
+      {
+        "title": "Example Capital: Winter Summit Pre Meet",
+        "date": "2026-11-17",
+        "start_time": "17:00",
+        "end_time": "20:00",
+        "timezone": "Europe/London",
+        "location": "London, United Kingdom",
+        "description": "Drinks 5-8 pm, then a private dinner at 8 pm.",
+        "warnings": ["conflicting_times", "location_hidden", "not_a_real_code"]
+      }
+    ]
+  }
+}

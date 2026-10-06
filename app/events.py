@@ -6,10 +6,15 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 
-from app import ai, config
+from app import ai, settings
 from app.db import EventSuggestion, SessionLocal, Task
 
 log = logging.getLogger(__name__)
+# Fixed list of warning codes the AI may return; the UI translates them (see locales/*.json).
+WARNING_CODES = (
+    "date_format_ambiguous", "year_missing", "timezone_guessed", "conflicting_times",
+    "location_hidden", "am_pm_unclear", "multi_day_unclear",
+)
 TIME_RE = re.compile(r"^([01]?\d|2[0-3]):([0-5]\d)$")
 
 
@@ -22,7 +27,13 @@ def _clean_tz(value) -> str:
     try:
         return ZoneInfo(str(value)).key
     except Exception:
-        return config.TIMEZONE
+        return settings.get_timezone()
+
+
+def _clean_warnings(value) -> str:
+    codes = value if isinstance(value, list) else []
+    seen = [c for c in WARNING_CODES if c in {str(x).strip() for x in codes}]
+    return ",".join(seen)
 
 
 def _clean(item: dict) -> dict | None:
@@ -38,7 +49,7 @@ def _clean(item: dict) -> dict | None:
         "timezone": _clean_tz(item.get("timezone")),
         "location": str(item.get("location") or "")[:500],
         "description": str(item.get("description") or "")[:2000],
-        "ambiguity": str(item.get("ambiguity") or "")[:1000],
+        "warnings": _clean_warnings(item.get("warnings")),
     }
 
 
