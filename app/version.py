@@ -8,9 +8,41 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.4.0"
+VERSION = "1.5.0"
 
 CHANGELOG = [
+    {
+        "version": "1.5.0",
+        "date": "2026-10-06",
+        "title": {
+            "en": "Every email is read, not only the ones that need a reply",
+            "fa": "همه‌ی ایمیل‌ها خوانده می‌شوند، نه فقط ایمیل‌هایی که جواب می‌خواهند",
+        },
+        "changes": {
+            "en": [
+                "Every new email is now read once by a cheap AI model that sorts it (needs a reply, event invitation, information, newsletter, receipt, other), writes a one-line summary and finds events, deadlines and related events.",
+                "A reply is drafted only when a real person is waiting for an answer. Newsletters, automated mail and forwarded messages never get a draft. Emails that need no reply appear under the new \"Other mail\" tab.",
+                "Newsletters and automated mail are no longer ignored: they are still read for events and summaries (turn it off with PROCESS_BULK=false). The default Gmail search no longer excludes the Promotions, Updates, Social and Forums tabs.",
+                "Better events: multi-day events (end date), the invitation link with an \"Open invite link\" button, cancelled events are shown as cancelled and cannot be added, cleaner titles and descriptions, and conflicting dates or times in one email are flagged.",
+                "The same event arriving twice (invitation, reminder, forward) is shown only once, matched by its link or by its title and date.",
+                "For forwarded emails the original sender, subject and date are read from inside the message. Other events mentioned only by name are listed without dates.",
+                "Cost controls: a per-run limit for emails and a smaller one for bulk mail, a configurable cheap model (CLASSIFY_MODEL) and an optional blocked-senders list (SKIP_SENDERS).",
+                "Safety: email text is treated as untrusted data. The AI has no tools, its answers are validated, links are only displayed and never opened, and nothing is sent or added to the calendar without your approval.",
+                "The database gains new columns automatically when the app starts. Nothing is deleted.",
+            ],
+            "fa": [
+                "هر ایمیل جدید یک بار توسط یک مدل هوش مصنوعی ارزان خوانده می‌شود: نوع آن (نیازمند جواب، دعوت به رویداد، اطلاع‌رسانی، خبرنامه، رسید، سایر) مشخص می‌شود، یک خلاصه‌ی یک‌خطی نوشته می‌شود و قرارها، مهلت‌ها و رویدادهای مرتبط پیدا می‌شوند.",
+                "فقط وقتی یک آدم واقعی منتظر جواب است پیش‌نویس جواب نوشته می‌شود. برای خبرنامه‌ها، ایمیل‌های خودکار و ایمیل‌های فورواردشده هرگز پیش‌نویس نوشته نمی‌شود. ایمیل‌هایی که جواب نمی‌خواهند در بخش تازه‌ی «سایر ایمیل‌ها» دیده می‌شوند.",
+                "خبرنامه‌ها و ایمیل‌های خودکار دیگر نادیده گرفته نمی‌شوند: برای پیدا کردن قرار و نوشتن خلاصه خوانده می‌شوند (با PROCESS_BULK=false خاموش می‌شود). جست‌وجوی پیش‌فرض جیمیل هم دیگر دسته‌های Promotions، Updates، Social و Forums را کنار نمی‌گذارد.",
+                "قرارهای بهتر: رویداد چندروزه (تاریخ پایان)، لینک دعوت با دکمه‌ی «باز کردن لینک دعوت»، نمایش قرارهای لغوشده (که قابل افزودن نیستند)، عنوان و توضیح تمیزتر، و هشدار وقتی یک ایمیل تاریخ یا ساعت‌های ناسازگار می‌دهد.",
+                "اگر یک قرار دو بار برسد (دعوت، یادآوری، فوروارد) فقط یک بار نشان داده می‌شود؛ با لینک یا با عنوان و تاریخ تشخیص داده می‌شود.",
+                "برای ایمیل‌های فورواردشده، فرستنده، موضوع و تاریخ اصلی از داخل متن خوانده می‌شود. رویدادهای دیگری که فقط نامشان آمده بدون تاریخ فهرست می‌شوند.",
+                "کنترل هزینه: سقف تعداد ایمیل در هر بار بررسی و سقف کمتر برای خبرنامه‌ها، مدل ارزان قابل تنظیم (CLASSIFY_MODEL) و فهرست اختیاری فرستنده‌های نادیده‌گرفته‌شده (SKIP_SENDERS).",
+                "امنیت: متن ایمیل داده‌ی غیرقابل‌اعتماد حساب می‌شود. هوش مصنوعی ابزاری ندارد، جواب‌هایش بررسی می‌شود، لینک‌ها فقط نمایش داده می‌شوند و هرگز باز نمی‌شوند، و بدون تأیید تو چیزی ارسال یا به تقویم اضافه نمی‌شود.",
+                "ستون‌های تازه‌ی دیتابیس هنگام شروع برنامه خودکار اضافه می‌شوند. چیزی پاک نمی‌شود.",
+            ],
+        },
+    },
     {
         "version": "1.4.0",
         "date": "2026-10-06",

@@ -1,5 +1,6 @@
 """Render every page in both languages with fake Gmail/Calendar data (no real API calls)."""
 import re
+import json
 from datetime import date, datetime, timedelta, timezone
 
 import pytest
@@ -128,3 +129,71 @@ def test_flash_message_follows_the_language_of_the_next_page(client, monkeypatch
     client.post("/poll-now", follow_redirects=False)
     client.cookies.set("lang", "fa")
     assert "بررسی صندوق شروع شد" in client.get("/").text
+
+
+@pytest.fixture()
+def info_task_id():
+    with SessionLocal() as db:
+        task = Task(gmail_message_id=f"i-{datetime.now().timestamp()}", thread_id="t2",
+                    from_addr="Alex Forwarder <forwarder@example.com>", reply_to="forwarder@example.com",
+                    subject="Fwd: Summit", received_at=datetime.now(timezone.utc), original_body="Forwarded text",
+                    status=TaskStatus.INFO, category="event_invite", summary="Invitation to a summit pre-meet.",
+                    is_forward=True, original_from="Sam Host <host@events.example.com>", original_subject="Summit",
+                    original_date="Sun, Oct 4, 2026", is_bulk=False,
+                    related_json=json.dumps([{"title": "Side Event", "url": "https://events.example.com/side"}, {"title": "No link"}]),
+                    action_items_json=json.dumps([{"text": "Register before the deadline", "due": "2026-11-01"}]))
+        db.add(task)
+        db.commit()
+        db.add_all([
+            EventSuggestion(task_id=task.id, title="Summit Pre Meet", date="2026-11-17", end_date="2026-11-19", start_time="17:00",
+                            end_time="20:00", timezone="Europe/London", url="https://events.example.com/abc123", warnings="conflicting_times"),
+            EventSuggestion(task_id=task.id, title="Called off", date="2026-11-25", timezone="Europe/London",
+                            status="cancelled", url="https://events.example.com/off"),
+        ])
+        db.commit()
+        return task.id
+
+
+@pytest.mark.parametrize("lang", ["en", "fa"])
+def test_info_task_page_and_other_mail_tab(client, info_task_id, lang):
+    client.cookies.set("lang", lang)
+    page = _plain(client.get(f"/tasks/{info_task_id}").text)
+    assert "Invitation to a summit pre-meet." in page and "Sam Host" in page
+    assert "Side Event" in page and "Register before the deadline" in page
+    assert 'name="end_date"' in page and 'value="2026-11-19"' in page          # multi-day: end date is editable
+    assert 'href="https://events.example.com/abc123" target="_blank" rel="noopener noreferrer"' in page   # link is only displayed
+    assert 'id="draft_body"' not in page and "/send" not in page               # nothing to send for this mail
+    assert "ev-card cancelled" in page and 'action="/events/' in page
+    assert page.count("/add") == 1                                              # the cancelled event has no "add" button
+    tab = _plain(client.get("/?status=info").text)
+    assert "Invitation to a summit pre-meet." in tab and "Fwd: Summit" in tab
+    assert client.get("/").status_code == 200
+
+
+def test_needs_reply_tab_is_not_polluted_by_other_mail(client, info_task_id):
+    client.cookies.set("lang", "en")
+    page = _plain(client.get("/?status=pending").text)
+    assert "Fwd: Summit" not in page
+
+
+def test_adding_a_multi_day_event_uses_the_end_date_and_rejects_cancelled(client, info_task_id, monkeypatch):
+    seen = {}
+    monkeypatch.setattr(calendar_client, "find_duplicate", lambda s: None)
+    monkeypatch.setattr(calendar_client, "create_event", lambda s, invite=None: seen.update(end=s.end_date, url=s.url) or {"id": "g1", "htmlLink": "https://calendar.example/g1"})
+    with SessionLocal() as db:
+        open_ev = db.query(EventSuggestion).filter_by(title="Summit Pre Meet").one()
+        cancelled = db.query(EventSuggestion).filter_by(title="Called off").one()
+    form = {"title": "Summit", "date": "2026-11-17", "end_date": "2026-11-19", "start_time": "17:00", "end_time": "20:00",
+            "tz": "Europe/London", "location": "London", "description": "x"}
+    assert client.post(f"/events/{open_ev.id}/add", data=form, follow_redirects=False).status_code == 303
+    assert seen == {"end": "2026-11-19", "url": "https://events.example.com/abc123"}
+    client.post(f"/events/{cancelled.id}/add", data=form, follow_redirects=False)
+    with SessionLocal() as db:
+        assert db.get(EventSuggestion, cancelled.id).status == "cancelled"      # still cancelled, never added
+    bad = dict(form, end_date="2026-11-10")                                     # end before start: ignored
+    with SessionLocal() as db:
+        again = EventSuggestion(task_id=open_ev.task_id, title="Other", date="2026-12-01", timezone="UTC")
+        db.add(again)
+        db.commit()
+    client.post(f"/events/{again.id}/add", data=dict(bad, date="2026-12-01"), follow_redirects=False)
+    assert seen["end"] == ""

@@ -15,9 +15,10 @@ from googleapiclient.discovery import build
 from app import config
 from app.db import GoogleCredential, SessionLocal
 
-AUTO_SENDER_PATTERN = re.compile(
-    r"(no-?reply|do-?not-?reply|mailer-daemon|postmaster|notifications?@|bounce)", re.I
-)
+# Automated senders: still read (they may carry events or receipts), but never get a reply draft
+AUTO_SENDER_PATTERN = re.compile(r"(no-?reply|do-?not-?reply|notifications?@)", re.I)
+# Mail-system messages (delivery failures etc.): not worth reading at all
+SYSTEM_SENDER_PATTERN = re.compile(r"(mailer-daemon|postmaster|bounce)", re.I)
 
 
 # ---------- OAuth ----------
@@ -110,6 +111,7 @@ class ParsedEmail:
     received_at: datetime | None
     body: str
     is_bulk: bool  # newsletters, mailing lists, automated senders
+    is_system: bool = False  # delivery-failure notices and similar
 
 
 def _headers(payload: dict) -> dict[str, str]:
@@ -192,6 +194,7 @@ def parse_message(msg: dict) -> ParsedEmail:
         received_at=received,
         body=_strip_quoted(_extract_body(payload))[:15000],
         is_bulk=is_bulk,
+        is_system=bool(SYSTEM_SENDER_PATTERN.search(sender_email)),
     )
 
 

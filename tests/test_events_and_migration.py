@@ -49,21 +49,27 @@ def test_fixture_event_is_stored_with_valid_codes_only(monkeypatch):
     assert row.date == "2026-11-17" and row.start_time == "17:00" and row.timezone == "Europe/London"
 
 
-def test_migration_adds_missing_column_keeps_data_and_is_repeatable(tmp_path, monkeypatch):
+def test_migration_adds_every_new_column_keeps_data_and_is_repeatable(tmp_path, monkeypatch):
     old = create_engine(f"sqlite:///{tmp_path}/old.db")
-    with old.begin() as c:   # the table as it was before 1.4.0 (no "warnings" column)
+    with old.begin() as c:   # the tables as they were in 1.3.x (before any migration)
         c.execute(text("CREATE TABLE event_suggestions (id INTEGER PRIMARY KEY, task_id INTEGER, title VARCHAR(512), ambiguity TEXT)"))
         c.execute(text("INSERT INTO event_suggestions (id, task_id, title, ambiguity) VALUES (1, 7, 'Lunch', 'old note')"))
+        c.execute(text("CREATE TABLE tasks (id INTEGER PRIMARY KEY, gmail_message_id VARCHAR(64), status VARCHAR(16), subject VARCHAR(1024), draft_body TEXT)"))
+        c.execute(text("INSERT INTO tasks (id, gmail_message_id, status, subject, draft_body) VALUES (1, 'm1', 'pending', 'Hello', 'My draft')"))
+        c.execute(text("INSERT INTO tasks (id, gmail_message_id, status, subject, draft_body) VALUES (2, 'm2', 'skipped', 'News', '')"))
     monkeypatch.setattr(db, "engine", old)
 
     db.migrate()
     db.migrate()   # running twice must be harmless
 
-    cols = {c["name"] for c in inspect(old).get_columns("event_suggestions")}
-    assert "warnings" in cols
+    for table, column, _ in db.COLUMN_MIGRATIONS:
+        assert column in {c["name"] for c in inspect(old).get_columns(table)}, (table, column)
     with old.connect() as c:
-        row = c.execute(text("SELECT title, ambiguity, warnings FROM event_suggestions")).one()
-    assert tuple(row) == ("Lunch", "old note", "")
+        ev = c.execute(text("SELECT title, ambiguity, warnings, end_date, url FROM event_suggestions")).one()
+        tasks = c.execute(text("SELECT id, status, draft_body, category, needs_reply, is_bulk, is_forward, summary FROM tasks ORDER BY id")).all()
+    assert tuple(ev) == ("Lunch", "old note", "", "", "")
+    # old rows keep their status and text; the new flags start as "false"/empty, so Needs-reply counts do not change
+    assert [tuple(t) for t in tasks] == [(1, "pending", "My draft", "", 0, 0, 0, ""), (2, "skipped", "", "", 0, 0, 0, "")]
 
 
 def test_migration_skips_tables_that_do_not_exist_yet(tmp_path, monkeypatch):

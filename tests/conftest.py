@@ -32,3 +32,13 @@ def _clear_settings_cache():
     settings._cache.clear()
     yield
     settings._cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def _clean_tables():
+    """Every test starts with no tasks and no events."""
+    from app.db import EventSuggestion, SessionLocal, Task
+    with SessionLocal() as db:
+        db.query(EventSuggestion).delete()
+        db.query(Task).delete()
+        db.commit()

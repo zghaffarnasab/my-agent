@@ -67,15 +67,29 @@ def upcoming(days: int | None = None) -> list[UpcomingEvent]:
 # ---------- Writing ----------
 
 def suggestion_window(s) -> tuple[dict, dict, datetime, datetime]:
-    """Google Calendar start/end bodies plus aware datetimes, for an EventSuggestion."""
+    """Google Calendar start/end bodies plus aware datetimes, for an EventSuggestion.
+
+    A multi-day event (s.end_date) lasts until the end time on its last day, or the end of that day.
+    """
     tz = _tz(s.timezone)
     d = date.fromisoformat(s.date)
+    last = d
+    if getattr(s, "end_date", ""):
+        try:
+            last = max(d, date.fromisoformat(s.end_date))
+        except ValueError:
+            pass
     if not s.start_time:
-        return ({"date": d.isoformat()}, {"date": (d + timedelta(days=1)).isoformat()},
+        return ({"date": d.isoformat()}, {"date": (last + timedelta(days=1)).isoformat()},
                 datetime.combine(d, datetime.min.time(), tz),
-                datetime.combine(d + timedelta(days=1), datetime.min.time(), tz))
+                datetime.combine(last + timedelta(days=1), datetime.min.time(), tz))
     start = datetime.combine(d, datetime.strptime(s.start_time, "%H:%M").time(), tz)
-    end = datetime.combine(d, datetime.strptime(s.end_time, "%H:%M").time(), tz) if s.end_time else None
+    if s.end_time:
+        end = datetime.combine(last, datetime.strptime(s.end_time, "%H:%M").time(), tz)
+    elif last > d:
+        end = datetime.combine(last, datetime.strptime("23:59", "%H:%M").time(), tz)
+    else:
+        end = None
     if end is None or end <= start:
         end = start + timedelta(hours=1)
     tzname = tz.key
@@ -108,10 +122,13 @@ def find_duplicate(s) -> dict | None:
 
 def create_event(s, invite: list[str] | None = None) -> dict:
     start_body, end_body, _, _ = suggestion_window(s)
+    description = s.description or ""
+    if s.url and s.url not in description:   # keep the invite link with the event (only stored, never opened)
+        description = f"{description}\n\n{s.url}".strip()
     body = {
         "summary": s.title or "Meeting",
         "location": s.location or None,
-        "description": s.description or None,
+        "description": description or None,
         "start": start_body,
         "end": end_body,
     }

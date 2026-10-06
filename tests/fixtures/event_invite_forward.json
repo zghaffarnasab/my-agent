@@ -14,8 +14,55 @@
         "timezone": "Europe/London",
         "location": "London, United Kingdom",
         "description": "Drinks 5-8 pm, then a private dinner at 8 pm.",
-        "warnings": ["conflicting_times", "location_hidden", "not_a_real_code"]
+        "warnings": [
+          "conflicting_times",
+          "location_hidden",
+          "not_a_real_code"
+        ],
+        "end_date": "",
+        "url": "https://events.example.com/abc123",
+        "cancelled": false
       }
     ]
+  },
+  "classification_reply": {
+    "category": "event_invite",
+    "needs_reply": true,
+    "summary": "Forwarded invitation to a pre-summit drinks evening in London on 17 Nov.",
+    "is_forward": true,
+    "original": {
+      "from": "Sam Host <usr-abc123@user.events.example.com>",
+      "subject": "You are invited to Example Capital : Winter Summit Pre Meet",
+      "date": "Sun, Oct 4, 2026 at 11:01 AM"
+    },
+    "events": [
+      {
+        "title": "You are invited to Example Capital: Winter Summit Pre Meet",
+        "date": "2026-11-17",
+        "start_time": "17:00",
+        "end_time": "20:00",
+        "timezone": "Europe/London",
+        "location": "London, United Kingdom",
+        "description": "Drinks 5-8 pm, then a private dinner at 8 pm.",
+        "warnings": [
+          "conflicting_times",
+          "location_hidden"
+        ],
+        "end_date": "",
+        "url": "https://events.example.com/abc123",
+        "cancelled": false
+      }
+    ],
+    "related_events": [
+      {
+        "title": "Other Summit Meetup",
+        "url": "https://events.example.com/other1"
+      },
+      {
+        "title": "Another Side Event",
+        "url": "https://events.example.com/other2"
+      }
+    ],
+    "action_items": []
   }
 }

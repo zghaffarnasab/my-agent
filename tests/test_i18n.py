@@ -41,11 +41,13 @@ def test_every_key_used_in_code_and_templates_exists():
 
 def test_dynamic_key_families_exist():
     known = set(i18n.messages("en"))
-    for status in ("pending", "failed", "sent", "rejected", "sending"):
+    for status in ("pending", "failed", "sent", "rejected", "sending", "info", "done"):
         assert f"status.{status}" in known
     for i in range(7):
         assert f"weekday.{i}" in known
-    from app.events import WARNING_CODES
+    from app.validation import CATEGORIES, WARNING_CODES
+    for category in CATEGORIES:
+        assert f"category.{category}" in known
     for code in WARNING_CODES:
         assert f"warning.{code}" in known
 

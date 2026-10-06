@@ -117,6 +117,8 @@
       <span class="when">{{ (item.sent_at if status == 'sent' else item.received_at) | dt }}</span>
       {% if item.status == 'failed' %}
         <span class="draft err">{{ t("dash.draft_failed") }}</span>
+      {% elif item.status in ['info', 'done'] %}
+        <span class="draft ltr-auto">{% if item.category %}{{ t("category." ~ item.category) }}: {% endif %}{{ item.summary }}</span>
       {% else %}
         <span class="draft ltr-auto">{{ item.draft_body[:180] }}</span>
       {% endif %}

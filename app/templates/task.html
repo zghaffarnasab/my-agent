@@ -27,6 +27,12 @@
   .badge { font-size: 12px; font-weight: 500; padding: 2px 10px; border-radius: 10px; background: var(--wait-bg); color: var(--wait); margin-inline-start: 8px; vertical-align: middle; }
   .badge.sent { background: var(--ok-bg); color: var(--ok-ink); }
   .badge.rejected, .badge.failed { background: var(--err-bg); color: var(--danger); }
+  .badge.info, .badge.done { background: #E4EEF5; color: var(--accent); }
+  .ev-card.cancelled { border-color: #E3C3BE; background: #FCF6F5; }
+  .ev-card.cancelled .ev-title-line { text-decoration: line-through; color: var(--muted); }
+  .info-list { margin: 0; padding: 0 20px 16px; list-style: none; }
+  .info-list li { padding: 4px 0; overflow-wrap: anywhere; }
+  .info-h { font-size: 13px; color: var(--muted); font-weight: 500; padding: 8px 20px 0; margin: 0; }
   .hint { font-size: 12px; color: var(--muted); }
   .readonly { padding: 20px; white-space: pre-wrap; unicode-bidi: plaintext; }
   .events { margin-top: 24px; scroll-margin-top: 16px; }
@@ -69,6 +75,26 @@
 {% if task.error %}<div class="flash error ltr-auto">{{ task.error }}</div>{% endif %}
 
 <div class="grid">
+  {% if task.status in ['info', 'done'] %}
+  <!-- Read-only summary for mail that needs no reply -->
+  <section class="panel editor" aria-labelledby="draft-h">
+    <h2 id="draft-h">{{ t("task.info_title") }} <span class="badge {{ task.status }}">{{ t("status." ~ task.status) }}</span></h2>
+    {% if task.summary %}<div class="readonly">{{ task.summary }}</div>{% endif %}
+    <p class="hint" style="padding:0 20px 14px;margin:0;">{{ t("task.forward_note") if task.is_forward else t("task.no_reply_needed") }}</p>
+    {% if task.action_items %}
+    <h3 class="info-h">{{ t("task.action_items") }}</h3>
+    <ul class="info-list">
+      {% for a in task.action_items %}<li><span class="ltr-auto">{{ a.text }}</span>{% if a.due %} <span class="hint">({{ t("task.due", date=a.due) }})</span>{% endif %}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% if task.related %}
+    <h3 class="info-h">{{ t("task.related_events") }}</h3>
+    <ul class="info-list">
+      {% for r in task.related %}<li>{% if r.url %}<a class="ltr-auto" href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.title }}</a>{% else %}<span class="ltr-auto">{{ r.title }}</span>{% endif %}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+  {% else %}
   <!-- Draft (first in RTL = right side) -->
   <section class="panel editor" aria-labelledby="draft-h">
     <h2 id="draft-h">{{ t("task.suggested_reply") }} <span class="badge {{ task.status }}">{{ t("status." ~ task.status) }}</span></h2>
@@ -107,6 +133,7 @@
       {% endif %}
     {% endif %}
   </section>
+  {% endif %}
 
   <!-- Original email -->
   <section class="panel" aria-labelledby="orig-h">
@@ -117,6 +144,13 @@
         {% if task.reply_to != task.from_addr %}<dt>{{ t("task.reply_to") }}</dt><dd class="ltr-auto">{{ task.reply_to }}</dd>{% endif %}
         <dt>{{ t("task.subject") }}</dt><dd class="ltr-auto">{{ task.subject or t("dash.no_subject") }}</dd>
         <dt>{{ t("task.time") }}</dt><dd><span dir="ltr">{{ task.received_at | dt }}</span></dd>
+        {% if task.category %}<dt>{{ t("task.category") }}</dt><dd>{{ t("category." ~ task.category) }}</dd>{% endif %}
+        {% if task.summary and task.status not in ['info', 'done'] %}<dt>{{ t("task.summary") }}</dt><dd class="ltr-auto">{{ task.summary }}</dd>{% endif %}
+        {% if task.is_forward %}
+          {% if task.original_from %}<dt>{{ t("task.forwarded_from") }}</dt><dd class="ltr-auto">{{ task.original_from }}</dd>{% endif %}
+          {% if task.original_subject %}<dt>{{ t("task.original_subject") }}</dt><dd class="ltr-auto">{{ task.original_subject }}</dd>{% endif %}
+          {% if task.original_date %}<dt>{{ t("task.original_date") }}</dt><dd class="ltr-auto">{{ task.original_date }}</dd>{% endif %}
+        {% endif %}
       </dl>
     </div>
     <div class="body ltr-auto">{{ task.original_body }}</div>
@@ -143,12 +177,23 @@
   {% else %}
   <div class="ev-grid">
     {% for ev in suggestions %}
-      {% if ev.status == 'added' %}
+      {% if ev.status == 'cancelled' %}
+      <div class="ev-card cancelled">
+        <div class="ev-src">{{ t("ev.src_outgoing") if ev.source == 'outgoing' else t("ev.src_incoming") }}
+          <span class="badge failed">{{ t("ev.cancelled_badge") }}</span></div>
+        <div class="ev-done">
+          <strong class="ltr-auto ev-title-line">{{ ev.title }}</strong>
+          {{ ev.date | dayhead }}{% if ev.end_date %} – {{ ev.end_date | dayhead }}{% endif %}{% if ev.start_time %}{{ t("ev.at_time", time=(ev.start_time ~ ("–" ~ ev.end_time if ev.end_time else ""))) }}{% endif %}
+        </div>
+        <div class="ev-note clash">{{ t("ev.cancelled_note") }}</div>
+        {% if ev.url %}<div class="ev-actions"><a class="btn" href="{{ ev.url }}" target="_blank" rel="noopener noreferrer">{{ t("ev.open_link") }}</a></div>{% endif %}
+      </div>
+      {% elif ev.status == 'added' %}
       <div class="ev-card added">
         <div class="ev-src">{{ t("ev.src_outgoing") if ev.source == 'outgoing' else t("ev.src_incoming") }}</div>
         <div class="ev-done">
           <strong class="ltr-auto">{{ ev.title }}</strong>
-          {{ ev.date | dayhead }}{% if ev.start_time %}{{ t("ev.at_time", time=(ev.start_time ~ ("–" ~ ev.end_time if ev.end_time else ""))) }}{% endif %}
+          {{ ev.date | dayhead }}{% if ev.end_date %} – {{ ev.end_date | dayhead }}{% endif %}{% if ev.start_time %}{{ t("ev.at_time", time=(ev.start_time ~ ("–" ~ ev.end_time if ev.end_time else ""))) }}{% endif %}
           {% if ev.timezone != owner_tz %}<span class="ltr-auto">({{ ev.timezone }})</span>{% endif %}
           {% if ev.location %}<br><span class="ltr-auto">{{ ev.location }}</span>{% endif %}
         </div>
@@ -171,6 +216,9 @@
             <input type="time" dir="ltr" id="e{{ ev.id }}" name="end_time" value="{{ ev.end_time }}"></div>
         </div>
         {% if not ev.start_time %}<div class="ev-note warn">{{ t("ev.no_time_note") }}</div>{% endif %}
+
+        <label for="ed{{ ev.id }}">{{ t("ev.label_end_date") }}</label>
+        <input type="date" dir="ltr" id="ed{{ ev.id }}" name="end_date" value="{{ ev.end_date }}">
 
         <label for="z{{ ev.id }}">{{ t("ev.label_tz") }}</label>
         <input type="text" id="z{{ ev.id }}" name="tz" value="{{ ev.timezone }}" dir="ltr" list="tzlist">
@@ -196,6 +244,7 @@
           {{ t("ev.invite_check", name=(task.reply_to | sender)) }}</label>
 
         <div class="ev-actions">
+          {% if ev.url %}<a class="btn" href="{{ ev.url }}" target="_blank" rel="noopener noreferrer">{{ t("ev.open_link") }}</a>{% endif %}
           {% if calendar_ok %}
             <button class="btn-primary" type="submit">{{ t("ev.add_btn") }}</button>
           {% else %}

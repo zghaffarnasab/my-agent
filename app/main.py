@@ -12,7 +12,7 @@ from jinja2 import pass_context
 from sqlalchemy import delete, func, select, update
 from starlette.middleware.sessions import SessionMiddleware
 
-from app import ai, calendar_client, config, events, gmail_client, i18n, settings
+from app import ai, calendar_client, config, events, gmail_client, i18n, settings, validation
 from app.version import CHANGELOG, VERSION
 from app.db import EventStatus, EventSuggestion, SessionLocal, Task, TaskStatus, init_db, utcnow
 
@@ -56,7 +56,7 @@ templates = Jinja2Templates(
     context_processors=[i18n_context],
 )
 
-VISIBLE_STATUSES = [TaskStatus.PENDING, TaskStatus.FAILED, TaskStatus.SENT, TaskStatus.REJECTED]
+VISIBLE_STATUSES = [TaskStatus.PENDING, TaskStatus.INFO, TaskStatus.FAILED, TaskStatus.SENT, TaskStatus.REJECTED]
 
 
 def fmt_date(value):
@@ -513,6 +513,7 @@ def add_event(
     event_id: int,
     title: str = Form(""),
     date: str = Form(...),
+    end_date: str = Form(""),
     start_time: str = Form(""),
     end_time: str = Form(""),
     tz: str = Form(""),
@@ -529,6 +530,7 @@ def add_event(
             return RedirectResponse(f"/tasks/{sug.task_id}#events", status_code=303)
         # apply your edits from the card
         sug.title, sug.date = title.strip(), date.strip()
+        sug.end_date = validation.clean_date(end_date) if end_date.strip() > date.strip() else ""
         sug.start_time, sug.end_time = start_time.strip(), end_time.strip()
         sug.timezone = events._clean_tz(tz.strip())
         sug.location, sug.description = location.strip(), description.strip()

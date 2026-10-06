@@ -10,20 +10,17 @@
   "nav.change_account": "تغییر حساب",
   "nav.check_mail": "بررسی ایمیل‌های جدید",
   "nav.language": "زبان",
-
   "login.title": "ورود",
   "login.prompt": "برای دیدن پیش‌نویس‌ها رمز داشبورد را وارد کن.",
   "login.password": "رمز عبور",
   "login.submit": "ورود",
   "login.error": "رمز عبور درست نیست.",
-
   "status.pending": "منتظر تأیید",
   "status.failed": "خطا در نوشتن",
   "status.sent": "ارسال‌شده",
   "status.rejected": "ردشده",
   "status.sending": "در حال ارسال",
   "status.tabs_label": "وضعیت تسک‌ها",
-
   "day.today": "امروز، {weekday}",
   "day.tomorrow": "فردا، {weekday}",
   "weekday.0": "دوشنبه",
@@ -33,7 +30,6 @@
   "weekday.4": "جمعه",
   "weekday.5": "شنبه",
   "weekday.6": "یکشنبه",
-
   "dash.connect_none": "هنوز جیمیلی وصل نشده. بعد از اتصال، ایمیل‌های جدید خودکار خوانده و برایشان جواب نوشته می‌شود.",
   "dash.connect_btn": "اتصال جیمیل",
   "dash.calendar_enable_text": "برای دیدن برنامه‌های تقویم و افزودن قرارها، یک بار دیگر حساب گوگل را وصل کن تا اجازه‌ی تقویم هم داده شود.",
@@ -50,7 +46,6 @@
   "dash.empty_pending": "جوابی منتظر تأیید نیست. ایمیل‌های جدید هر چند دقیقه یک‌بار بررسی می‌شوند.",
   "dash.empty_other": "چیزی در این بخش نیست.",
   "dash.change_account_confirm": "با وصل کردن یک حساب جیمیل دیگر، همه‌ی تسک‌های حساب فعلی پاک می‌شوند. ادامه می‌دهی؟",
-
   "task.fallback_title": "تسک",
   "task.suggested_reply": "جواب پیشنهادی",
   "task.reply_aria": "متن جواب",
@@ -71,7 +66,6 @@
   "task.time": "زمان",
   "task.events_jump": "{n} قرار در این گفتگو پیدا شد؛ افزودن به تقویم ↓",
   "task.earlier_messages": "پیام‌های قبلی این گفتگو",
-
   "ev.section": "قرارها و رویدادها",
   "ev.recheck": "بررسی دوباره‌ی این ایمیل",
   "ev.none": "قراری با تاریخ مشخص در این ایمیل پیدا نشد.",
@@ -95,7 +89,6 @@
   "ev.added": "✓ در تقویم ثبت شد",
   "ev.view_in_gcal": "مشاهده در Google Calendar",
   "ev.at_time": "، ساعت {time}",
-
   "warning.date_format_ambiguous": "قالب تاریخ مبهم است (روز/ماه یا ماه/روز).",
   "warning.year_missing": "سال در ایمیل نیامده بود؛ سال حدس زده شده است.",
   "warning.timezone_guessed": "منطقه‌ی زمانی از روی مکان حدس زده شده است.",
@@ -103,7 +96,6 @@
   "warning.location_hidden": "مکان دقیق نمایش داده نشده (مثلاً بعد از ثبت‌نام مشخص می‌شود).",
   "warning.am_pm_unclear": "صبح یا عصر بودن ساعت مشخص نیست.",
   "warning.multi_day_unclear": "مشخص نیست رویداد یک روزه است یا چند روزه.",
-
   "flash.gmail_connect_failed": "اتصال به جیمیل ناموفق بود. دوباره امتحان کن.",
   "flash.gmail_connected": "جیمیل {email} وصل شد. ایمیل‌های جدید چند دقیقه دیگر اینجا ظاهر می‌شوند.",
   "flash.poll_started": "بررسی صندوق شروع شد. چند ثانیه دیگر صفحه را تازه کن.",
@@ -126,7 +118,6 @@
   "flash.event_add_failed": "افزودن به تقویم ناموفق بود: {error}",
   "flash.settings_saved": "تنظیمات ذخیره شد.",
   "flash.settings_bad_tz": "این منطقه‌ی زمانی شناخته نشد. نمونه: Europe/London",
-
   "settings.title": "تنظیمات",
   "settings.language": "زبان برنامه",
   "settings.language_help": "زبان صفحه‌ها و متن‌هایی که هوش مصنوعی می‌نویسد (مثل خلاصه‌ها).",
@@ -134,7 +125,29 @@
   "settings.timezone_help": "همه‌ی ساعت‌ها به این منطقه‌ی زمانی نمایش داده می‌شوند. نام استاندارد را بنویس، مثل Europe/London.",
   "settings.timezone_default": "اگر خالی بماند، مقدار سرور ({tz}) استفاده می‌شود.",
   "settings.save": "ذخیره",
-
   "changelog.title": "تاریخچه‌ی تغییرات",
-  "changelog.current": "نسخه‌ی فعلی"
+  "changelog.current": "نسخه‌ی فعلی",
+  "status.info": "سایر ایمیل‌ها",
+  "status.done": "انجام‌شده",
+  "category.needs_reply": "نیازمند جواب",
+  "category.event_invite": "دعوت به رویداد",
+  "category.info_fyi": "اطلاع‌رسانی",
+  "category.newsletter_promo": "خبرنامه یا تبلیغات",
+  "category.receipt_notification": "رسید یا اعلان",
+  "category.other": "سایر",
+  "task.summary": "خلاصه",
+  "task.category": "دسته",
+  "task.forwarded_from": "ایمیل فورواردشده؛ فرستنده‌ی اصلی",
+  "task.original_subject": "موضوع اصلی",
+  "task.original_date": "تاریخ اصلی",
+  "task.info_title": "جواب لازم نیست",
+  "task.no_reply_needed": "این ایمیل جواب نمی‌خواهد، برای همین پیش‌نویسی نوشته نشد.",
+  "task.forward_note": "این یک ایمیل فورواردشده است. جواب فقط به همان کسی می‌رسد که فوروارد کرده، برای همین پیش‌نویسی نوشته نشد.",
+  "task.related_events": "رویدادهای دیگری که نام برده شده (بدون تاریخ)",
+  "task.action_items": "کارهای لازم",
+  "task.due": "مهلت: {date}",
+  "ev.label_end_date": "تاریخ پایان (اختیاری، برای رویداد چندروزه)",
+  "ev.open_link": "باز کردن لینک دعوت",
+  "ev.cancelled_badge": "لغو شده",
+  "ev.cancelled_note": "طبق ایمیل این رویداد لغو شده، پس نمی‌شود آن را به تقویم اضافه کرد."
 }

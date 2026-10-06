@@ -10,20 +10,17 @@
   "nav.change_account": "Change account",
   "nav.check_mail": "Check for new emails",
   "nav.language": "Language",
-
   "login.title": "Log in",
   "login.prompt": "Enter the dashboard password to see the drafts.",
   "login.password": "Password",
   "login.submit": "Log in",
   "login.error": "Wrong password.",
-
   "status.pending": "Waiting for approval",
   "status.failed": "Draft failed",
   "status.sent": "Sent",
   "status.rejected": "Rejected",
   "status.sending": "Sending",
   "status.tabs_label": "Task status",
-
   "day.today": "Today, {weekday}",
   "day.tomorrow": "Tomorrow, {weekday}",
   "weekday.0": "Monday",
@@ -33,7 +30,6 @@
   "weekday.4": "Friday",
   "weekday.5": "Saturday",
   "weekday.6": "Sunday",
-
   "dash.connect_none": "No Gmail account is connected yet. Once connected, new emails are read automatically and a reply is drafted for each.",
   "dash.connect_btn": "Connect Gmail",
   "dash.calendar_enable_text": "To see your calendar and add events, connect your Google account once more so the calendar permission is granted too.",
@@ -50,7 +46,6 @@
   "dash.empty_pending": "No replies are waiting for approval. New emails are checked every few minutes.",
   "dash.empty_other": "Nothing in this section.",
   "dash.change_account_confirm": "Connecting a different Gmail account deletes all tasks of the current account. Continue?",
-
   "task.fallback_title": "Task",
   "task.suggested_reply": "Suggested reply",
   "task.reply_aria": "Reply text",
@@ -71,7 +66,6 @@
   "task.time": "Time",
   "task.events_jump": "{n} event(s) found in this conversation; add to calendar ↓",
   "task.earlier_messages": "Earlier messages in this conversation",
-
   "ev.section": "Meetings and events",
   "ev.recheck": "Check this email again",
   "ev.none": "No event with a clear date was found in this email.",
@@ -95,7 +89,6 @@
   "ev.added": "✓ Added to the calendar",
   "ev.view_in_gcal": "View in Google Calendar",
   "ev.at_time": ", at {time}",
-
   "warning.date_format_ambiguous": "The date format is ambiguous (day/month or month/day).",
   "warning.year_missing": "The email did not give a year; the year was guessed.",
   "warning.timezone_guessed": "The time zone was guessed from the place.",
@@ -103,7 +96,6 @@
   "warning.location_hidden": "The exact location is not shown (for example, it is revealed after registration).",
   "warning.am_pm_unclear": "It is unclear whether the time is AM or PM.",
   "warning.multi_day_unclear": "It is unclear whether the event lasts one day or several.",
-
   "flash.gmail_connect_failed": "Connecting to Gmail failed. Please try again.",
   "flash.gmail_connected": "Gmail account {email} connected. New emails will appear here in a few minutes.",
   "flash.poll_started": "Checking the mailbox. Refresh the page in a few seconds.",
@@ -126,7 +118,6 @@
   "flash.event_add_failed": "Adding to the calendar failed: {error}",
   "flash.settings_saved": "Settings saved.",
   "flash.settings_bad_tz": "This time zone is not recognised. Example: Europe/London",
-
   "settings.title": "Settings",
   "settings.language": "App language",
   "settings.language_help": "The language of the pages and of text the AI writes (such as summaries).",
@@ -134,7 +125,29 @@
   "settings.timezone_help": "All times are shown in this time zone. Use the standard name, for example Europe/London.",
   "settings.timezone_default": "If left empty, the server value ({tz}) is used.",
   "settings.save": "Save",
-
   "changelog.title": "Changelog",
-  "changelog.current": "Current version"
+  "changelog.current": "Current version",
+  "status.info": "Other mail",
+  "status.done": "Done",
+  "category.needs_reply": "Needs a reply",
+  "category.event_invite": "Event invitation",
+  "category.info_fyi": "For your information",
+  "category.newsletter_promo": "Newsletter or promotion",
+  "category.receipt_notification": "Receipt or notification",
+  "category.other": "Other",
+  "task.summary": "Summary",
+  "task.category": "Category",
+  "task.forwarded_from": "Forwarded; original sender",
+  "task.original_subject": "Original subject",
+  "task.original_date": "Original date",
+  "task.info_title": "No reply needed",
+  "task.no_reply_needed": "This email does not need a reply, so no draft was written.",
+  "task.forward_note": "It is a forwarded message. A reply would only go to the person who forwarded it, so none was drafted.",
+  "task.related_events": "Other events mentioned (no dates given)",
+  "task.action_items": "Action items",
+  "task.due": "due {date}",
+  "ev.label_end_date": "End date (optional, for multi-day events)",
+  "ev.open_link": "Open invite link",
+  "ev.cancelled_badge": "Cancelled",
+  "ev.cancelled_note": "The email says this event was cancelled, so it cannot be added to the calendar."
 }

@@ -26,11 +26,12 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
 
 ## Code map
 - `app/main.py` — FastAPI routes (login, dashboard, task actions, OAuth, calendar, changelog)
-- `app/worker.py` — polling loop: Gmail -> draft -> task, then event extraction
+- `app/worker.py` — polling loop: Gmail -> skip filters -> one cheap AI call (classify + events) -> reply draft ONLY if needs_reply -> task (`pending` or `info`)
 - `app/gmail_client.py` — OAuth + Gmail read/send; `has_calendar_access()`
 - `app/calendar_client.py` — list/create events, conflicts, duplicates
-- `app/ai.py` — `draft_reply()` and `extract_events()` (Claude API)
-- `app/events.py` — validates extracted events and stores `EventSuggestion` rows
+- `app/ai.py` — `classify_email()` (CLASSIFY_MODEL), `extract_events()`, `draft_reply()` (CLAUDE_MODEL). Email text is wrapped in tags and defused; no tools
+- `app/validation.py` — cleans/validates ALL AI output (links http(s) only, dates, codes, categories). Add new AI fields here
+- `app/events.py` — `store_events()` saves suggestions and dedupes across emails (same link, or same title + date); cancelled events
 - `app/db.py` — SQLAlchemy models: Task, EventSuggestion, GoogleCredential (SQLite in Docker volume)
 - `app/version.py` — VERSION + CHANGELOG (bilingual: each entry has "en" and "fa"; shown in the footer and /changelog)
 - `app/i18n.py` + `app/locales/{en,fa}.json` — `t()` helper and flat translation files
@@ -45,6 +46,13 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
 - AI warnings are fixed codes (`events.WARNING_CODES`) translated as `warning.<code>`; never store language-specific AI warning text.
 - Persian pages are `dir="rtl"`, English `dir="ltr"`. Use CSS logical properties.
 - A test fails if a key is missing in one language or if Persian text is hardcoded in code/templates.
+
+## How emails are processed (since 1.5.0)
+- Statuses: pending/sent/rejected/failed/skipped keep their old meaning. Mail that needs no reply is `info` (then `done`
+  when archived) and NEVER `pending`, so the Needs-reply counts stay correct.
+- Bulk headers mean "no reply draft", not "ignore" (`PROCESS_BULK`, `MAX_BULK_PER_RUN`, `MAX_EMAILS_PER_RUN`, `SKIP_SENDERS`).
+- Forwards and bulk mail never get an automatic draft, whatever the model says (enforced in `validation.clean_classification`).
+- Never fetch or open links from emails; they are only displayed (`rel="noopener noreferrer"`).
 
 ## Rules for every change
 1. **Versioning:** bump `VERSION` in `app/version.py` and add a changelog entry at the TOP of
@@ -77,7 +85,7 @@ Never suggest `docker compose down -v` (deletes all data).
 - The mailbox owner is probably in the UK; do not assume Europe/Berlin (set the time zone on the Settings page).
 
 ## Roadmap
-- Process every email not only ones needing a reply (1.5.0), dashboard tabs for the new kinds of email (1.6.0).
+- Dashboard tabs for the new kinds of email (1.6.0): Needs reply | Events | Other mail | Sent | Rejected, Done/Archive button, "Draft a reply anyway".
 - Calendar phase 2: take calendar conflicts into account when drafting replies
   (propose another time instead of accepting a busy slot).
 - More tools may be added to the same server later.
