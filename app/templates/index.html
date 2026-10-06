@@ -1,59 +1,27 @@
 {% extends "base.html" %}
+{% block wrapclass %}narrow{% endblock %}
 {% block head %}
 <style>
-  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 0; flex-wrap: wrap; }
-  .tabs a {
-    padding: 10px 14px; text-decoration: none; color: var(--muted); font-weight: 500;
-    border-bottom: 2px solid transparent; margin-bottom: -1px;
-  }
-  .tabs a.active { color: var(--ink); border-bottom-color: var(--ink); }
-  .tabs .n { font-size: 12px; background: var(--line); color: var(--ink); border-radius: 10px; padding: 0 7px; margin-inline-start: 6px; }
-  .tabs a.active .n { background: var(--ink); color: var(--surface); }
-  .queue { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-top: none; border-radius: 0 0 10px 10px; }
-  .queue li + li { border-top: 1px solid var(--line); }
-  .queue a {
-    display: grid; grid-template-columns: 200px 1fr auto; gap: 4px 20px;
-    padding: 14px 20px; color: inherit; text-decoration: none; align-items: baseline;
-  }
-  .queue a:hover { background: #F6F8FA; }
-  .queue li.row { display: grid; grid-template-columns: 1fr auto; align-items: center; }
-  .row-actions { display: flex; gap: 8px; align-items: center; padding-inline-end: 20px; }
-  .row-actions button { white-space: nowrap; }
-  .day-head { font-size: 14px; color: var(--muted); font-weight: 700; margin: 22px 0 10px; }
-  .day-head.today { color: var(--accent); }
-  .ev-wrap { padding-top: 4px; }
-  .archived-link { margin: 16px 4px 0; font-size: 14px; }
-  .from { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .subj { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .draft { grid-column: 2 / 3; color: var(--muted); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .when { color: var(--muted); font-size: 13px; white-space: nowrap; direction: ltr; }
-  .err { color: var(--danger); }
-  .empty { background: var(--surface); border: 1px solid var(--line); border-top: none; border-radius: 0 0 10px 10px; padding: 48px 20px; text-align: center; color: var(--muted); }
+{% include "_accordion.css" %}
   .connect { background: var(--wait-bg); color: var(--wait); border-radius: 10px; padding: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-  .upcoming { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 28px; }
-  .upcoming h2 { font-size: 15px; margin: 0; padding: 12px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; }
+  .upcoming { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 20px; }
+  .upcoming h2 { font-size: 15px; margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .upcoming h2 a { font-weight: 400; font-size: 13px; }
-  .days { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
-  .day { padding: 12px 20px; border-top: 1px solid var(--line); }
+  .days { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); }
+  .day { padding: 12px 16px; border-top: 1px solid var(--line); min-width: 0; }
   .day h3 { font-size: 13px; color: var(--muted); font-weight: 500; margin: 0 0 6px; }
   .day.today h3 { color: var(--accent); font-weight: 700; }
-  .ev { display: flex; gap: 10px; font-size: 14px; padding: 2px 0; color: inherit; text-decoration: none; }
-  .ev:hover .ev-title { text-decoration: underline; }
+  .upcoming .ev { display: flex; gap: 10px; font-size: 14px; padding: 2px 0; color: inherit; text-decoration: none; }
+  .upcoming .ev:hover .ev-title { text-decoration: underline; }
   .ev-time { direction: ltr; color: var(--muted); min-width: 44px; font-variant-numeric: tabular-nums; }
   .ev-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .up-empty { padding: 16px 20px; color: var(--muted); font-size: 14px; }
-  .tag-ev { font-size: 12px; background: #E4EEF5; color: var(--accent); border-radius: 10px; padding: 0 8px; margin-inline-start: 8px; font-weight: 500; }
-  @media (max-width: 720px) {
-    .queue a { grid-template-columns: 1fr auto; }
-    .subj, .draft { grid-column: 1 / -1; }
-    .queue li.row { grid-template-columns: 1fr; }
-    .row-actions { padding: 0 20px 12px; flex-wrap: wrap; }
-    .ev-grid { grid-template-columns: 1fr; }
-  }
+  .up-empty { padding: 16px; color: var(--muted); font-size: 14px; }
 </style>
 {% endblock %}
 {% block body %}
-{% from "_event_card.html" import event_card, tz_datalist with context %}
+{% from "_task_row.html" import task_row with context %}
+{% from "_event_row.html" import event_row with context %}
+{% from "_event_card.html" import tz_datalist with context %}
 <header class="top">
   <h1><a href="/">{{ t("app.name") }}</a></h1>
   <div class="account">
@@ -112,62 +80,28 @@
 
 <nav class="tabs" aria-label="{{ t('status.tabs_label') }}">
   {% for key in tabs %}
-    <a href="/?tab={{ key }}" class="{% if key == tab %}active{% endif %}"{% if key == tab %} aria-current="page"{% endif %}>
-      {{ t("tab." ~ key) }}{% if tab_counts[key] %}<span class="n">{{ tab_counts[key] }}</span>{% endif %}
+    <a class="tab{% if key == tab %} on{% endif %}" data-tab="{{ key }}" href="/?tab={{ key }}"{% if key == tab %} aria-current="page"{% endif %}>
+      {{ t("tab." ~ key) }}<span class="n"{% if not tab_counts[key] %} hidden{% endif %}>{{ tab_counts[key] }}</span>
     </a>
   {% endfor %}
 </nav>
 
-{% if tab == 'events' %}
-  {% if event_days %}
-  <div class="ev-wrap">
-    {% for day, group in event_days %}
-      <h3 class="day-head{% if day | is_today %} today{% endif %}">{{ day | dayhead }}</h3>
-      <div class="ev-grid">
-        {% for ev, ev_task in group %}{{ event_card(ev, ev_task, conflicts, "/?tab=events", true) }}{% endfor %}
-      </div>
-    {% endfor %}
-  </div>
-  {{ tz_datalist() }}
+<div id="list-status" class="flash" role="status" aria-live="polite" tabindex="-1" hidden></div>
+
+{% set rows = event_items if tab == 'events' else tasks %}
+<ul class="list" id="rows" data-tab="{{ tab }}" data-archived="{{ 1 if show_archived else 0 }}"{% if not rows %} hidden{% endif %}>
+  {% if tab == 'events' %}
+    {% for ev, ev_task in event_items %}{{ event_row(ev, ev_task, ev.id == open_id, open_panel_html if ev.id == open_id else "") }}{% endfor %}
   {% else %}
-  <div class="empty">{{ t("dash.empty_events") }}</div>
+    {% for item in tasks %}{{ task_row(item, tab, show_archived, item.id == open_id, open_panel_html if item.id == open_id else "", item.id in tasks_with_events) }}{% endfor %}
   {% endif %}
-{% elif tasks %}
-<ul class="queue">
-  {% for item in tasks %}
-  <li class="row">
-    <a href="/tasks/{{ item.id }}">
-      <span class="from ltr-auto">{{ item.from_addr | sender }}</span>
-      <span class="subj"><span class="ltr-auto">{{ item.subject or t("dash.no_subject") }}</span>{% if item.id in tasks_with_events %}<span class="tag-ev">{{ t("dash.tag_event") }}</span>{% endif %}</span>
-      <span class="when">{{ (item.sent_at if tab == 'sent' else item.received_at) | dt }}</span>
-      {% if item.status == 'failed' %}
-        <span class="draft err">{{ t("dash.draft_failed") }}</span>
-      {% elif item.status in ['info', 'done'] %}
-        <span class="draft ltr-auto">{% if item.category %}<strong>{{ t("category." ~ item.category) }}</strong> · {% endif %}{{ item.summary }}</span>
-      {% else %}
-        <span class="draft ltr-auto">{{ item.draft_body[:180] }}</span>
-      {% endif %}
-    </a>
-    {% if tab == 'other' %}
-    <div class="row-actions">
-      {% if item.status == 'done' %}
-        <form class="inline" method="post" action="/tasks/{{ item.id }}/undone"><button type="submit">{{ t("action.restore_info") }}</button></form>
-      {% else %}
-        <form class="inline" method="post" action="/tasks/{{ item.id }}/done"><button type="submit">{{ t("action.done") }}</button></form>
-        <form class="inline" method="post" action="/tasks/{{ item.id }}/draft-anyway"><button type="submit" class="btn-link">{{ t("action.draft_anyway") }}</button></form>
-      {% endif %}
-    </div>
-    {% endif %}
-  </li>
-  {% endfor %}
 </ul>
-{% else %}
-<div class="empty">
-  {% if tab == 'reply' %}{{ t("dash.empty_pending") }}
+<div class="empty" id="empty-state"{% if rows %} hidden{% endif %}>
+  {% if tab == 'events' %}{{ t("dash.empty_events") }}
+  {% elif tab == 'reply' %}{{ t("dash.empty_pending") }}
   {% elif tab == 'other' %}{{ t("dash.empty_other_mail") }}
   {% else %}{{ t("dash.empty_other") }}{% endif %}
 </div>
-{% endif %}
 
 {% if tab == 'other' %}
   {% if show_archived %}
@@ -176,4 +110,10 @@
     <p class="archived-link"><a href="/?tab=other&archived=1">{{ t("dash.show_done", n=archived_count) }}</a></p>
   {% endif %}
 {% endif %}
+
+{{ tz_datalist() }}
+<script type="application/json" id="js-i18n">{{ {"loading": t("js.loading"), "failed": t("js.failed"), "retry": t("js.retry")} | tojson }}</script>
+<script>
+{% include "_dashboard.js" %}
+</script>
 {% endblock %}

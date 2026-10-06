@@ -59,7 +59,7 @@
   "task.reject_btn": "رد کردن؛ لازم نیست جواب بدهم",
   "task.restore_btn": "برگرداندن به صف",
   "task.sent_at": "ارسال‌شده در {time}",
-  "task.original": "ایمیل دریافتی",
+  "task.original": "ایمیل اصلی",
   "task.from": "از",
   "task.reply_to": "جواب به",
   "task.subject": "موضوع",
@@ -166,5 +166,10 @@
   "flash.marked_done": "انجام‌شده علامت خورد. فقط همین‌جا بایگانی می‌شود؛ ایمیل در جیمیل دست‌نخورده می‌ماند.",
   "flash.restored_other": "به سایر ایمیل‌ها برگشت.",
   "flash.draft_ready": "پیش‌نویس جواب آماده است. قبل از ارسال بخوانش.",
-  "flash.draft_failed": "نوشتن پیش‌نویس ناموفق بود: {error}"
+  "flash.draft_failed": "نوشتن پیش‌نویس ناموفق بود: {error}",
+  "js.loading": "در حال بارگذاری…",
+  "js.failed": "مشکلی پیش آمد. دوباره امتحان کن.",
+  "js.retry": "تلاش دوباره",
+  "task.show_full": "نمایش کل ایمیل",
+  "task.reject_short": "رد کردن"
 }

@@ -1,0 +1,21 @@
+{# One accordion row on the Events tab. The panel holds the editable event card. #}
+{% macro event_row(ev, ev_task, is_open, panel_html) %}
+<li class="row{% if is_open %} open{% endif %}" id="event-{{ ev.id }}" data-row="event:{{ ev.id }}">
+  <form class="head-form" method="get" action="/">
+    <input type="hidden" name="tab" value="events">
+    <button class="head" type="submit" name="open" value="{{ ev.id }}" id="head-event-{{ ev.id }}"
+            aria-expanded="{{ 'true' if is_open else 'false' }}" aria-controls="panel-event-{{ ev.id }}">
+      <span class="sum">
+        <span class="l1">
+          <span class="from ltr-auto">{{ ev.title or t("dash.untitled") }}</span>
+          <span class="date" dir="ltr">{{ ev.date }}{% if ev.end_date %} – {{ ev.end_date }}{% endif %}{% if ev.start_time %} {{ ev.start_time }}{% if ev.end_time %}–{{ ev.end_time }}{% endif %}{% endif %}</span>
+        </span>
+        <span class="subj">{{ ev.date | dayhead }}{% if ev.end_date %} – {{ ev.end_date | dayhead }}{% endif %}{% if ev.location %} · <span class="ltr-auto">{{ ev.location }}</span>{% endif %}</span>
+        {% if ev_task %}<span class="prev ltr-auto">{{ t("ev.from_task", subject=(ev_task.subject or t("dash.no_subject"))) }}</span>{% endif %}
+      </span>
+      <svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg>
+    </button>
+  </form>
+  <div class="body" id="panel-event-{{ ev.id }}" role="region" aria-labelledby="head-event-{{ ev.id }}" data-src="/events/{{ ev.id }}/panel"{% if panel_html %} data-loaded="1"{% endif %}{% if not is_open %} hidden{% endif %}>{{ panel_html }}</div>
+</li>
+{% endmacro %}

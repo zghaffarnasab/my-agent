@@ -1,0 +1,5 @@
+{% from "_event_card.html" import event_card with context %}
+<div class="panel-inner">
+  <div class="inline-msg" role="status" aria-live="polite" hidden></div>
+  {{ event_card(ev, task, conflicts, "/?tab=events", true) }}
+</div>

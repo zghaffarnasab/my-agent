@@ -1,0 +1,108 @@
+{# Everything about one email: original, draft reply (or summary), events. Shared by the dashboard rows and /tasks/{id}. #}
+{% from "_event_card.html" import event_card with context %}
+{% set long_body = (task.original_body | length) > 600 %}
+<div class="panel-inner" data-task="{{ task.id }}">
+  <div class="inline-msg" role="status" aria-live="polite" hidden></div>
+  {% if task.error %}<div class="inline-msg error ltr-auto">{{ task.error }}</div>{% endif %}
+
+  <h3>{{ t("task.original") }}</h3>
+  <div class="orig">
+    <dl class="meta-list">
+      <dt>{{ t("task.from") }}</dt><dd class="ltr-auto">{{ task.from_addr }}</dd>
+      {% if task.reply_to != task.from_addr %}<dt>{{ t("task.reply_to") }}</dt><dd class="ltr-auto">{{ task.reply_to }}</dd>{% endif %}
+      <dt>{{ t("task.subject") }}</dt><dd class="ltr-auto">{{ task.subject or t("dash.no_subject") }}</dd>
+      <dt>{{ t("task.time") }}</dt><dd><span dir="ltr">{{ task.received_at | dt }}</span></dd>
+      {% if task.category %}<dt>{{ t("task.category") }}</dt><dd>{{ t("category." ~ task.category) }}</dd>{% endif %}
+      {% if task.summary and task.status not in ['info', 'done'] %}<dt>{{ t("task.summary") }}</dt><dd class="ltr-auto">{{ task.summary }}</dd>{% endif %}
+      {% if task.is_forward %}
+        {% if task.original_from %}<dt>{{ t("task.forwarded_from") }}</dt><dd class="ltr-auto">{{ task.original_from }}</dd>{% endif %}
+        {% if task.original_subject %}<dt>{{ t("task.original_subject") }}</dt><dd class="ltr-auto">{{ task.original_subject }}</dd>{% endif %}
+        {% if task.original_date %}<dt>{{ t("task.original_date") }}</dt><dd class="ltr-auto">{{ task.original_date }}</dd>{% endif %}
+      {% endif %}
+    </dl>
+    <div class="orig-text ltr-auto">{{ task.original_body[:600] }}{% if long_body %}…{% endif %}</div>
+    {% if long_body %}
+    <details>
+      <summary>{{ t("task.show_full") }}</summary>
+      <pre class="ltr-auto">{{ task.original_body }}</pre>
+    </details>
+    {% endif %}
+    {% if task.thread_context %}
+    <details>
+      <summary>{{ t("task.earlier_messages") }}</summary>
+      <pre class="ltr-auto">{{ task.thread_context }}</pre>
+    </details>
+    {% endif %}
+  </div>
+
+  {% if task.status in ['info', 'done'] %}
+  <h3>{{ t("task.info_title") }} <span class="badge {{ task.status }}">{{ t("status." ~ task.status) }}</span></h3>
+  {% if task.summary %}<div class="readonly">{{ task.summary }}</div>{% endif %}
+  <p class="hint">{{ t("task.forward_note") if task.is_forward else t("task.no_reply_needed") }}</p>
+  {% if task.action_items %}
+  <h3>{{ t("task.action_items") }}</h3>
+  <ul class="info-list">
+    {% for a in task.action_items %}<li><span class="ltr-auto">{{ a.text }}</span>{% if a.due %} <span class="hint">({{ t("task.due", date=a.due) }})</span>{% endif %}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% if task.related %}
+  <h3>{{ t("task.related_events") }}</h3>
+  <ul class="info-list">
+    {% for r in task.related %}<li>{% if r.url %}<a class="ltr-auto" href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.title }}</a>{% else %}<span class="ltr-auto">{{ r.title }}</span>{% endif %}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  <div class="acts">
+    {% if task.status == 'done' %}
+      <form class="inline" method="post" action="/tasks/{{ task.id }}/undone">{% if back_url %}<input type="hidden" name="next" value="{{ back_url }}">{% endif %}<button type="submit">{{ t("action.restore_info") }}</button></form>
+    {% else %}
+      <form class="inline" method="post" action="/tasks/{{ task.id }}/done">{% if back_url %}<input type="hidden" name="next" value="{{ back_url }}">{% endif %}<button class="btn-primary" type="submit">{{ t("action.done") }}</button></form>
+    {% endif %}
+    <form class="inline" method="post" action="/tasks/{{ task.id }}/draft-anyway">{% if back_url %}<input type="hidden" name="next" value="{{ back_url }}">{% endif %}<button type="submit">{{ t("action.draft_anyway") }}</button></form>
+  </div>
+
+  {% elif task.status in ['pending', 'failed'] %}
+  <h3>{{ t("task.suggested_reply") }} <span class="badge {{ task.status }}">{{ t("status." ~ task.status) }}</span></h3>
+  <form class="draft-form" method="post" action="/tasks/{{ task.id }}/send">
+    {% if back_url %}<input type="hidden" name="next" value="{{ back_url }}">{% endif %}
+    <textarea name="draft_body" id="draft-{{ task.id }}" dir="auto" aria-label="{{ t('task.reply_aria') }}">{{ task.draft_body }}</textarea>
+    <div class="rewrite">
+      <input type="text" name="instruction" placeholder="{{ t('task.rewrite_placeholder') }}" aria-label="{{ t('task.rewrite_aria') }}">
+      <button type="submit" formaction="/tasks/{{ task.id }}/regenerate" formnovalidate>{{ t("task.rewrite_btn") }}</button>
+    </div>
+    <div class="acts">
+      {% if task.status == 'pending' %}
+      <button class="btn-primary" type="submit" data-send formaction="/tasks/{{ task.id }}/send"
+        onclick='return confirm({{ t("task.send_confirm", name=(task.reply_to | sender)) | tojson }})'>{{ t("task.send_btn") }}</button>
+      {% endif %}
+      <button type="submit" formaction="/tasks/{{ task.id }}/save">{{ t("task.save_btn") }}</button>
+      <button type="submit" class="btn-danger" formaction="/tasks/{{ task.id }}/reject" formnovalidate>{{ t("task.reject_short") }}</button>
+      <span class="spacer"></span>
+      <span class="hint">{{ t("task.send_hint") }}</span>
+    </div>
+  </form>
+
+  {% else %}
+  <h3>{{ t("task.suggested_reply") }} <span class="badge {{ task.status }}">{{ t("status." ~ task.status) }}</span></h3>
+  <div class="readonly">{{ task.draft_body }}</div>
+  <div class="acts">
+    {% if task.status == 'rejected' %}
+      <form class="inline" method="post" action="/tasks/{{ task.id }}/restore">{% if back_url %}<input type="hidden" name="next" value="{{ back_url }}">{% endif %}<button type="submit">{{ t("task.restore_btn") }}</button></form>
+    {% elif task.sent_at %}
+      <span class="hint">{{ t("task.sent_at", time=(task.sent_at | dt)) }}</span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <h3 id="events-{{ task.id }}">{{ t("ev.section") }}
+    <form class="inline" method="post" action="/tasks/{{ task.id }}/find-events">{% if back_url %}<input type="hidden" name="next" value="{{ back_url }}">{% endif %}
+      <button type="submit" class="btn-link">{{ t("ev.recheck") }}</button>
+    </form>
+  </h3>
+  {% if not suggestions %}
+    <p class="hint">{{ t("ev.none") }}</p>
+  {% else %}
+  <div class="ev-grid">
+    {% for ev in suggestions %}{{ event_card(ev, task, conflicts, back_url) }}{% endfor %}
+  </div>
+  {% endif %}
+</div>

@@ -1,0 +1,28 @@
+{# One accordion row. The header is a real button; the details (panel) are loaded when the row is opened. #}
+{% macro task_row(item, tab, archived, is_open, panel_html, has_event) %}
+<li class="row{% if is_open %} open{% endif %}" id="task-{{ item.id }}" data-row="task:{{ item.id }}">
+  <form class="head-form" method="get" action="/">
+    <input type="hidden" name="tab" value="{{ tab }}">
+    {% if archived %}<input type="hidden" name="archived" value="1">{% endif %}
+    <button class="head" type="submit" name="open" value="{{ item.id }}" id="head-task-{{ item.id }}"
+            aria-expanded="{{ 'true' if is_open else 'false' }}" aria-controls="panel-task-{{ item.id }}">
+      <span class="sum">
+        <span class="l1">
+          <span class="from ltr-auto">{{ item.from_addr | sender }}</span>
+          <span class="date" dir="ltr">{{ (item.sent_at if tab == 'sent' else item.received_at) | dt }}</span>
+        </span>
+        <span class="subj"><span class="ltr-auto">{{ item.subject or t("dash.no_subject") }}</span>{% if has_event %}<span class="mtg">{{ t("dash.tag_event") }}</span>{% endif %}</span>
+        {% if item.status == 'failed' %}
+          <span class="prev err">{{ t("dash.draft_failed") }}</span>
+        {% elif item.status in ['info', 'done'] %}
+          <span class="prev ltr-auto">{% if item.category %}<strong>{{ t("category." ~ item.category) }}</strong> · {% endif %}{{ item.summary }}</span>
+        {% else %}
+          <span class="prev ltr-auto">{{ item.draft_body[:180] }}</span>
+        {% endif %}
+      </span>
+      <svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg>
+    </button>
+  </form>
+  <div class="body" id="panel-task-{{ item.id }}" role="region" aria-labelledby="head-task-{{ item.id }}" data-src="/tasks/{{ item.id }}/panel"{% if panel_html %} data-loaded="1"{% endif %}{% if not is_open %} hidden{% endif %}>{{ panel_html }}</div>
+</li>
+{% endmacro %}

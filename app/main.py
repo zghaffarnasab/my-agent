@@ -1,15 +1,15 @@
 import asyncio
-import itertools
 import os
 import secrets
 from datetime import timezone
 from zoneinfo import ZoneInfo
 from email.utils import parseaddr
 
-from fastapi import BackgroundTasks, FastAPI, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import BackgroundTasks, FastAPI, Form, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from jinja2 import pass_context
+from markupsafe import Markup
 from sqlalchemy import delete, func, select, update
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -248,26 +248,24 @@ def upcoming_suggestions(db) -> list[tuple[EventSuggestion, Task]]:
     return [(ev, task) for ev, task in rows if (ev.end_date or ev.date) >= today]
 
 
-@app.get("/", response_class=HTMLResponse)
-def index(request: Request, tab: str = "", status: str = "", archived: int = 0):
-    require_login(request)
-    tab = tab or LEGACY_STATUS_TABS.get(status, "reply")
-    if tab not in TABS:
-        tab = "reply"
-    show_archived = bool(archived) and tab == "other"
-    tasks, event_items = [], []
-    with SessionLocal() as db:
-        counts = dict(db.execute(select(Task.status, func.count()).group_by(Task.status)).all())
-        all_events = upcoming_suggestions(db)
-        if tab == "events":
-            event_items = all_events[:MAX_EVENT_CARDS]
-        else:
-            statuses = [TaskStatus.DONE] if show_archived else TAB_STATUSES[tab]
-            tasks = db.scalars(
-                select(Task).where(Task.status.in_(statuses))
-                .order_by(Task.received_at.desc().nullslast(), Task.id.desc()).limit(200)
-            ).all()
-        tasks_with_events = {ev.task_id for ev, _ in all_events}
+def _tab_of(status: str) -> tuple[str, bool]:
+    """(tab, archived?) where a task with this status is listed."""
+    if status == TaskStatus.DONE:
+        return "other", True
+    for tab, statuses in TAB_STATUSES.items():
+        if status in statuses:
+            return tab, False
+    return "reply", False   # e.g. "sending"
+
+
+def row_url(task: Task) -> str:
+    """The dashboard with this task's row open. Also where a plain form post (no JavaScript) lands after an action."""
+    tab, archived = _tab_of(task.status)
+    return f"/?tab={tab}{'&archived=1' if archived else ''}&open={task.id}#task-{task.id}"
+
+
+def _tab_counts(db, all_events) -> tuple[dict, dict]:
+    counts = dict(db.execute(select(Task.status, func.count()).group_by(Task.status)).all())
     tab_counts = {
         "reply": sum(counts.get(s, 0) for s in TAB_STATUSES["reply"]),
         "events": len(all_events),
@@ -275,21 +273,100 @@ def index(request: Request, tab: str = "", status: str = "", archived: int = 0):
         "sent": counts.get(TaskStatus.SENT, 0),
         "rejected": counts.get(TaskStatus.REJECTED, 0),
     }
-    event_days = [(day, list(group)) for day, group in itertools.groupby(event_items, key=lambda item: item[0].date)]
+    return tab_counts, counts
+
+
+def _render(request: Request, name: str, context: dict) -> str:
+    """Render a template to a string (with the language helpers), for panels and row replacements."""
+    return templates.TemplateResponse(request, name, context).body.decode()
+
+
+def _conflicts_for(suggestions) -> dict:
+    conflicts = {}
+    if gmail_client.has_calendar_access():
+        for sug in suggestions:
+            if sug.status == EventStatus.SUGGESTED:
+                try:
+                    conflicts[sug.id] = calendar_client.conflicts(sug)
+                except Exception:
+                    conflicts[sug.id] = []
+    return conflicts
+
+
+def _task_panel_context(db, task: Task, back_url: str = "") -> dict:
+    suggestions = db.scalars(
+        select(EventSuggestion).where(EventSuggestion.task_id == task.id,
+                                      EventSuggestion.status != EventStatus.DISMISSED)
+        .order_by(EventSuggestion.date, EventSuggestion.start_time)
+    ).all()
+    return {
+        "task": task,
+        "suggestions": suggestions,
+        "conflicts": _conflicts_for(suggestions),
+        "calendar_ok": gmail_client.has_calendar_access(),
+        "owner_tz": settings.get_timezone(),
+        "back_url": back_url,
+    }
+
+
+def task_panel_html(request: Request, db, task: Task) -> Markup:
+    return Markup(_render(request, "_task_panel.html", _task_panel_context(db, task)))
+
+
+def event_panel_html(request: Request, db, ev: EventSuggestion) -> Markup:
+    return Markup(_render(request, "_event_panel.html", {
+        "ev": ev,
+        "task": db.get(Task, ev.task_id),
+        "conflicts": _conflicts_for([ev]),
+        "calendar_ok": gmail_client.has_calendar_access(),
+        "owner_tz": settings.get_timezone(),
+    }))
+
+
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request, tab: str = "", status: str = "", archived: int = 0,
+          open_id: int = Query(0, alias="open")):
+    require_login(request)
+    if open_id and not tab and not status:       # a link like /?open=12 finds the right tab by itself
+        with SessionLocal() as db:
+            wanted = db.get(Task, open_id)
+        if wanted is not None and wanted.status != TaskStatus.SKIPPED:
+            tab, was_archived = _tab_of(wanted.status)
+            archived = int(was_archived)
+    tab = tab or LEGACY_STATUS_TABS.get(status, "reply")
+    if tab not in TABS:
+        tab = "reply"
+    show_archived = bool(archived) and tab == "other"
+    tasks, event_items, open_panel_html = [], [], ""
+    with SessionLocal() as db:
+        all_events = upcoming_suggestions(db)
+        tab_counts, counts = _tab_counts(db, all_events)
+        if tab == "events":
+            event_items = all_events[:MAX_EVENT_CARDS]
+            shown = [ev for ev, _ in event_items]
+            if open_id in {ev.id for ev in shown}:
+                open_panel_html = event_panel_html(request, db, next(ev for ev in shown if ev.id == open_id))
+            else:
+                open_id = 0
+        else:
+            statuses = [TaskStatus.DONE] if show_archived else TAB_STATUSES[tab]
+            tasks = db.scalars(
+                select(Task).where(Task.status.in_(statuses))
+                .order_by(Task.received_at.desc().nullslast(), Task.id.desc()).limit(200)
+            ).all()
+            if open_id in {t.id for t in tasks}:
+                open_panel_html = task_panel_html(request, db, next(t for t in tasks if t.id == open_id))
+            else:
+                open_id = 0
+        tasks_with_events = {ev.task_id for ev, _ in all_events}
     gmail = gmail_client.connected_email()
     calendar_ok = bool(gmail) and gmail_client.has_calendar_access()
     upcoming, upcoming_error = [], None
-    conflicts = {}
     if calendar_ok:
         try:
             upcoming = calendar_client.upcoming()
         except Exception as exc:
             upcoming_error = str(exc)[:300]
-        for ev, _ in event_items:
-            try:
-                conflicts[ev.id] = calendar_client.conflicts(ev)
-            except Exception:
-                conflicts[ev.id] = []
     return templates.TemplateResponse(request, "index.html", {
         "calendar_ok": calendar_ok,
         "upcoming": upcoming,
@@ -297,8 +374,9 @@ def index(request: Request, tab: str = "", status: str = "", archived: int = 0):
         "upcoming_days": config.UPCOMING_DAYS,
         "tasks_with_events": tasks_with_events,
         "tasks": tasks,
-        "event_days": event_days,
-        "conflicts": conflicts,
+        "event_items": event_items,
+        "open_id": open_id,
+        "open_panel_html": open_panel_html,
         "owner_tz": settings.get_timezone(),
         "tab": tab,
         "tabs": TABS,
@@ -319,45 +397,117 @@ def poll_now(request: Request, background: BackgroundTasks):
     return RedirectResponse("/", status_code=303)
 
 
+@app.get("/tasks/{task_id}/panel", response_class=HTMLResponse)
+def task_panel(request: Request, task_id: int):
+    """The details of one row, loaded when the row is opened."""
+    require_login(request)
+    with SessionLocal() as db:
+        task = get_task_or_404(db, task_id)
+        return HTMLResponse(task_panel_html(request, db, task))
+
+
+@app.get("/events/{event_id}/panel", response_class=HTMLResponse)
+def event_panel(request: Request, event_id: int):
+    require_login(request)
+    with SessionLocal() as db:
+        return HTMLResponse(event_panel_html(request, db, _get_suggestion(db, event_id)))
+
+
 @app.get("/tasks/{task_id}", response_class=HTMLResponse)
 def task_detail(request: Request, task_id: int):
+    """Fallback / deep link: the same panel as in the dashboard, on its own page."""
     require_login(request)
     with SessionLocal() as db:
         task = get_task_or_404(db, task_id)
         next_task = db.scalars(
             select(Task).where(Task.status == TaskStatus.PENDING, Task.id != task_id).order_by(Task.id).limit(1)
         ).first()
-        suggestions = db.scalars(
-            select(EventSuggestion).where(EventSuggestion.task_id == task_id,
-                                          EventSuggestion.status != EventStatus.DISMISSED)
-            .order_by(EventSuggestion.date, EventSuggestion.start_time)
-        ).all()
-    calendar_ok = gmail_client.has_calendar_access()
-    conflicts = {}
-    if calendar_ok:
-        for sug in suggestions:
-            if sug.status == EventStatus.SUGGESTED:
-                try:
-                    conflicts[sug.id] = calendar_client.conflicts(sug)
-                except Exception:
-                    conflicts[sug.id] = []
+        context = _task_panel_context(db, task, back_url=f"/tasks/{task_id}")
     return templates.TemplateResponse(request, "task.html", {
-        "suggestions": suggestions,
-        "conflicts": conflicts,
-        "calendar_ok": calendar_ok,
-        "owner_tz": settings.get_timezone(),
-        "task": task,
+        **context,
         "next_task": next_task,
         "flash": pop_flash(request),
     })
 
 
+# ---------- Actions: plain form posts redirect, fetch() calls get JSON ----------
+
+def is_fetch(request: Request) -> bool:
+    return request.headers.get("x-requested-with") == "fetch"
+
+
+def notify(request: Request, key: str, kind: str = "ok", **params):
+    """Tell the user what happened: a flash message after a redirect, or inline text for fetch()."""
+    if is_fetch(request):
+        request.state.note = {"key": key, "kind": kind, "params": {k: str(v) for k, v in params.items()}}
+    else:
+        flash(request, key, kind, **params)
+
+
+def _dest(next_url: str, task_id: int) -> str:
+    """Where a plain form post goes next: the task page it came from, else the dashboard with the row open."""
+    if next_url.startswith("/tasks/"):
+        return _safe_next(next_url)
+    with SessionLocal() as db:
+        task = db.get(Task, task_id)
+    return row_url(task) if task is not None else "/"
+
+
+def _event_dest(next_url: str, task_id: int) -> str:
+    return _safe_next(next_url) if next_url else _dest("", task_id)
+
+
+def reply(request: Request, redirect_to: str, *, replace: bool = True):
+    """Redirect for plain form posts. For fetch(): a small JSON answer with the new row, if it changed."""
+    if not is_fetch(request):
+        return RedirectResponse(redirect_to, status_code=303)
+
+    note = getattr(request.state, "note", None)
+    lang = current_lang(request)
+    kind = note["kind"] if note else "ok"
+    payload = {
+        "ok": kind != "error",
+        "kind": kind,
+        "message": i18n.translate(lang, note["key"], **note["params"]) if note else "",
+        "remove": False,
+        "html": "",
+    }
+    row_kind, _, row_id = request.headers.get("x-row", "").partition(":")
+    tab = request.headers.get("x-tab", "reply")
+    tab = tab if tab in TABS else "reply"
+    archived = request.headers.get("x-archived") == "1"
+    with SessionLocal() as db:
+        payload["counts"] = _tab_counts(db, upcoming_suggestions(db))[0]
+        if payload["ok"] and replace and row_id.isdigit():
+            if row_kind == "task":
+                task = db.get(Task, int(row_id))
+                statuses = [TaskStatus.DONE] if (archived and tab == "other") else TAB_STATUSES.get(tab, [])
+                if task is None or task.status not in statuses:
+                    payload["remove"] = True
+                else:
+                    payload["html"] = _render(request, "_task_row_fragment.html", {
+                        "item": task, "tab": tab, "archived": archived, "is_open": True,
+                        "panel_html": task_panel_html(request, db, task),
+                        "has_event": any(ev.task_id == task.id for ev, _ in upcoming_suggestions(db)),
+                    })
+            elif row_kind == "event":
+                ev = db.get(EventSuggestion, int(row_id))
+                if ev is None or ev.status != EventStatus.SUGGESTED or (ev.end_date or ev.date) < _today().isoformat():
+                    payload["remove"] = True
+                else:
+                    payload["html"] = _render(request, "_event_row_fragment.html", {
+                        "ev": ev, "ev_task": db.get(Task, ev.task_id), "is_open": True,
+                        "panel_html": event_panel_html(request, db, ev),
+                    })
+    return JSONResponse(payload)
+
+
 @app.post("/tasks/{task_id}/send")
-def send_task(request: Request, task_id: int, draft_body: str = Form(...)):
+def send_task(request: Request, task_id: int, draft_body: str = Form(...), next: str = Form("")):
     require_login(request)
     if not draft_body.strip():
-        flash(request, "flash.reply_empty", "error")
-        return RedirectResponse(f"/tasks/{task_id}", status_code=303)
+        notify(request, "flash.reply_empty", "error")
+        return reply(request, _dest(next, task_id))
 
     with SessionLocal() as db:
         # Atomic claim so a double click can never send twice
@@ -368,8 +518,8 @@ def send_task(request: Request, task_id: int, draft_body: str = Form(...)):
         ).rowcount
         db.commit()
         if not claimed:
-            flash(request, "flash.task_already_done", "error")
-            return RedirectResponse(f"/tasks/{task_id}", status_code=303)
+            notify(request, "flash.task_already_done", "error")
+            return reply(request, _dest(next, task_id))
         task = db.get(Task, task_id)
 
     try:
@@ -398,29 +548,24 @@ def send_task(request: Request, task_id: int, draft_body: str = Form(...)):
         if new_status == TaskStatus.SENT:
             task.sent_at = utcnow()
         db.commit()
-        next_task = db.scalars(
-            select(Task).where(Task.status == TaskStatus.PENDING).order_by(Task.id).limit(1)
-        ).first()
 
     if new_status == TaskStatus.SENT:
         found = events.extract_for_task(task, source="outgoing", text=draft_body, reference=utcnow())
-        if found:
-            flash(request, "flash.reply_sent_with_events")
-            return RedirectResponse(f"/tasks/{task_id}#events", status_code=303)
-        flash(request, "flash.reply_sent")
-        return RedirectResponse(f"/tasks/{next_task.id}" if next_task else "/", status_code=303)
-    flash(request, "flash.send_failed", "error", error=error)
-    return RedirectResponse(f"/tasks/{task_id}", status_code=303)
+        notify(request, "flash.reply_sent_with_events" if found else "flash.reply_sent")
+    else:
+        notify(request, "flash.send_failed", "error", error=error)
+    return reply(request, _dest(next, task_id))
 
 
 @app.post("/tasks/{task_id}/regenerate")
-def regenerate_task(request: Request, task_id: int, instruction: str = Form(""), draft_body: str = Form("")):
+def regenerate_task(request: Request, task_id: int, instruction: str = Form(""), draft_body: str = Form(""),
+                    next: str = Form("")):
     require_login(request)
     with SessionLocal() as db:
         task = get_task_or_404(db, task_id)
         if task.status not in (TaskStatus.PENDING, TaskStatus.FAILED):
-            flash(request, "flash.regen_only_pending", "error")
-            return RedirectResponse(f"/tasks/{task_id}", status_code=303)
+            notify(request, "flash.regen_only_pending", "error")
+            return reply(request, _dest(next, task_id))
         try:
             task.draft_body = ai.draft_reply(
                 from_addr=task.from_addr,
@@ -432,24 +577,24 @@ def regenerate_task(request: Request, task_id: int, instruction: str = Form(""),
             )
             task.status = TaskStatus.PENDING
             task.error = ""
-            flash(request, "flash.regen_ok")
+            notify(request, "flash.regen_ok")
         except Exception as exc:
             task.error = str(exc)[:2000]
-            flash(request, "flash.regen_failed", "error", error=exc)
+            notify(request, "flash.regen_failed", "error", error=exc)
         db.commit()
-    return RedirectResponse(f"/tasks/{task_id}", status_code=303)
+    return reply(request, _dest(next, task_id))
 
 
 @app.post("/tasks/{task_id}/save")
-def save_task(request: Request, task_id: int, draft_body: str = Form(...)):
+def save_task(request: Request, task_id: int, draft_body: str = Form(...), next: str = Form("")):
     require_login(request)
     with SessionLocal() as db:
         task = get_task_or_404(db, task_id)
         if task.status in (TaskStatus.PENDING, TaskStatus.FAILED):
             task.draft_body = draft_body
             db.commit()
-            flash(request, "flash.saved")
-    return RedirectResponse(f"/tasks/{task_id}", status_code=303)
+            notify(request, "flash.saved")
+    return reply(request, _dest(next, task_id), replace=False)   # nothing else changed: keep the open row as it is
 
 
 @app.post("/tasks/{task_id}/done")
@@ -461,31 +606,31 @@ def done_task(request: Request, task_id: int, next: str = Form("")):
         if task.status == TaskStatus.INFO:
             task.status = TaskStatus.DONE
             db.commit()
-    flash(request, "flash.marked_done")
-    return RedirectResponse(_safe_next(next) if next else "/?tab=other", status_code=303)
+    notify(request, "flash.marked_done")
+    return reply(request, _dest(next, task_id))
 
 
 @app.post("/tasks/{task_id}/undone")
-def undone_task(request: Request, task_id: int):
+def undone_task(request: Request, task_id: int, next: str = Form("")):
     require_login(request)
     with SessionLocal() as db:
         task = get_task_or_404(db, task_id)
         if task.status == TaskStatus.DONE:
             task.status = TaskStatus.INFO
             db.commit()
-    flash(request, "flash.restored_other")
-    return RedirectResponse("/?tab=other", status_code=303)
+    notify(request, "flash.restored_other")
+    return reply(request, _dest(next, task_id))
 
 
 @app.post("/tasks/{task_id}/draft-anyway")
-def draft_anyway(request: Request, task_id: int):
+def draft_anyway(request: Request, task_id: int, next: str = Form("")):
     """The owner wants a reply to a mail that was read as "no reply needed". The draft still waits for approval."""
     require_login(request)
     with SessionLocal() as db:
         task = get_task_or_404(db, task_id)
         if task.status not in (TaskStatus.INFO, TaskStatus.DONE):
-            flash(request, "flash.task_already_done", "error")
-            return RedirectResponse(f"/tasks/{task_id}", status_code=303)
+            notify(request, "flash.task_already_done", "error")
+            return reply(request, _dest(next, task_id))
         try:
             try:
                 task.thread_context = gmail_client.get_thread_context(gmail_client.get_service(), task.thread_id, task.gmail_message_id)
@@ -500,38 +645,34 @@ def draft_anyway(request: Request, task_id: int):
             task.status = TaskStatus.PENDING
             task.error = ""
             db.commit()
-            flash(request, "flash.draft_ready")
+            notify(request, "flash.draft_ready")
         except Exception as exc:
             db.rollback()
-            flash(request, "flash.draft_failed", "error", error=exc)
-            return RedirectResponse(f"/tasks/{task_id}", status_code=303)
-    return RedirectResponse(f"/tasks/{task_id}", status_code=303)
+            notify(request, "flash.draft_failed", "error", error=exc)
+    return reply(request, _dest(next, task_id))
 
 
 @app.post("/tasks/{task_id}/reject")
-def reject_task(request: Request, task_id: int):
+def reject_task(request: Request, task_id: int, next: str = Form("")):
     require_login(request)
     with SessionLocal() as db:
         task = get_task_or_404(db, task_id)
         if task.status in (TaskStatus.PENDING, TaskStatus.FAILED):
             task.status = TaskStatus.REJECTED
             db.commit()
-        next_task = db.scalars(
-            select(Task).where(Task.status == TaskStatus.PENDING).order_by(Task.id).limit(1)
-        ).first()
-    flash(request, "flash.rejected")
-    return RedirectResponse(f"/tasks/{next_task.id}" if next_task else "/", status_code=303)
+    notify(request, "flash.rejected")
+    return reply(request, _dest(next, task_id))
 
 
 @app.post("/tasks/{task_id}/restore")
-def restore_task(request: Request, task_id: int):
+def restore_task(request: Request, task_id: int, next: str = Form("")):
     require_login(request)
     with SessionLocal() as db:
         task = get_task_or_404(db, task_id)
         if task.status == TaskStatus.REJECTED:
             task.status = TaskStatus.PENDING
             db.commit()
-    return RedirectResponse(f"/tasks/{task_id}", status_code=303)
+    return reply(request, _dest(next, task_id))
 
 
 # ---------- Language and settings ----------
@@ -583,11 +724,6 @@ def save_settings(request: Request, language: str = Form(...), tz: str = Form(""
 
 # ---------- Calendar ----------
 
-def _event_return(next_url: str, task_id: int) -> str:
-    """After using an event card: back to the page it was on (the Events tab or the task page)."""
-    return _safe_next(next_url) if next_url else f"/tasks/{task_id}#events"
-
-
 def _get_suggestion(db, event_id: int) -> EventSuggestion:
     sug = db.get(EventSuggestion, event_id)
     if sug is None:
@@ -596,7 +732,7 @@ def _get_suggestion(db, event_id: int) -> EventSuggestion:
 
 
 @app.post("/tasks/{task_id}/find-events")
-def find_events(request: Request, task_id: int):
+def find_events(request: Request, task_id: int, next: str = Form("")):
     """Manually look for events, e.g. for emails that arrived before this feature existed."""
     require_login(request)
     with SessionLocal() as db:
@@ -606,10 +742,10 @@ def find_events(request: Request, task_id: int):
         n += events.extract_for_task(task, source="outgoing", text=task.draft_body,
                                      reference=task.sent_at or utcnow())
     if n:
-        flash(request, "flash.events_found", n=n)
+        notify(request, "flash.events_found", n=n)
     else:
-        flash(request, "flash.events_none")
-    return RedirectResponse(f"/tasks/{task_id}#events", status_code=303)
+        notify(request, "flash.events_none")
+    return reply(request, _dest(next, task_id))
 
 
 @app.post("/events/{event_id}/add")
@@ -632,8 +768,8 @@ def add_event(
         sug = _get_suggestion(db, event_id)
         task = db.get(Task, sug.task_id)
         if sug.status != EventStatus.SUGGESTED:
-            flash(request, "flash.event_already", "error")
-            return RedirectResponse(_event_return(next, sug.task_id), status_code=303)
+            notify(request, "flash.event_already", "error")
+            return reply(request, _event_dest(next, sug.task_id))
         # apply your edits from the card
         sug.title, sug.date = title.strip(), date.strip()
         sug.end_date = validation.clean_date(end_date) if end_date.strip() > date.strip() else ""
@@ -651,12 +787,12 @@ def add_event(
             sug.status = EventStatus.ADDED
             sug.google_event_id = created.get("id", "")
             sug.html_link = created.get("htmlLink", "")
-            flash(request, note)
+            notify(request, note)
         except Exception as exc:
-            flash(request, "flash.event_add_failed", "error", error=exc)
+            notify(request, "flash.event_add_failed", "error", error=exc)
         db.commit()
         task_id = sug.task_id
-    return RedirectResponse(_event_return(next, task_id), status_code=303)
+    return reply(request, _event_dest(next, task_id))
 
 
 @app.post("/events/{event_id}/dismiss")
@@ -668,4 +804,4 @@ def dismiss_event(request: Request, event_id: int, next: str = Form("")):
             sug.status = EventStatus.DISMISSED
             db.commit()
         task_id = sug.task_id
-    return RedirectResponse(_event_return(next, task_id), status_code=303)
+    return reply(request, _event_dest(next, task_id))

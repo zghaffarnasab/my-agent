@@ -8,9 +8,37 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.6.0"
+VERSION = "1.7.0"
 
 CHANGELOG = [
+    {
+        "version": "1.7.0",
+        "date": "2026-10-07",
+        "title": {
+            "en": "Open emails inline, right in the list",
+            "fa": "باز کردن ایمیل‌ها همان‌جا، داخل فهرست",
+        },
+        "changes": {
+            "en": [
+                "Every row in every tab is now an accordion: click it to open the details right below it, click again to close. Only one row is open at a time.",
+                "Everything you could do on the email page you can now do inside the open row: read the original email, edit, rewrite, save, approve and send or reject the draft, add or dismiss events, mark mail as done, draft a reply anyway, and put a rejected email back.",
+                "Actions no longer reload the page. The row updates in place, a small message tells you what happened, and the tab counts change. A row that no longer belongs to its tab (for example after sending) disappears from it.",
+                "The details are loaded only when you open a row, so the dashboard opens faster. Text you typed into a draft stays when you close and re-open a row.",
+                "The Events tab rows are accordions too, with the editable event card inside.",
+                "Links like /#task-123 open that row. Without JavaScript the page still works: a row opens with a normal click and every action returns you to the dashboard with that row open. The old email page /tasks/123 still works as a fallback.",
+                "A narrower, single-column layout that fits phones (no sideways scrolling, bigger tap targets) and follows the language direction. English is the default language and the EN | FA choice is remembered.",
+            ],
+            "fa": [
+                "هر ردیف در هر تب حالا آکاردئون است: روی آن کلیک کن تا جزئیاتش درست زیر خودش باز شود و دوباره کلیک کن تا بسته شود. فقط یک ردیف در یک زمان باز است.",
+                "هر کاری که در صفحه‌ی جدای ایمیل می‌شد کرد، حالا داخل ردیف باز هم شدنی است: خواندن ایمیل اصلی، ویرایش، بازنویسی، ذخیره، تأیید و ارسال یا رد پیش‌نویس، افزودن یا ردِ قرار، «انجام شد» برای ایمیل‌های بدون جواب، نوشتن جواب به‌هرحال، و برگرداندن ایمیل ردشده.",
+                "کارها دیگر صفحه را دوباره بارگذاری نمی‌کنند. ردیف همان‌جا به‌روز می‌شود، یک پیام کوتاه می‌گوید چه شد و شمارنده‌ی تب‌ها عوض می‌شود. ردیفی که دیگر به آن تب تعلق ندارد (مثلاً بعد از ارسال) از آن ناپدید می‌شود.",
+                "جزئیات فقط وقتی ردیف را باز می‌کنی بارگذاری می‌شود، پس داشبورد سریع‌تر باز می‌شود. متنی که در پیش‌نویس تایپ کرده‌ای با بستن و دوباره باز کردن ردیف از بین نمی‌رود.",
+                "ردیف‌های تب رویدادها هم آکاردئون‌اند و کارت قابل‌ویرایش رویداد داخلشان است.",
+                "لینک‌هایی مثل ‎/#task-123‎ همان ردیف را باز می‌کنند. بدون جاوااسکریپت هم صفحه کار می‌کند: ردیف با کلیک معمولی باز می‌شود و هر کار تو را به داشبورد با همان ردیف باز برمی‌گرداند. صفحه‌ی قدیمی ‎/tasks/123‎ هم به‌عنوان جایگزین کار می‌کند.",
+                "چیدمان تک‌ستونی و باریک‌تر که روی گوشی جا می‌شود (بدون اسکرول افقی و با دکمه‌های بزرگ‌تر) و با جهت زبان عوض می‌شود. زبان پیش‌فرض انگلیسی است و انتخاب EN | FA به خاطر سپرده می‌شود.",
+            ],
+        },
+    },
     {
         "version": "1.6.0",
         "date": "2026-10-06",

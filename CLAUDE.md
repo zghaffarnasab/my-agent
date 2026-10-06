@@ -59,6 +59,16 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
 - The event card is one macro (`app/templates/_event_card.html`) used on the task page and the Events tab; forms carry a `next` field so the user returns to the tab they came from (`_safe_next` blocks outside redirects).
 - "Done" only changes our database (Gmail is never modified). "Draft a reply anyway" creates a normal `pending` draft that still needs approval.
 
+## Accordion rows (since 1.7.0)
+- Every row (all tabs) is an accordion: header = a real `<button>` inside a GET form (`/?tab=..&open=ID`, so it works without JS);
+  details are a lazy partial (`/tasks/{id}/panel`, `/events/{id}/panel`) rendered by ONE shared template `_task_panel.html`
+  (also used by the fallback page `/tasks/{id}`). The script is `app/templates/_dashboard.js` (plain JS, no libraries).
+- Actions are the same POST routes. Plain posts redirect to `row_url(task)` (tab + `open=` + `#task-ID`); `fetch()` calls
+  (header `X-Requested-With: fetch`, plus `X-Row`, `X-Tab`, `X-Archived`) get JSON via `reply()`: message, new counts, and either
+  `remove` or the new row HTML. Use `notify()` (not `flash()`) in action routes so both modes work.
+- Try it with fake data: `.venv/bin/python tests/demo_server.py` (add `DEMO_HOST=0.0.0.0` for a phone on the same Wi-Fi).
+  It uses a temporary database and fake Gmail/Calendar/Claude; never point it at real data.
+
 ## Rules for every change
 1. **Versioning:** bump `VERSION` in `app/version.py` and add a changelog entry at the TOP of
    `CHANGELOG`. PATCH = small fix, MINOR = new feature, MAJOR = needs extra setup.

@@ -1,42 +1,13 @@
 {% extends "base.html" %}
 {% block title %}{{ task.subject or t("task.fallback_title") }}{% endblock %}
+{% block wrapclass %}narrow{% endblock %}
 {% block head %}
 <style>
-  .grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 24px; align-items: start; }
-  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
-  .panel h2 { font-size: 15px; font-weight: 700; margin: 0; padding: 14px 20px; border-bottom: 1px solid var(--line); }
-  .meta { padding: 14px 20px 0; font-size: 14px; color: var(--muted); }
-  .meta dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; }
-  .meta dt { color: var(--muted); }
-  .meta dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
-  .body { padding: 16px 20px 20px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 60vh; overflow-y: auto; }
-  details { margin: 0 20px 16px; font-size: 14px; }
-  details summary { cursor: pointer; color: var(--muted); }
-  details pre { white-space: pre-wrap; font-family: inherit; background: var(--bg); padding: 12px; border-radius: 8px; max-height: 300px; overflow-y: auto; }
-  .editor { position: sticky; top: 16px; }
-  .editor textarea {
-    display: block; width: 100%; min-height: 380px; resize: vertical;
-    border: none; padding: 20px; font: inherit; font-size: 16px; line-height: 1.9;
-    color: var(--ink); background: var(--surface); unicode-bidi: plaintext;
-  }
-  .editor textarea:focus { outline: none; background: #FBFCFD; }
-  .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 14px 20px; border-top: 1px solid var(--line); }
-  .actions .spacer { flex: 1; }
-  .rewrite { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--line); background: #F7F9FB; border-radius: 0 0 10px 10px; }
-  .rewrite input { flex: 1; min-width: 0; font: inherit; font-size: 14px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-  .info-list { margin: 0; padding: 0 20px 16px; list-style: none; }
-  .info-list li { padding: 4px 0; overflow-wrap: anywhere; }
-  .info-h { font-size: 13px; color: var(--muted); font-weight: 500; padding: 8px 20px 0; margin: 0; }
-  .hint { font-size: 12px; color: var(--muted); }
-  .readonly { padding: 20px; white-space: pre-wrap; unicode-bidi: plaintext; }
-  .events { margin-top: 24px; scroll-margin-top: 16px; }
-  .events > h2 { font-size: 16px; margin: 0 0 12px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-  .ev-jump { display: inline-block; margin: 0 20px 16px; font-size: 14px; }
-  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .editor { position: static; } }
+{% include "_accordion.css" %}
 </style>
 {% endblock %}
 {% block body %}
-{% from "_event_card.html" import event_card, tz_datalist with context %}
+{% from "_event_card.html" import tz_datalist with context %}
 <header class="top">
   <h1><a href="/">{{ t("app.name") }}</a></h1>
   <div class="account">
@@ -47,131 +18,15 @@
 </header>
 
 {% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
-{% if task.error %}<div class="flash error ltr-auto">{{ task.error }}</div>{% endif %}
 
-<div class="grid">
-  {% if task.status in ['info', 'done'] %}
-  <!-- Read-only summary for mail that needs no reply -->
-  <section class="panel editor" aria-labelledby="draft-h">
-    <h2 id="draft-h">{{ t("task.info_title") }} <span class="badge {{ task.status }}">{{ t("status." ~ task.status) }}</span></h2>
-    {% if task.summary %}<div class="readonly">{{ task.summary }}</div>{% endif %}
-    <p class="hint" style="padding:0 20px 14px;margin:0;">{{ t("task.forward_note") if task.is_forward else t("task.no_reply_needed") }}</p>
-    {% if task.action_items %}
-    <h3 class="info-h">{{ t("task.action_items") }}</h3>
-    <ul class="info-list">
-      {% for a in task.action_items %}<li><span class="ltr-auto">{{ a.text }}</span>{% if a.due %} <span class="hint">({{ t("task.due", date=a.due) }})</span>{% endif %}</li>{% endfor %}
-    </ul>
-    {% endif %}
-    {% if task.related %}
-    <h3 class="info-h">{{ t("task.related_events") }}</h3>
-    <ul class="info-list">
-      {% for r in task.related %}<li>{% if r.url %}<a class="ltr-auto" href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.title }}</a>{% else %}<span class="ltr-auto">{{ r.title }}</span>{% endif %}</li>{% endfor %}
-    </ul>
-    {% endif %}
-    <div class="actions">
-      {% if task.status == 'done' %}
-        <form class="inline" method="post" action="/tasks/{{ task.id }}/undone"><button type="submit">{{ t("action.restore_info") }}</button></form>
-      {% else %}
-        <form class="inline" method="post" action="/tasks/{{ task.id }}/done"><input type="hidden" name="next" value="/?tab=other"><button type="submit">{{ t("action.done") }}</button></form>
-      {% endif %}
-      <form class="inline" method="post" action="/tasks/{{ task.id }}/draft-anyway"><button type="submit" class="btn-link">{{ t("action.draft_anyway") }}</button></form>
-    </div>
-  </section>
-  {% else %}
-  <!-- Draft (first in RTL = right side) -->
-  <section class="panel editor" aria-labelledby="draft-h">
-    <h2 id="draft-h">{{ t("task.suggested_reply") }} <span class="badge {{ task.status }}">{{ t("status." ~ task.status) }}</span></h2>
-
-    {% if task.status in ['pending', 'failed'] %}
-    <form method="post" id="draft-form" action="/tasks/{{ task.id }}/send">
-      <textarea name="draft_body" id="draft_body" dir="auto" aria-label="{{ t('task.reply_aria') }}">{{ task.draft_body }}</textarea>
-      <div class="actions">
-        {% if task.status == 'pending' %}
-        <button class="btn-primary" type="submit" id="send-btn"
-          formaction="/tasks/{{ task.id }}/send"
-          onclick='return confirm({{ t("task.send_confirm", name=(task.reply_to | sender)) | tojson }})'>{{ t("task.send_btn") }}</button>
-        {% endif %}
-        <button type="submit" formaction="/tasks/{{ task.id }}/save">{{ t("task.save_btn") }}</button>
-        <span class="spacer"></span>
-        <span class="hint">{{ t("task.send_hint") }}</span>
-      </div>
-      <div class="rewrite">
-        <input name="instruction" placeholder="{{ t('task.rewrite_placeholder') }}" aria-label="{{ t('task.rewrite_aria') }}">
-        <button type="submit" formaction="/tasks/{{ task.id }}/regenerate" formnovalidate>{{ t("task.rewrite_btn") }}</button>
-      </div>
-    </form>
-    <div style="padding: 0 20px 14px;">
-      <form class="inline" method="post" action="/tasks/{{ task.id }}/reject">
-        <button class="btn-link btn-danger" type="submit">{{ t("task.reject_btn") }}</button>
-      </form>
-    </div>
-    {% else %}
-      <div class="readonly">{{ task.draft_body }}</div>
-      {% if task.status == 'rejected' %}
-      <div class="actions">
-        <form class="inline" method="post" action="/tasks/{{ task.id }}/restore"><button type="submit">{{ t("task.restore_btn") }}</button></form>
-      </div>
-      {% elif task.sent_at %}
-      <div class="actions"><span class="hint">{{ t("task.sent_at", time=(task.sent_at | dt)) }}</span></div>
-      {% endif %}
-    {% endif %}
-  </section>
-  {% endif %}
-
-  <!-- Original email -->
-  <section class="panel" aria-labelledby="orig-h">
-    <h2 id="orig-h">{{ t("task.original") }}</h2>
-    <div class="meta">
-      <dl>
-        <dt>{{ t("task.from") }}</dt><dd class="ltr-auto">{{ task.from_addr }}</dd>
-        {% if task.reply_to != task.from_addr %}<dt>{{ t("task.reply_to") }}</dt><dd class="ltr-auto">{{ task.reply_to }}</dd>{% endif %}
-        <dt>{{ t("task.subject") }}</dt><dd class="ltr-auto">{{ task.subject or t("dash.no_subject") }}</dd>
-        <dt>{{ t("task.time") }}</dt><dd><span dir="ltr">{{ task.received_at | dt }}</span></dd>
-        {% if task.category %}<dt>{{ t("task.category") }}</dt><dd>{{ t("category." ~ task.category) }}</dd>{% endif %}
-        {% if task.summary and task.status not in ['info', 'done'] %}<dt>{{ t("task.summary") }}</dt><dd class="ltr-auto">{{ task.summary }}</dd>{% endif %}
-        {% if task.is_forward %}
-          {% if task.original_from %}<dt>{{ t("task.forwarded_from") }}</dt><dd class="ltr-auto">{{ task.original_from }}</dd>{% endif %}
-          {% if task.original_subject %}<dt>{{ t("task.original_subject") }}</dt><dd class="ltr-auto">{{ task.original_subject }}</dd>{% endif %}
-          {% if task.original_date %}<dt>{{ t("task.original_date") }}</dt><dd class="ltr-auto">{{ task.original_date }}</dd>{% endif %}
-        {% endif %}
-      </dl>
-    </div>
-    <div class="body ltr-auto">{{ task.original_body }}</div>
-    {% set open_events = suggestions | selectattr("status", "equalto", "suggested") | list %}
-    {% if open_events %}<a class="ev-jump" href="#events">{{ t("task.events_jump", n=(open_events | length)) }}</a>{% endif %}
-    {% if task.thread_context %}
-    <details>
-      <summary>{{ t("task.earlier_messages") }}</summary>
-      <pre class="ltr-auto">{{ task.thread_context }}</pre>
-    </details>
-    {% endif %}
-  </section>
-</div>
-
-<section class="events" id="events" aria-labelledby="ev-h">
-  <h2 id="ev-h">{{ t("ev.section") }}
-    <form class="inline" method="post" action="/tasks/{{ task.id }}/find-events">
-      <button type="submit" class="btn-link">{{ t("ev.recheck") }}</button>
-    </form>
-  </h2>
-
-  {% if not suggestions %}
-    <p style="color:var(--muted);font-size:14px;margin:0;">{{ t("ev.none") }}</p>
-  {% else %}
-  <div class="ev-grid">
-    {% for ev in suggestions %}
-      {{ event_card(ev, task, conflicts) }}
-    {% endfor %}
-  </div>
-  {% endif %}
-  {{ tz_datalist() }}
-</section>
+<div class="page-panel"><div class="body">{% include "_task_panel.html" %}</div></div>
+{{ tz_datalist() }}
 
 <script>
   document.addEventListener('keydown', function (e) {
-    var inDraft = document.activeElement && document.activeElement.closest && document.activeElement.closest('#draft-form');
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && inDraft) {
-      var btn = document.getElementById('send-btn');
+    var form = e.target.closest && e.target.closest('.draft-form');
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && form) {
+      var btn = form.querySelector('[data-send]');
       if (btn) { e.preventDefault(); btn.click(); }
     }
   });

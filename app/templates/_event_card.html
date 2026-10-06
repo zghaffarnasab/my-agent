@@ -27,7 +27,7 @@
 <form class="ev-card" method="post" action="/events/{{ ev.id }}/add">
   {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
   <div class="ev-src">{{ t("ev.src_outgoing") if ev.source == 'outgoing' else t("ev.src_incoming") }}
-    {% if show_source and task %}· <a class="ltr-auto" href="/tasks/{{ task.id }}">{{ t("ev.from_task", subject=(task.subject or t("dash.no_subject"))) }}</a>{% endif %}</div>
+    {% if show_source and task %}· <a class="ltr-auto" href="/?open={{ task.id }}#task-{{ task.id }}">{{ t("ev.from_task", subject=(task.subject or t("dash.no_subject"))) }}</a>{% endif %}</div>
 
   <label for="t{{ ev.id }}">{{ t("ev.label_title") }}</label>
   <input type="text" id="t{{ ev.id }}" name="title" value="{{ ev.title }}" dir="auto" required>

@@ -41,7 +41,7 @@
   "dash.all_day": "All day",
   "dash.untitled": "(untitled)",
   "dash.no_subject": "(no subject)",
-  "dash.tag_event": "Event",
+  "dash.tag_event": "Meeting",
   "dash.draft_failed": "The draft could not be written; open it and try again.",
   "dash.empty_pending": "No replies are waiting for approval. New emails are checked every few minutes.",
   "dash.empty_other": "Nothing in this section.",
@@ -59,7 +59,7 @@
   "task.reject_btn": "Reject; no reply needed",
   "task.restore_btn": "Put back in the queue",
   "task.sent_at": "Sent at {time}",
-  "task.original": "Received email",
+  "task.original": "Original email",
   "task.from": "From",
   "task.reply_to": "Reply to",
   "task.subject": "Subject",
@@ -166,5 +166,10 @@
   "flash.marked_done": "Marked as done. It is archived here only; the email in Gmail is untouched.",
   "flash.restored_other": "Moved back to Other mail.",
   "flash.draft_ready": "A reply draft is ready. Review it before sending.",
-  "flash.draft_failed": "Could not write the draft: {error}"
+  "flash.draft_failed": "Could not write the draft: {error}",
+  "js.loading": "Loading…",
+  "js.failed": "Something went wrong. Please try again.",
+  "js.retry": "Try again",
+  "task.show_full": "Show the full email",
+  "task.reject_short": "Reject"
 }
