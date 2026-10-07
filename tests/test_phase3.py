@@ -472,6 +472,15 @@ def test_every_panel_has_a_delete_button_with_a_confirmation(client, world):
         assert "cannot be undone" in html, key
 
 
+def test_closed_rows_have_a_delete_icon_too(client, world):
+    for tab, key in (("reply", "p1"), ("other", "i1"), ("sent", "s1"), ("rejected", "r1")):
+        html = client.get(f"/?tab={tab}").text
+        row = re.search(rf'<li class="row" id="task-{world[key]}".*?</li>', html, re.S).group(0)
+        assert 'class="row-del"' in row and f'action="/tasks/{world[key]}/delete"' in row, tab
+        assert "cannot be undone" in row, tab
+    assert _unbalanced(client.get("/?tab=reply").text) == []
+
+
 def test_delete_removes_the_row_its_events_and_its_content(client, world, monkeypatch):
     sent = []
     monkeypatch.setattr(gmail_client, "send_reply", lambda *a, **k: sent.append(1))
