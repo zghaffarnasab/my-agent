@@ -64,6 +64,7 @@ TAB_STATUSES = {
     "sent": [TaskStatus.SENT],
     "rejected": [TaskStatus.REJECTED],
 }
+HIDDEN_STATUSES = (TaskStatus.SKIPPED, TaskStatus.DELETED)   # never shown anywhere
 LEGACY_STATUS_TABS = {"pending": "reply", "failed": "reply", "info": "other", "done": "other",
                       "sent": "sent", "rejected": "rejected"}   # old /?status=... links
 MAX_EVENT_CARDS = 50
@@ -152,7 +153,7 @@ def pop_flash(request: Request):
 
 def get_task_or_404(db, task_id: int) -> Task:
     task = db.get(Task, task_id)
-    if task is None or task.status == TaskStatus.SKIPPED:
+    if task is None or task.status in HIDDEN_STATUSES:
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
@@ -242,7 +243,7 @@ def upcoming_suggestions(db) -> list[tuple[EventSuggestion, Task]]:
     rows = db.execute(
         select(EventSuggestion, Task)
         .join(Task, Task.id == EventSuggestion.task_id)
-        .where(EventSuggestion.status == EventStatus.SUGGESTED, Task.status != TaskStatus.SKIPPED)
+        .where(EventSuggestion.status == EventStatus.SUGGESTED, Task.status.not_in(HIDDEN_STATUSES))
         .order_by(EventSuggestion.date, EventSuggestion.start_time, EventSuggestion.id)
     ).all()
     return [(ev, task) for ev, task in rows if (ev.end_date or ev.date) >= today]
@@ -330,7 +331,7 @@ def index(request: Request, tab: str = "", status: str = "", archived: int = 0,
     if open_id and not tab and not status:       # a link like /?open=12 finds the right tab by itself
         with SessionLocal() as db:
             wanted = db.get(Task, open_id)
-        if wanted is not None and wanted.status != TaskStatus.SKIPPED:
+        if wanted is not None and wanted.status not in HIDDEN_STATUSES:
             tab, was_archived = _tab_of(wanted.status)
             archived = int(was_archived)
     tab = tab or LEGACY_STATUS_TABS.get(status, "reply")
@@ -673,6 +674,28 @@ def restore_task(request: Request, task_id: int, next: str = Form("")):
             task.status = TaskStatus.PENDING
             db.commit()
     return reply(request, _dest(next, task_id))
+
+
+@app.post("/tasks/{task_id}/delete")
+def delete_task(request: Request, task_id: int, next: str = Form("")):
+    """Remove an email from the dashboard for good. Gmail is not touched.
+    The row stays as an empty marker so the worker does not read (and pay for) the same email again."""
+    require_login(request)
+    with SessionLocal() as db:
+        task = get_task_or_404(db, task_id)
+        if task.status == TaskStatus.SENDING:
+            notify(request, "flash.delete_busy", "error")
+            return reply(request, _dest(next, task_id))
+        tab, archived = _tab_of(task.status)
+        db.execute(delete(EventSuggestion).where(EventSuggestion.task_id == task.id))
+        task.status = TaskStatus.DELETED
+        for field in ("from_addr", "reply_to", "subject", "message_id_header", "references_header", "original_body",
+                      "thread_context", "draft_body", "error", "category", "summary", "original_from",
+                      "original_subject", "original_date", "related_json", "action_items_json"):
+            setattr(task, field, "")
+        db.commit()
+    notify(request, "flash.deleted")
+    return reply(request, f"/?tab={tab}{'&archived=1' if archived else ''}")
 
 
 # ---------- Language and settings ----------

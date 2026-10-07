@@ -33,6 +33,7 @@ class TaskStatus:
     SKIPPED = "skipped"      # own / empty / system mail, or bulk mail we chose not to read; never shown
     INFO = "info"            # read and summarised, no reply needed ("Other mail"); never uses "pending"
     DONE = "done"            # an INFO mail the owner has archived
+    DELETED = "deleted"      # removed by the owner; content wiped, row kept so the worker never reads the mail again
 
 
 class Task(Base):

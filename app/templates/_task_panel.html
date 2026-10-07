@@ -105,4 +105,13 @@
     {% for ev in suggestions %}{{ event_card(ev, task, conflicts, back_url) }}{% endfor %}
   </div>
   {% endif %}
+
+  {% if task.status != 'sending' %}
+  <div class="acts delete-acts">
+    <form class="inline" method="post" action="/tasks/{{ task.id }}/delete">
+      <button type="submit" class="btn-danger"
+        onclick='return confirm({{ t("task.delete_confirm") | tojson }})'>{{ t("action.delete") }}</button>
+    </form>
+  </div>
+  {% endif %}
 </div>

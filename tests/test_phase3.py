@@ -463,6 +463,47 @@ def test_rendered_pages_have_balanced_html(client, world, lang):
         assert _unbalanced(client.get(path).text) == [], path
 
 
+# ---------- delete ----------
+
+def test_every_panel_has_a_delete_button_with_a_confirmation(client, world):
+    for key in ("p1", "f1", "i1", "d1", "s1", "r1"):
+        html = panel(client, world[key])
+        assert f'action="/tasks/{world[key]}/delete"' in html, key
+        assert "cannot be undone" in html, key
+
+
+def test_delete_removes_the_row_its_events_and_its_content(client, world, monkeypatch):
+    sent = []
+    monkeypatch.setattr(gmail_client, "send_reply", lambda *a, **k: sent.append(1))
+    res = fetch_post(client, f"/tasks/{world['p1']}/delete", row=f"task:{world['p1']}")
+    assert res["ok"] and res["remove"] and "deleted" in res["message"]
+    assert res["counts"]["reply"] == 2 and res["counts"]["events"] == 2   # "Later event" went with it
+    assert "Pending one" not in client.get("/?tab=reply").text
+    assert client.get(f"/tasks/{world['p1']}/panel").status_code == 404
+    client.post(f"/tasks/{world['p1']}/send", data={"draft_body": "x"})                    # nothing is sent
+    with SessionLocal() as db:
+        task = db.get(Task, world["p1"])
+        assert task.status == TaskStatus.DELETED and task.gmail_message_id   # kept so the worker skips the mail
+        assert task.subject == "" and task.original_body == "" and task.draft_body == ""
+        assert db.query(EventSuggestion).filter_by(task_id=world["p1"]).count() == 0
+    assert sent == []
+
+
+def test_delete_without_javascript_returns_to_the_same_tab(client, world):
+    r = client.post(f"/tasks/{world['d1']}/delete", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/?tab=other&archived=1"
+    assert "Email deleted" in client.get(r.headers["location"]).text
+
+
+def test_a_reply_being_sent_cannot_be_deleted(client):
+    task_id = add_task(TaskStatus.SENDING, "Going out")
+    assert "/delete" not in panel(client, task_id)
+    res = fetch_post(client, f"/tasks/{task_id}/delete", row=f"task:{task_id}")
+    assert not res["ok"]
+    with SessionLocal() as db:
+        assert db.get(Task, task_id).status == TaskStatus.SENDING
+
+
 VOID = {"meta", "link", "input", "br", "hr", "img", "option"}
 
 
