@@ -171,5 +171,10 @@
   "js.failed": "Something went wrong. Please try again.",
   "js.retry": "Try again",
   "task.show_full": "Show the full email",
-  "task.reject_short": "Reject"
+  "task.reject_short": "Reject",
+  "action.delete": "Delete",
+  "task.delete_confirm": "Delete this email from the dashboard? This cannot be undone. The email stays in Gmail.",
+  "flash.deleted": "Email deleted from the dashboard. It was left untouched in Gmail.",
+  "flash.delete_busy": "This reply is being sent right now. Try again in a moment.",
+  "status.deleted": "Deleted"
 }

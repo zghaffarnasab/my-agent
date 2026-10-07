@@ -8,9 +8,27 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.7.0"
+VERSION = "1.8.0"
 
 CHANGELOG = [
+    {
+        "version": "1.8.0",
+        "date": "2026-10-07",
+        "title": {
+            "en": "Delete emails from the dashboard",
+            "fa": "حذف ایمیل‌ها از داشبورد",
+        },
+        "changes": {
+            "en": [
+                "Every open row now has a Delete button. It asks you to confirm first, because a deleted email cannot be brought back.",
+                "Deleting removes the email, its draft and its suggested events from every tab. Gmail is not touched, and the same email is never read again.",
+            ],
+            "fa": [
+                "هر ردیف باز حالا یک دکمه‌ی «حذف» دارد. اول از تو تأیید می‌گیرد، چون ایمیل حذف‌شده برنمی‌گردد.",
+                "حذف، ایمیل و پیش‌نویس و قرارهای پیشنهادی‌اش را از همه‌ی تب‌ها برمی‌دارد. جیمیل دست نمی‌خورد و همان ایمیل دوباره خوانده نمی‌شود.",
+            ],
+        },
+    },
     {
         "version": "1.7.0",
         "date": "2026-10-07",
