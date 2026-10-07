@@ -1,6 +1,7 @@
 {# One accordion row. The header is a real button; the details (panel) are loaded when the row is opened. #}
 {% macro task_row(item, tab, archived, is_open, panel_html, has_event) %}
 <li class="row{% if is_open %} open{% endif %}" id="task-{{ item.id }}" data-row="task:{{ item.id }}">
+  <div class="row-top">
   <form class="head-form" method="get" action="/">
     <input type="hidden" name="tab" value="{{ tab }}">
     {% if archived %}<input type="hidden" name="archived" value="1">{% endif %}
@@ -23,6 +24,15 @@
       <svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg>
     </button>
   </form>
+  {% if item.status != 'sending' %}
+  <form class="row-del" method="post" action="/tasks/{{ item.id }}/delete">
+    <button type="submit" class="btn-danger" title="{{ t('action.delete') }}" aria-label="{{ t('action.delete') }}"
+      onclick='return confirm({{ t("task.delete_confirm") | tojson }})'>
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 5.5h13M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5l.8 10.6a1 1 0 0 0 1 .9h5.4a1 1 0 0 0 1-.9l.8-10.6M8.5 8.5v5.5M11.5 8.5v5.5"/></svg>
+    </button>
+  </form>
+  {% endif %}
+  </div>
   <div class="body" id="panel-task-{{ item.id }}" role="region" aria-labelledby="head-task-{{ item.id }}" data-src="/tasks/{{ item.id }}/panel"{% if panel_html %} data-loaded="1"{% endif %}{% if not is_open %} hidden{% endif %}>{{ panel_html }}</div>
 </li>
 {% endmacro %}

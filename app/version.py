@@ -8,9 +8,25 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.8.0"
+VERSION = "1.8.1"
 
 CHANGELOG = [
+    {
+        "version": "1.8.1",
+        "date": "2026-10-07",
+        "title": {
+            "en": "Delete straight from the list",
+            "fa": "حذف مستقیم از فهرست",
+        },
+        "changes": {
+            "en": [
+                "Every email row now shows a small trash icon next to the arrow, so you can delete without opening the row. It still asks you to confirm first.",
+            ],
+            "fa": [
+                "کنار فلش هر ردیف ایمیل حالا یک آیکون سطل زباله هست، تا بدون باز کردن ردیف بتوانی حذفش کنی. باز هم اول تأیید می‌گیرد.",
+            ],
+        },
+    },
     {
         "version": "1.8.0",
         "date": "2026-10-07",

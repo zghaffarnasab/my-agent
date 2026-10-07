@@ -162,7 +162,7 @@
   document.addEventListener('submit', function (e) {
     var form = e.target;
     if (form.classList.contains('head-form')) { e.preventDefault(); toggle(rowOf(form)); return; }
-    if (!form.closest('#rows .body')) return;
+    if (!form.closest('#rows .body') && !form.classList.contains('row-del')) return;   // panel actions and the row's delete icon
     e.preventDefault();
     act(form, e.submitter, rowOf(form));
   });
