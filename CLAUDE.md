@@ -69,6 +69,14 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
 - Try it with fake data: `.venv/bin/python tests/demo_server.py` (add `DEMO_HOST=0.0.0.0` for a phone on the same Wi-Fi).
   It uses a temporary database and fake Gmail/Calendar/Claude; never point it at real data.
 
+## Filmmaker dashboard pipeline (`pipeline/`)
+- A separate tool in the same repo: fetches official funding/festival pages, extracts funds and events with Claude
+  (`pipeline/prompts/`), and stores them as drafts in its OWN Postgres (`pipeline/sql/`, `pipeline/docker-compose.yml`).
+  It does not import `app/` and the Gmail assistant does not use it. Setup and commands: `pipeline/README.md`.
+- Every stored date and amount must have a quote found verbatim in the page text (`pipeline/validate.py`). Never relax this.
+- Nothing is published automatically. Schema changes go in a new numbered file in `pipeline/sql/`.
+- DB tests need `PIPELINE_TEST_DATABASE_URL` (an empty throwaway database; the test wipes it), otherwise they skip.
+
 ## Rules for every change
 1. **Versioning:** bump `VERSION` in `app/version.py` and add a changelog entry at the TOP of
    `CHANGELOG`. PATCH = small fix, MINOR = new feature, MAJOR = needs extra setup.
