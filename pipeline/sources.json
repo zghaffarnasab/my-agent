@@ -1,0 +1,35 @@
+{
+  "_note": "Official pages watched for changes. Seeded from the UK research report (Oct 2026). Add more here, then run: python -m pipeline seed",
+  "organisations": [
+    {"name": "BFI", "website": "https://www.bfi.org.uk"},
+    {"name": "Doc Society", "website": "https://docsociety.org"},
+    {"name": "The Whickers", "website": "https://www.whickerawards.com"},
+    {"name": "Sheffield DocFest", "website": "https://www.sheffdocfest.com"}
+  ],
+  "sources": [
+    {
+      "url": "https://www.bfi.org.uk/get-funding-support/create-films-tv-or-new-formats-storytelling/discovery-impact-feature-funding",
+      "organisation": "BFI", "title": "BFI Discovery (first features)", "tier": "official", "method": "html", "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.bfi.org.uk/get-funding-support/create-films-tv-or-new-formats-storytelling/development-funding",
+      "organisation": "BFI", "title": "BFI Development funding", "tier": "official", "method": "html", "feeds_kind": "fund"
+    },
+    {
+      "url": "https://bfi.docsociety.org/funds/features-development/",
+      "organisation": "Doc Society", "title": "BFI Doc Society Features Development", "tier": "official", "method": "html", "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.whickerawards.com/apply/film-and-tv/",
+      "organisation": "The Whickers", "title": "Whickers Film & TV Funding Award", "tier": "official", "method": "html", "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.sheffdocfest.com/film-programme-entries",
+      "organisation": "Sheffield DocFest", "title": "Sheffield DocFest film programme entries", "tier": "official", "method": "html", "feeds_kind": "event"
+    },
+    {
+      "url": "https://www.sheffdocfest.com/key-dates",
+      "organisation": "Sheffield DocFest", "title": "Sheffield DocFest key dates", "tier": "official", "method": "html", "feeds_kind": "event"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+# Filmmaker dashboard pipeline: its own Postgres and a one-shot pipeline container.
+# Separate from the Gmail assistant's compose file at the repo root; run it with
+#   sudo docker compose -f pipeline/docker-compose.yml ...
+name: filmdash
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: filmdash
+      POSTGRES_USER: filmdash
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in pipeline/.env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432"   # only reachable from the server itself (e.g. psql, SSH tunnel)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U filmdash -d filmdash"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  pipeline:
+    build:
+      context: ..
+      dockerfile: pipeline/Dockerfile
+    env_file: .env
+    environment:
+      PIPELINE_DATABASE_URL: postgresql://filmdash:${POSTGRES_PASSWORD}@db:5432/filmdash
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["run"]   # not started by "up"; used with "docker compose run --rm pipeline <command>"
+
+volumes:
+  pgdata:

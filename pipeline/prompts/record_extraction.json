@@ -1,0 +1,103 @@
+{
+  "name": "record_extraction",
+  "description": "Report funds and events stated in the source document. Every date, amount and filled field must carry a verbatim source_quote from the document.",
+  "input_schema": {
+    "type": "object",
+    "required": ["items", "notes"],
+    "properties": {
+      "notes": { "type": "string", "description": "Anything the reviewer should know: contradictions, missing years, page looks outdated, nothing relevant found." },
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["kind", "slug", "name", "uk_eligible", "dates", "evidence", "confidence"],
+          "properties": {
+            "kind": { "enum": ["fund", "event"] },
+            "slug": { "type": "string", "description": "lowercase-hyphenated, include edition year for events, e.g. sheffield-docfest-2027" },
+            "name": { "type": "string" },
+            "organisation": { "type": ["string", "null"] },
+            "strand": { "type": ["string", "null"], "description": "fund strand or round, e.g. 'Round 3', 'IBF Classic'" },
+            "summary": { "type": ["string", "null"], "maxLength": 300 },
+
+            "event_type": { "enum": ["festival", "market", "lab", "workshop", "pitch", "award", "talent_programme", "other", null] },
+            "edition_year": { "type": ["integer", "null"] },
+            "format": { "enum": ["in_person", "online", "hybrid", "unknown", null] },
+            "city": { "type": ["string", "null"] },
+            "submit_platform": { "enum": ["filmfreeway", "own_site", "email", "bfi_portal", "other", "unknown", null] },
+            "submit_url": { "type": ["string", "null"] },
+            "fee_min": { "type": ["number", "null"] },
+            "fee_max": { "type": ["number", "null"] },
+            "fee_currency": { "type": ["string", "null"] },
+            "fee_note": { "type": ["string", "null"] },
+            "qualifying": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["body", "source_quote"],
+                "properties": {
+                  "body": { "enum": ["BAFTA", "BIFA", "Oscars", "BAFTA Cymru", "Other"] },
+                  "category": { "type": ["string", "null"] },
+                  "source_quote": { "type": "string" }
+                }
+              }
+            },
+
+            "stages": { "type": "array", "items": { "enum": ["development", "production", "post_production", "distribution", "festival_travel", "talent", "other"] } },
+            "forms": { "type": "array", "items": { "type": "string" }, "description": "feature, short, documentary, animation, immersive, experimental, artists_film, series" },
+            "genres": { "type": "array", "items": { "type": "string" } },
+            "amount_min": { "type": ["number", "null"] },
+            "amount_max": { "type": ["number", "null"] },
+            "amount_currency": { "type": ["string", "null"] },
+            "amount_status": { "enum": ["confirmed", "unverified", "conflict", null] },
+            "amount_note": { "type": ["string", "null"] },
+            "deadline_mode": { "enum": ["fixed", "rolling", "rounds", "unknown"] },
+            "is_accepting": { "type": ["boolean", "null"] },
+            "residency_rule": { "type": ["string", "null"] },
+            "nationality_rule": { "type": ["string", "null"] },
+            "other_eligibility": { "type": ["string", "null"] },
+            "apply_url": { "type": ["string", "null"] },
+
+            "uk_eligible": { "enum": ["yes", "no", "partial", "unknown"] },
+            "uk_not_eligible_reason": { "type": ["string", "null"] },
+
+            "dates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["kind", "status", "source_quote"],
+                "properties": {
+                  "kind": { "enum": ["opens", "deadline", "deadline_early", "deadline_regular", "deadline_late", "deadline_extended", "event_start", "event_end", "results", "closure_start", "closure_end", "other"] },
+                  "label": { "type": ["string", "null"] },
+                  "status": { "enum": ["confirmed", "expected", "unverified", "conflict", "closed"] },
+                  "date_value": { "type": ["string", "null"], "description": "YYYY-MM-DD, only when day, month and year are all stated" },
+                  "time_value": { "type": ["string", "null"], "description": "HH:MM" },
+                  "tz": { "type": ["string", "null"] },
+                  "approx_text": { "type": ["string", "null"] },
+                  "approx_from": { "type": ["string", "null"] },
+                  "approx_to": { "type": ["string", "null"] },
+                  "source_quote": { "type": "string" }
+                }
+              }
+            },
+
+            "evidence": {
+              "type": "array",
+              "description": "One entry per filled non-date field (amounts, eligibility, platform, fee, stages, uk_eligible...).",
+              "items": {
+                "type": "object",
+                "required": ["field", "value", "source_quote"],
+                "properties": {
+                  "field": { "type": "string" },
+                  "value": { "type": "string" },
+                  "source_quote": { "type": "string" }
+                }
+              }
+            },
+
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      }
+    }
+  }
+}
