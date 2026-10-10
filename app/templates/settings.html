@@ -2,10 +2,10 @@
 {% block title %}{{ t("settings.title") }}{% endblock %}
 {% block head %}
 <style>
-  .box { max-width: 560px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px 24px; }
+  .box { max-width: 560px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow); }
   .box label { display: block; font-weight: 500; margin: 16px 0 4px; }
   .box label:first-child { margin-top: 0; }
-  .box select, .box input[type=text] { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+  .box select, .box input[type=text] { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
   .box input[type=text] { direction: ltr; text-align: start; }
   .help { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
 </style>
