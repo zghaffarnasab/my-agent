@@ -31,6 +31,7 @@
       <a href="/auth/google" onclick='return confirm({{ t("dash.change_account_confirm") | tojson }})'>{{ t("nav.change_account") }}</a>
       <form class="inline" method="post" action="/poll-now"><button type="submit">{{ t("nav.check_mail") }}</button></form>
     {% endif %}
+    {% if film_enabled() %}<a href="/film">{{ t("nav.film") }}</a>{% endif %}
     <a href="/settings">{{ t("nav.settings") }}</a>
     <form class="inline" method="post" action="/logout"><button class="btn-link" type="submit">{{ t("nav.logout") }}</button></form>
   </div>

@@ -8,9 +8,29 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.8.1"
+VERSION = "1.9.0"
 
 CHANGELOG = [
+    {
+        "version": "1.9.0",
+        "date": "2026-10-10",
+        "title": {
+            "en": "Review page for the film dashboard",
+            "fa": "صفحه‌ی بررسی داشبورد فیلم",
+        },
+        "changes": {
+            "en": [
+                "New \"Film dashboard\" page: the funds and events the pipeline found, each with its dates and the exact quotes they came from.",
+                "Approve or reject each record, with an optional note. Approving does not publish anything yet; the website sync comes later.",
+                "The page appears only when FILMDASH_DATABASE_URL is set in .env (see pipeline/README.md).",
+            ],
+            "fa": [
+                "صفحه‌ی تازه‌ی «داشبورد فیلم»: فاندها و رویدادهایی که پایپ‌لاین پیدا کرده، هر کدام با تاریخ‌ها و نقل‌قول دقیقی که از آن آمده‌اند.",
+                "هر رکورد را می‌شود با یک یادداشت اختیاری تأیید یا رد کرد. تأیید هنوز چیزی را در سایت منتشر نمی‌کند؛ همگام‌سازی با سایت بعداً می‌آید.",
+                "این صفحه فقط وقتی دیده می‌شود که FILMDASH_DATABASE_URL در .env تنظیم شده باشد (راهنما در pipeline/README.md).",
+            ],
+        },
+    },
     {
         "version": "1.8.1",
         "date": "2026-10-07",

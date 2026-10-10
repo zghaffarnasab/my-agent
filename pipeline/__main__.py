@@ -23,7 +23,10 @@ def status(conn) -> None:
         ("events (draft)", "SELECT count(*) AS n FROM events WHERE status = 'draft'"),
         ("current dates", "SELECT count(*) AS n FROM current_dates"),
         ("date conflicts", "SELECT count(*) AS n FROM date_conflicts"),
-        ("failed extractions", "SELECT count(*) AS n FROM extraction_runs WHERE ok IS NOT TRUE"),
+        ("failed extractions", """SELECT count(*) AS n FROM (
+             SELECT DISTINCT ON (source_id) id FROM snapshots ORDER BY source_id, fetched_at DESC) latest
+           WHERE NOT EXISTS (SELECT 1 FROM extraction_runs r WHERE r.snapshot_id = latest.id AND r.ok)
+             AND EXISTS (SELECT 1 FROM extraction_runs r WHERE r.snapshot_id = latest.id)"""),
     ]:
         print(f"{label:22} {conn.execute(sql).fetchone()['n']}")
     print("\nReview queue:")

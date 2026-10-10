@@ -13,7 +13,7 @@ from markupsafe import Markup
 from sqlalchemy import delete, func, select, update
 from starlette.middleware.sessions import SessionMiddleware
 
-from app import ai, calendar_client, config, events, gmail_client, i18n, settings, validation
+from app import ai, calendar_client, config, events, filmdash, gmail_client, i18n, settings, validation
 from app.version import CHANGELOG, VERSION
 from app.db import EventStatus, EventSuggestion, SessionLocal, Task, TaskStatus, init_db, utcnow
 
@@ -119,6 +119,7 @@ templates.env.filters["is_today"] = is_today
 templates.env.filters["dt"] = fmt_date
 templates.env.filters["sender"] = sender_name
 templates.env.globals["APP_VERSION"] = VERSION
+templates.env.globals["film_enabled"] = filmdash.enabled
 
 
 @app.on_event("startup")
@@ -743,6 +744,57 @@ def save_settings(request: Request, language: str = Form(...), tz: str = Form(""
     response = RedirectResponse("/settings", status_code=303)
     _set_lang_cookie(response, language)
     return response
+
+
+# ---------- Filmmaker dashboard review (records from pipeline/) ----------
+
+def _film_kind(kind: str) -> str:
+    if kind not in filmdash.TABLES:
+        raise HTTPException(status_code=404, detail="Not found")
+    return kind
+
+
+@app.get("/film", response_class=HTMLResponse)
+def film_list(request: Request, status: str = "draft"):
+    require_login(request)
+    status = status if status in filmdash.STATUSES else "draft"
+    context = {"flash": pop_flash(request), "status": status, "statuses": filmdash.STATUSES,
+               "records": [], "counts": {}, "unavailable": None}
+    try:
+        context["records"], context["counts"] = filmdash.overview(status)
+    except filmdash.Unavailable as exc:
+        context["unavailable"] = "not_configured" if str(exc) == "not configured" else "unreachable"
+    return templates.TemplateResponse(request, "film_list.html", context)
+
+
+@app.get("/film/{kind}/{record_id}", response_class=HTMLResponse)
+def film_detail(request: Request, kind: str, record_id: int):
+    require_login(request)
+    try:
+        rec = filmdash.get(_film_kind(kind), record_id)
+    except filmdash.Unavailable:
+        flash(request, "flash.film_unavailable", "error")
+        return RedirectResponse("/film", status_code=303)
+    if rec is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    return templates.TemplateResponse(request, "film_detail.html",
+                                      {"flash": pop_flash(request), "kind": kind, "rec": rec})
+
+
+@app.post("/film/{kind}/{record_id}/review")
+def film_review(request: Request, kind: str, record_id: int, status: str = Form(...), note: str = Form("")):
+    require_login(request)
+    if status not in filmdash.STATUSES:
+        raise HTTPException(status_code=400, detail="Bad status")
+    try:
+        found = filmdash.set_status(_film_kind(kind), record_id, status, note)
+    except filmdash.Unavailable:
+        flash(request, "flash.film_unavailable", "error")
+        return RedirectResponse("/film", status_code=303)
+    if not found:
+        raise HTTPException(status_code=404, detail="Not found")
+    flash(request, f"flash.film_{status}")
+    return RedirectResponse("/film", status_code=303)
 
 
 # ---------- Calendar ----------

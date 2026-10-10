@@ -32,6 +32,7 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
 - `app/ai.py` — `classify_email()` (CLASSIFY_MODEL), `extract_events()`, `draft_reply()` (CLAUDE_MODEL). Email text is wrapped in tags and defused; no tools
 - `app/validation.py` — cleans/validates ALL AI output (links http(s) only, dates, codes, categories). Add new AI fields here
 - `app/events.py` — `store_events()` saves suggestions and dedupes across emails (same link, or same title + date); cancelled events
+- `app/filmdash.py` — film dashboard review queries (pipeline Postgres); routes `/film...` in `main.py`
 - `app/db.py` — SQLAlchemy models: Task, EventSuggestion, GoogleCredential (SQLite in Docker volume)
 - `app/version.py` — VERSION + CHANGELOG (bilingual: each entry has "en" and "fa"; shown in the footer and /changelog)
 - `app/i18n.py` + `app/locales/{en,fa}.json` — `t()` helper and flat translation files
@@ -72,7 +73,10 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
 ## Filmmaker dashboard pipeline (`pipeline/`)
 - A separate tool in the same repo: fetches official funding/festival pages, extracts funds and events with Claude
   (`pipeline/prompts/`), and stores them as drafts in its OWN Postgres (`pipeline/sql/`, `pipeline/docker-compose.yml`).
-  It does not import `app/` and the Gmail assistant does not use it. Setup and commands: `pipeline/README.md`.
+  It does not import `app/`. Setup and commands: `pipeline/README.md`.
+- Review page `/film` (since 1.9.0): `app/filmdash.py` reads the pipeline tables with plain SQL (never imports `pipeline`)
+  and only changes review status (draft/published/rejected). Hidden unless `FILMDASH_DATABASE_URL` is set. The pipeline's
+  db joins the app's Docker network as `filmdash-db` (`pipeline/docker-compose.yml`, `APP_NETWORK`).
 - Every stored date and amount must have a quote found verbatim in the page text (`pipeline/validate.py`). Never relax this.
 - Nothing is published automatically. Schema changes go in a new numbered file in `pipeline/sql/`.
 - DB tests need `PIPELINE_TEST_DATABASE_URL` (an empty throwaway database; the test wipes it), otherwise they skip.

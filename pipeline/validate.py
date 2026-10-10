@@ -4,6 +4,7 @@ Every date, amount and filled eligibility field must carry a quote that is found
 page text, and the value must appear inside its quote. Anything that fails is dropped and logged
 in extraction_runs.rejected_items; nothing is "fixed" by guessing.
 """
+import html
 import re
 import unicodedata
 from dataclasses import dataclass, field
@@ -124,6 +125,9 @@ def validate_extraction(output: dict, clean_text: str, source_tier: str) -> Resu
 
 
 def _validate_item(raw: dict, doc: str, tier: str, rejected: list[dict]) -> dict | None:
+    for key in ("name", "strand", "organisation", "summary"):   # the model sometimes copies "&amp;" from HTML
+        if isinstance(raw.get(key), str):
+            raw[key] = html.unescape(raw[key])
     name = (raw.get("name") or "").strip()
     slug = slugify(raw.get("slug") or name)
 

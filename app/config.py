@@ -39,6 +39,10 @@ TIMEZONE = _get("TIMEZONE", "Europe/Berlin")   # fallback time zone (IANA name);
 CALENDAR_ID = _get("CALENDAR_ID", "primary")
 UPCOMING_DAYS = int(_get("UPCOMING_DAYS", "7"))
 
+# --- Filmmaker dashboard review (optional) ---
+# Postgres of the pipeline in pipeline/, e.g. postgresql://filmdash:pass@filmdash-db:5432/filmdash. Empty = hidden.
+FILMDASH_DATABASE_URL = _get("FILMDASH_DATABASE_URL", "")
+
 # --- Worker ---
 POLL_INTERVAL_SECONDS = int(_get("POLL_INTERVAL_SECONDS", "180"))
 # Gmail search query for the emails to read (every one is classified; only some get a reply draft)
