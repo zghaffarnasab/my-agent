@@ -8,9 +8,29 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.9.0"
+VERSION = "1.9.1"
 
 CHANGELOG = [
+    {
+        "version": "1.9.1",
+        "date": "2026-10-10",
+        "title": {
+            "en": "Fresh look and dark mode",
+            "fa": "ظاهر تازه و حالت تاریک",
+        },
+        "changes": {
+            "en": [
+                "Warmer, calmer colors, softer cards and a tidier header on every page.",
+                "Dark mode: the dashboard follows your phone or computer setting.",
+                "The language switch is now a small toggle; the selected tab and the open email stand out more.",
+            ],
+            "fa": [
+                "رنگ‌های گرم‌تر و آرام‌تر، کارت‌های نرم‌تر و هدر مرتب‌تر در همه‌ی صفحه‌ها.",
+                "حالت تاریک: داشبورد از تنظیم گوشی یا کامپیوترت پیروی می‌کند.",
+                "انتخاب زبان حالا یک کلید کوچک است و تب انتخاب‌شده و ایمیل باز بهتر دیده می‌شوند.",
+            ],
+        },
+    },
     {
         "version": "1.9.0",
         "date": "2026-10-10",
