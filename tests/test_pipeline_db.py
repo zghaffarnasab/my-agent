@@ -98,7 +98,8 @@ def test_full_run_stores_drafts_with_quotes(conn):
     # The prompt saw the cleaned page, not the menu or footer.
     message = claude.calls[0]["messages"][0]["content"]
     assert "Round 2 opens on 9 November 2026" in message and "Cookie settings" not in message
-    assert claude.calls[0]["tool_choice"] == {"type": "tool", "name": "record_extraction"}
+    assert claude.calls[0]["tool_choice"]["type"] == "auto"
+    assert "calling the record_extraction tool" in message
 
     fund = conn.execute("SELECT *, stages::text[] AS stages FROM funds").fetchone()
     assert fund["status"] == "draft" and fund["uk_eligible"] == "yes"
