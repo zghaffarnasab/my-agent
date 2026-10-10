@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block wrapclass %}narrow{% endblock %}
+{% block title %}{{ rec.name }}{% endblock %}
+{% block head %}<style>{% include "_film_style.css" %}</style>{% endblock %}
+{% block body %}
+<header class="top">
+  <h1><a href="/film">{{ t("film.title") }}</a></h1>
+  <div class="account">{% include "_header_tools.html" %}<a href="/film?status={{ rec.status }}">{{ t("nav.back_to_list") }}</a></div>
+</header>
+
+{% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
+
+<h2 style="font-size:20px;margin:0 0 4px;" class="ltr-auto">{{ rec.name }}{% if rec.strand %} · {{ rec.strand }}{% endif %}
+  <span class="badge">{{ t("film_status." ~ rec.status) }}</span></h2>
+<p class="muted" style="margin:0 0 16px;">
+  <span class="kind">{{ t("film_kind." ~ kind) }}</span><span class="ltr-auto">{{ rec.org or "" }}</span>
+  <span class="badge uk-{{ rec.uk_eligible }}">{{ t("film_uk." ~ rec.uk_eligible) }}</span>
+</p>
+
+<section class="panel review">
+  <form method="post" action="/film/{{ kind }}/{{ rec.id }}/review">
+    <label for="note" class="muted">{{ t("film.review_note") }}</label>
+    <textarea id="note" name="note" dir="auto">{{ rec.review_note or "" }}</textarea>
+    <div class="actions">
+      {% if rec.status != 'published' %}<button class="btn-primary" type="submit" name="status" value="published">{{ t("film.approve") }}</button>{% endif %}
+      {% if rec.status != 'rejected' %}<button class="btn-danger" type="submit" name="status" value="rejected">{{ t("film.reject") }}</button>{% endif %}
+      {% if rec.status != 'draft' %}<button type="submit" name="status" value="draft">{{ t("film.back_to_draft") }}</button>{% endif %}
+    </div>
+  </form>
+  <p class="muted" style="margin:10px 0 0;">{{ t("film.approve_help") }}</p>
+</section>
+
+{% if rec.summary %}<section class="panel"><p class="ltr-auto" style="margin:0;">{{ rec.summary }}</p></section>{% endif %}
+
+<section class="panel">
+  <h3>{{ t("film.dates") }}</h3>
+  {% if rec.dates %}
+  <ul class="dates">
+    {% for d in rec.dates %}
+    <li>
+      <div class="date-head">
+        <span class="date-val">{% if d.date_value %}{{ d.date_value }}{% if d.time_value %} {{ d.time_value.strftime("%H:%M") }}{% endif %}{% if d.tz %} {{ d.tz }}{% endif %}{% else %}{{ d.approx_text or "?" }}{% endif %}</span>
+        <span class="ltr-auto">{{ d.label or d.kind }}</span>
+        <span class="badge st-{{ d.status }}">{{ t("film_date." ~ d.status) }}</span>
+      </div>
+      <blockquote class="quote" dir="auto">“{{ d.source_quote }}”</blockquote>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ t("film.no_dates") }}</p>{% endif %}
+</section>
+
+{% if rec.fields %}
+<section class="panel">
+  <h3>{{ t("film.details") }}</h3>
+  <dl class="facts">
+    {% for key, value in rec.fields %}<dt>{{ t(key) }}</dt><dd class="ltr-auto">{{ value }}</dd>{% endfor %}
+    {% if rec.uk_not_eligible_reason or rec.eligibility_note %}<dt>{{ t("film.field.uk_reason") }}</dt><dd class="ltr-auto">{{ rec.uk_not_eligible_reason or rec.eligibility_note }}</dd>{% endif %}
+  </dl>
+</section>
+{% endif %}
+
+{% if rec.evidence or rec.qualifications %}
+<section class="panel">
+  <h3>{{ t("film.evidence") }}</h3>
+  <ul class="dates">
+    {% for e in rec.evidence %}
+    <li><div class="date-head"><span class="ltr-auto" dir="ltr">{{ e.field_name }}</span><span class="ltr-auto">{{ e.value_text }}</span></div>
+      <blockquote class="quote" dir="auto">“{{ e.source_quote }}”</blockquote></li>
+    {% endfor %}
+    {% for q in rec.qualifications %}
+    <li><div class="date-head"><span>{{ q.body }}</span><span class="ltr-auto">{{ q.category or "" }}</span></div>
+      <blockquote class="quote" dir="auto">“{{ q.source_quote }}”</blockquote></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="panel">
+  <h3>{{ t("film.source") }}</h3>
+  <dl class="facts">
+    <dt>{{ t("film.source_page") }}</dt><dd dir="ltr"><a href="{{ rec.source_url }}" target="_blank" rel="noopener noreferrer">{{ rec.source_url }}</a></dd>
+    <dt>{{ t("film.source_tier") }}</dt><dd>{{ rec.source_tier }}</dd>
+    {% if rec.last_verified_at %}<dt>{{ t("film.last_checked") }}</dt><dd dir="ltr">{{ rec.last_verified_at | dt }}</dd>{% endif %}
+    {% if rec.confidence is not none %}<dt>{{ t("film.confidence") }}</dt><dd dir="ltr">{{ "%.0f" % (rec.confidence * 100) }}%</dd>{% endif %}
+    {% if rec.rejected_count %}<dt>{{ t("film.rejected_items") }}</dt><dd>{{ rec.rejected_count }}</dd>{% endif %}
+  </dl>
+  {% if rec.notes %}<p class="muted ltr-auto" style="margin:10px 0 0;">{{ rec.notes }}</p>{% endif %}
+</section>
+{% endblock %}

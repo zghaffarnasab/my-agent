@@ -28,6 +28,26 @@ sudo docker compose -f pipeline/docker-compose.yml run --rm pipeline status
 
 `status` تعداد رکوردها، صف بررسی و تاریخ‌های پیش رو را نشان می‌دهد. اگر صفحه‌ای خطا داشت (مثلاً `HTTP 403` یا «no main text found»)، آن صفحه احتمالاً جاوااسکریپت لازم دارد و در فاز بعد با Playwright خوانده می‌شود.
 
+## صفحه‌ی بررسی در داشبورد (یک بار)
+
+داشبورد جیمیل یک صفحه‌ی «داشبورد فیلم» دارد که در آن هر draft را با نقل‌قول‌هایش می‌بینی و تأیید یا رد می‌کنی. برای روشن کردنش:
+
+1. دیتابیس را یک بار دوباره بالا بیاور تا به شبکه‌ی داشبورد وصل شود (داده‌ها پاک نمی‌شوند):
+   ```bash
+   cd ~/my-agent && git pull
+   sudo docker compose -f pipeline/docker-compose.yml up -d db
+   ```
+2. در فایل `.env` اصلی (نه `pipeline/.env`) این خط را اضافه کن. به‌جای `PASSWORD` همان `POSTGRES_PASSWORD` فایل `pipeline/.env` را بگذار:
+   ```
+   FILMDASH_DATABASE_URL=postgresql://filmdash:PASSWORD@filmdash-db:5432/filmdash
+   ```
+3. داشبورد را مثل همیشه به‌روز کن:
+   ```bash
+   sudo docker compose cp web:/data/app.db ./backup.db && sudo docker compose up -d --build
+   ```
+
+بعد در داشبورد، کنار «تنظیمات»، لینک «داشبورد فیلم» را می‌بینی.
+
 ## اجرای خودکار روزانه
 
 ```bash

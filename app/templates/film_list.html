@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block wrapclass %}narrow{% endblock %}
+{% block title %}{{ t("film.title") }}{% endblock %}
+{% block head %}<style>{% include "_film_style.css" %}</style>{% endblock %}
+{% block body %}
+<header class="top">
+  <h1><a href="/film">{{ t("film.title") }}</a></h1>
+  <div class="account">{% include "_header_tools.html" %}<a href="/">{{ t("nav.back_to_dashboard") }}</a></div>
+</header>
+
+{% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
+
+{% if unavailable %}
+  <div class="flash error">{{ t("film." ~ unavailable) }}</div>
+{% else %}
+  <p class="muted">{{ t("film.intro") }}</p>
+  <nav class="tabs" aria-label="{{ t('film.tabs_label') }}">
+    {% for key in statuses %}
+      <a class="tab{% if key == status %} on{% endif %}" href="/film?status={{ key }}"{% if key == status %} aria-current="page"{% endif %}>
+        {{ t("film_status." ~ key) }}<span class="n">{{ counts[key] }}</span></a>
+    {% endfor %}
+  </nav>
+  {% if records %}
+    <ul class="film-list">
+      {% for r in records %}
+      <li class="film-item"><a href="/film/{{ r.kind }}/{{ r.id }}">
+        <span class="film-name ltr-auto"><span class="kind">{{ t("film_kind." ~ r.kind) }}</span>{{ r.name }}{% if r.sub %} · {{ r.sub }}{% endif %}</span>
+        <span class="film-when">{% if r.next_date %}{{ r.next_date }}{% endif %}</span>
+        <span class="film-meta ltr-auto">{{ r.org or "" }}</span>
+        <span><span class="badge uk-{{ r.uk_eligible }}">{{ t("film_uk." ~ r.uk_eligible) }}</span></span>
+      </a></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">{{ t("film.empty") }}</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

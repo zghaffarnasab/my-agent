@@ -130,3 +130,8 @@ def test_event_fees_and_platform():
 def test_item_without_name_is_rejected():
     res = _run({"kind": "fund", "slug": "", "name": "", "dates": [], "evidence": []})
     assert res.items == [] and res.rejected[0]["what"] == "item"
+
+
+def test_html_entities_in_names_are_decoded():
+    res = _run(_fund(name="Film &amp; TV Award", slug="film-tv-award"))
+    assert res.items[0]["name"] == "Film & TV Award"

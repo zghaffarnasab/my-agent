@@ -14,6 +14,10 @@ services:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:5433:5432"   # only reachable from the server itself (e.g. psql, SSH tunnel)
+    networks:
+      default:
+      app:
+        aliases: [filmdash-db]   # the Gmail assistant's web container reaches the database by this name
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U filmdash -d filmdash"]
       interval: 5s
@@ -32,6 +36,12 @@ services:
       db:
         condition: service_healthy
     profiles: ["run"]   # not started by "up"; used with "docker compose run --rm pipeline <command>"
+
+networks:
+  app:
+    external: true
+    # Network of the Gmail assistant's compose project (folder name + "_default").
+    name: ${APP_NETWORK:-my-agent_default}
 
 volumes:
   pgdata:
