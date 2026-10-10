@@ -1,82 +1,82 @@
-# دستیار جواب ایمیل (Gmail + Claude)
+# Email Reply Assistant (Gmail + Claude)
 
-این برنامه ایمیل‌های جدید جیمیل را می‌خواند، با Claude برایشان پیش‌نویس جواب می‌نویسد و آن‌ها را در یک صف تسک نگه می‌دارد. تو هر تسک را باز می‌کنی، در صورت نیاز ویرایش یا بازنویسی می‌کنی و با «تأیید و ارسال» جواب در همان رشته‌ی ایمیل فرستاده می‌شود. هیچ ایمیلی بدون تأیید تو ارسال نمی‌شود.
+This app reads new Gmail messages, uses Claude to draft replies, and keeps them in a task queue. You open each task, edit or rewrite the draft if needed, and click "Approve and send" to send the reply in the original email thread. No email is ever sent without your approval.
 
-## ساختار پروژه
+## Project structure
 
 ```
 app/
-  config.py        تنظیمات از متغیرهای محیطی
-  db.py            مدل‌های دیتابیس (تسک‌ها و توکن گوگل)
-  gmail_client.py  اتصال OAuth، خواندن ایمیل، ارسال reply
-  ai.py            نوشتن پیش‌نویس با Claude
-  worker.py        فرایند پس‌زمینه که هر چند دقیقه صندوق را بررسی می‌کند
-  main.py          وب‌اپ FastAPI (داشبورد، تأیید، ارسال)
-  templates/       صفحه‌های داشبورد
+  config.py        Settings from environment variables
+  db.py            Database models (tasks and the Google token)
+  gmail_client.py  OAuth connection, reading email, sending replies
+  ai.py            Drafting replies with Claude
+  worker.py        Background process that checks the inbox every few minutes
+  main.py          FastAPI web app (dashboard, approval, sending)
+  templates/       Dashboard pages
 Dockerfile, docker-compose.yml, Caddyfile
 ```
 
-## ۱. ساخت OAuth Client در Google Cloud
+## 1. Create an OAuth client in Google Cloud
 
-1. به https://console.cloud.google.com برو و یک پروژه‌ی جدید بساز.
-2. در APIs & Services → Library، سرویس **Gmail API** را فعال کن.
-3. در OAuth consent screen نوع کاربر را External بگذار (یا اگر Google Workspace داری Internal)، و ایمیل خودت را در بخش Test users اضافه کن.
-4. در Credentials → Create credentials → OAuth client ID، نوع **Web application** را انتخاب کن و این Redirect URI ها را اضافه کن:
-   - `http://localhost:8000/auth/callback` برای تست روی کامپیوتر خودت
-   - `https://mail.example.com/auth/callback` با دامنه‌ی واقعی خودت برای سرور
-5. Client ID و Client Secret را در فایل `.env` بگذار.
+1. Go to https://console.cloud.google.com and create a new project.
+2. Under APIs & Services → Library, enable the **Gmail API**.
+3. On the OAuth consent screen, set the user type to External (or Internal if you have Google Workspace), and add your own email address under Test users.
+4. Under Credentials → Create credentials → OAuth client ID, choose **Web application** and add these redirect URIs:
+   - `http://localhost:8000/auth/callback` for testing on your own computer
+   - `https://mail.example.com/auth/callback` with your real domain, for the server
+5. Put the Client ID and Client Secret in the `.env` file.
 
-نکته‌ی مهم: اگر اپ گوگل در حالت Testing و نوع External باشد، گوگل توکن را هر ۷ روز باطل می‌کند و باید از داشبورد دوباره «اتصال جیمیل» را بزنی. برای رفع کامل این محدودیت دو راه داری: استفاده از حساب Google Workspace با نوع Internal، یا Publish کردن اپ (که برای دسترسی جیمیل نیاز به بررسی گوگل دارد).
+Important: if the Google app is in Testing mode with the External user type, Google revokes the token every 7 days and you will need to click "Connect Gmail" on the dashboard again. There are two ways to remove this limit completely: use a Google Workspace account with the Internal user type, or publish the app (which requires a Google review for Gmail access).
 
-## ۲. اجرا روی کامپیوتر خودت
+## 2. Run on your own computer
 
 ```bash
 cp .env.example .env
-# مقادیر را پر کن و BASE_URL را بگذار: http://localhost:8000
+# Fill in the values and set BASE_URL=http://localhost:8000
 docker compose up --build web worker
 ```
 
-بعد http://localhost:8000 را باز کن، با رمز داشبورد وارد شو و «اتصال جیمیل» را بزن.
+Then open http://localhost:8000, sign in with the dashboard password, and click "Connect Gmail".
 
-## ۳. استقرار روی AWS (EC2)
+## 3. Deploy on AWS (EC2)
 
-1. یک EC2 با Ubuntu بساز (t3.small کافی است). در Security Group پورت‌های 22، 80 و 443 را باز کن.
-2. یک Elastic IP به آن وصل کن تا آی‌پی ثابت بماند، و رکورد A دامنه‌ات (مثلاً `mail.example.com`) را به آن آی‌پی بده.
-3. روی سرور Docker نصب کن:
+1. Create an Ubuntu EC2 instance (a t3.small is enough). In the Security Group, open ports 22, 80 and 443.
+2. Attach an Elastic IP so the IP address stays fixed, and point your domain's A record (for example `mail.example.com`) to that IP.
+3. Install Docker on the server:
    ```bash
    curl -fsSL https://get.docker.com | sudo sh
-   sudo usermod -aG docker $USER   # بعدش یک‌بار logout/login کن
+   sudo usermod -aG docker $USER   # then log out and back in once
    ```
-4. پروژه را روی سرور کپی کن (با git یا scp)، فایل `.env` را بساز و `BASE_URL=https://mail.example.com` بگذار.
-5. در `Caddyfile` دامنه‌ی خودت را جایگزین کن. Caddy خودش گواهی HTTPS می‌گیرد.
-6. اجرا:
+4. Copy the project to the server (with git or scp), create the `.env` file, and set `BASE_URL=https://mail.example.com`.
+5. Replace the domain in the `Caddyfile` with your own. Caddy obtains the HTTPS certificate automatically.
+6. Start it:
    ```bash
    docker compose up -d --build
    docker compose logs -f worker
    ```
 
-به خاطر `restart: always`، اگر برنامه کرش کند یا سرور ریستارت شود، همه‌چیز خودکار دوباره بالا می‌آید.
+Because of `restart: always`, everything comes back up automatically if the app crashes or the server restarts.
 
-## تقویم گوگل
+## Google Calendar
 
-برنامه به Google Calendar هم وصل می‌شود: برنامه‌های چند روز آینده بالای داشبورد نشان داده می‌شوند، و قرارهایی که در ایمیل‌های دریافتی یا جواب‌های ارسالی تو پیدا شوند، به‌صورت کارت «افزودن به تقویم» در صفحه‌ی هر تسک می‌آیند. هیچ رویدادی بدون تأیید تو به تقویم اضافه نمی‌شود. اگر زمان قرار با برنامه‌ی دیگری تداخل داشته باشد، روی کارت هشدار داده می‌شود.
+The app also connects to Google Calendar: events for the next few days are shown at the top of the dashboard, and meetings found in incoming emails or in your sent replies appear as "Add to calendar" cards on each task's page. No event is added to your calendar without your approval. If a meeting time clashes with another event, the card shows a warning.
 
-برای فعال کردن: در Google Cloud سرویس **Google Calendar API** را فعال کن، و بعد از به‌روزرسانی برنامه، در داشبورد روی «فعال کردن تقویم» بزن تا اجازه‌ی تقویم هم داده شود.
+To enable it: turn on the **Google Calendar API** in Google Cloud, and after updating the app, click "Enable calendar" on the dashboard to grant calendar permission.
 
-تنظیمات اختیاری در `.env`: `TIMEZONE` منطقه‌ی زمانی خودت (پیش‌فرض `Europe/Berlin`)، `UPCOMING_DAYS` تعداد روزهایی که در داشبورد نشان داده می‌شود (پیش‌فرض ۷)، و `CALENDAR_ID` اگر می‌خواهی به تقویمی غیر از تقویم اصلی اضافه شود.
+Optional settings in `.env`: `TIMEZONE` for your time zone (default `Europe/Berlin`), `UPCOMING_DAYS` for the number of days shown on the dashboard (default 7), and `CALENDAR_ID` if you want events added to a calendar other than your primary one.
 
-## تنظیمات مفید در `.env`
+## Useful settings in `.env`
 
-`GMAIL_QUERY` تعیین می‌کند کدام ایمیل‌ها جواب بگیرند. پیش‌فرض ایمیل‌های خوانده‌نشده‌ی دو روز اخیر را برمی‌دارد (برای کنار گذاشتن یک دسته مثلاً `-category:promotions` را اضافه کن). اگر ایمیل‌ها را معمولاً قبل از برنامه در جیمیل باز می‌کنی، `is:unread` را حذف کن. با `label:` هم می‌توانی فقط یک برچسب خاص را هدف بگیری.
+`GMAIL_QUERY` controls which emails get a reply. By default it picks up unread emails from the last two days (to exclude a category, add something like `-category:promotions`). If you usually open emails in Gmail before the app sees them, remove `is:unread`. You can also use `label:` to target a single label.
 
-`REPLY_STYLE`، `OWNER_NAME` و `EMAIL_SIGNATURE` لحن و امضای جواب‌ها را تعیین می‌کنند. Claude همیشه به زبان خود فرستنده جواب می‌دهد و جاهایی که اطلاعات ندارد را با کروشه مثل `[زمان جلسه]` علامت می‌زند تا خودت پر کنی.
+`REPLY_STYLE`, `OWNER_NAME` and `EMAIL_SIGNATURE` set the tone and signature of replies. Claude always replies in the sender's language, and marks any information it does not have with square brackets, such as `[meeting time]`, for you to fill in.
 
-هر ایمیل یک بار با یک مدل ارزان (`CLASSIFY_MODEL`) خوانده و دسته‌بندی می‌شود. فقط وقتی کسی منتظر جواب است پیش‌نویس نوشته می‌شود؛ بقیه (خبرنامه، رسید، اطلاع‌رسانی، فوروارد) در بخش «سایر ایمیل‌ها» با خلاصه و قرارهایشان می‌آیند. ایمیل‌های خودت و پیام‌های سیستمی نادیده گرفته می‌شوند. با `PROCESS_BULK=false` خواندن خبرنامه‌ها خاموش می‌شود.
+Each email is read and categorized once by an inexpensive model (`CLASSIFY_MODEL`). A draft is written only when someone is waiting for a reply; everything else (newsletters, receipts, notifications, forwards) appears under "Other emails" with a summary and any events it mentions. Your own emails and system messages are ignored. Set `PROCESS_BULK=false` to stop reading newsletters.
 
-## امنیت
+## Security
 
-کلیدها را هرگز در git نگذار (`.env` در `.gitignore` است). برای `SECRET_KEY` و `DASHBOARD_PASSWORD` مقدار طولانی و تصادفی بگذار. در محیط جدی‌تر بهتر است کلیدها را در AWS Secrets Manager نگه داری و از RDS به جای SQLite استفاده کنی؛ فقط کافی است `DATABASE_URL` را عوض کنی.
+Never commit keys to git (`.env` is in `.gitignore`). Use long, random values for `SECRET_KEY` and `DASHBOARD_PASSWORD`. For a more serious setup, keep keys in AWS Secrets Manager and use RDS instead of SQLite; you only need to change `DATABASE_URL`.
 
-## ایده‌های نسخه‌ی بعد
+## Ideas for the next version
 
-اعلان در تلگرام یا ایمیل وقتی تسک جدید می‌آید، اولویت‌بندی ایمیل‌ها با هوش مصنوعی، و یادگیری لحن از جواب‌هایی که قبلاً ویرایش کرده‌ای.
+Telegram or email notifications when a new task arrives, AI-based email prioritization, and learning your tone from replies you have edited before.
