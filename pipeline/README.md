@@ -10,7 +10,7 @@ What it does today (first version):
 4. Checks that every date and amount has a quote that appears **verbatim** in the page text, and that the value itself is inside that quote. Anything that fails this check is recorded in `extraction_runs.rejected_items`.
 5. Saves the result in Postgres as a `draft`. Nothing is published automatically.
 
-Not yet included: Wix sync, a review panel (Review UI), RSS and newsletters.
+Not yet included: RSS and newsletters.
 
 ## Server setup (one time)
 
@@ -47,6 +47,30 @@ The Gmail dashboard has a "Film dashboard" page where you can see each draft wit
    ```
 
 A "Film dashboard" link then appears in the dashboard next to "Settings".
+
+## Sending to the Wix site (one time)
+
+Only funds and events you **approve** on the film dashboard go to two CMS collections on your Wix site: `FilmFunds` and `FilmEvents`. Drafts never go. If you reject something later, it is removed from Wix too. The sync is one-way: Postgres is the source of truth, and manual edits in the CMS are overwritten on the next run.
+
+1. Create an API key in Wix: Account Settings → API Keys → Generate API Key. Give it the **Wix Data** permissions (manage collections and write items) and select your site.
+2. Copy the Site ID from your site's dashboard URL: the part after `/dashboard/`.
+3. Add these two lines to `pipeline/.env`:
+   ```
+   WIX_API_KEY=...
+   WIX_SITE_ID=...
+   ```
+4. First see what would be sent (nothing is sent to Wix):
+   ```bash
+   sudo docker compose -f pipeline/docker-compose.yml run --rm --build pipeline wix-sync --dry-run
+   ```
+5. Then send it for real (the first time this also creates the two collections):
+   ```bash
+   sudo docker compose -f pipeline/docker-compose.yml run --rm pipeline wix-sync
+   ```
+
+From then on the daily `run` also does `wix-sync` after reading the pages, so anything you approve today is on Wix the next morning (or right away with the command above).
+
+The collections are not visible on the site until you connect them to a page in the Wix editor (for example a Repeater or a dynamic page). The `displayStatus` field is `expired` for items whose deadlines have passed; filter the page to show only `published`.
 
 ## Daily automatic run
 
