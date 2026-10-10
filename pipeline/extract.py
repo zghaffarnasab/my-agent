@@ -23,7 +23,7 @@ KNOWN_RECORDS: {known_records}
 </document>
 
 Extract every fund and event this document describes. If an item matches one in
-KNOWN_RECORDS, reuse its slug."""
+KNOWN_RECORDS, reuse its slug. Answer only by calling the record_extraction tool, exactly once."""
 
 # The page is untrusted text: a look-alike tag inside it must not close the wrapper.
 _DOC_TAG = re.compile(r"<(/?)document\b", re.I)
@@ -56,7 +56,8 @@ def call_claude(client, user_message: str, model: str | None = None) -> tuple[di
         max_tokens=16000,
         system=SYSTEM_PROMPT,
         tools=[TOOL],
-        tool_choice={"type": "tool", "name": TOOL["name"]},
+        # Current models reject a forced tool_choice ("tool"/"any"); the prompt asks for the tool instead.
+        tool_choice={"type": "auto", "disable_parallel_tool_use": True},
         messages=[{"role": "user", "content": user_message}],
     )
     usage = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}
