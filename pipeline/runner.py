@@ -70,8 +70,8 @@ def extract_snapshot(conn, client, snapshot_id: int) -> dict:
         return {"error": str(exc)}
 
 
-def run(conn, *, force: bool = False, claude_client=None, http_client=None) -> dict:
-    """Fetch due pages, then extract every snapshot that still needs it."""
+def run(conn, *, force: bool = False, claude_client=None, http_client=None, wix_client=None) -> dict:
+    """Fetch due pages, extract every snapshot that still needs it, then sync published records to Wix."""
     fetched = fetch.fetch_due(conn, force=force, client=http_client)
     pending = pending_snapshots(conn)
     results = {}
@@ -79,5 +79,14 @@ def run(conn, *, force: bool = False, claude_client=None, http_client=None) -> d
         claude_client = claude_client or extract.make_client()
         for snapshot_id in pending:
             results[snapshot_id] = extract_snapshot(conn, claude_client, snapshot_id)
-    return {"fetched": len(fetched), "changed": sum(f.changed for f in fetched),
-            "errors": [f"{f.url}: {f.error}" for f in fetched if f.error], "extracted": results}
+    out = {"fetched": len(fetched), "changed": sum(f.changed for f in fetched),
+           "errors": [f"{f.url}: {f.error}" for f in fetched if f.error], "extracted": results}
+    if config.WIX_API_KEY or wix_client:
+        from pipeline import wix
+        try:
+            out["wix"] = wix.sync(conn, wix_client)
+        except Exception as exc:   # a Wix outage must not hide the fetch/extract results
+            conn.rollback()
+            log.exception("wix sync failed")
+            out["wix"] = {"error": str(exc)}
+    return out

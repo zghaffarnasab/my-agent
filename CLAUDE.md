@@ -79,6 +79,9 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
   db joins the app's Docker network as `filmdash-db` (`pipeline/docker-compose.yml`, `APP_NETWORK`).
 - Every stored date and amount must have a quote found verbatim in the page text (`pipeline/validate.py`). Never relax this.
 - Nothing is published automatically. Schema changes go in a new numbered file in `pipeline/sql/`.
+- Wix sync (`pipeline/wix.py`, `python -m pipeline wix-sync [--dry-run]`, also at the end of `run` when `WIX_API_KEY`
+  is set): one-way, only `published` records, to CMS collections `FilmFunds`/`FilmEvents`; unpublished records are
+  removed from Wix. Item ids are uuid5 of the record id; `wix_sync_hash` skips unchanged items. Tests fake the Wix API.
 - DB tests need `PIPELINE_TEST_DATABASE_URL` (an empty throwaway database; the test wipes it), otherwise they skip.
 
 ## Rules for every change

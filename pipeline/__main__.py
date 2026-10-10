@@ -4,7 +4,8 @@
   seed               add the watched pages from pipeline/sources.json
   fetch [--force]    download due pages and keep a snapshot when the text changed
   extract            send new snapshots to Claude and store the results as drafts
-  run [--force]      fetch + extract (what the daily cron job runs)
+  run [--force]      fetch + extract + wix-sync (what the daily cron job runs)
+  wix-sync [--dry-run]  send published funds/events to the Wix CMS (only if WIX_API_KEY is set)
   status             counts and the review queue
 """
 import argparse
@@ -44,9 +45,10 @@ def status(conn) -> None:
 def main(argv=None) -> None:
     parser = argparse.ArgumentParser(prog="python -m pipeline", description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=["migrate", "seed", "fetch", "extract", "run", "status"])
+    parser.add_argument("command", choices=["migrate", "seed", "fetch", "extract", "run", "wix-sync", "status"])
     parser.add_argument("--force", action="store_true", help="fetch every page, even if checked recently")
     parser.add_argument("--source", type=int, help="fetch only this source id")
+    parser.add_argument("--dry-run", action="store_true", help="wix-sync: show what would be sent, call nothing")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -68,6 +70,9 @@ def main(argv=None) -> None:
                 print("nothing to extract")
         elif args.command == "run":
             print(json.dumps(runner.run(conn, force=args.force), indent=2, default=str))
+        elif args.command == "wix-sync":
+            from pipeline import wix
+            print(json.dumps(wix.sync(conn, dry_run=args.dry_run), indent=2, ensure_ascii=False, default=str))
         elif args.command == "status":
             status(conn)
 

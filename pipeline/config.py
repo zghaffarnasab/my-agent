@@ -17,6 +17,12 @@ FETCH_TIMEOUT_SECONDS = float(os.getenv("FETCH_TIMEOUT_SECONDS", "30"))
 # Very long pages are cut before they are sent to Claude (characters of clean text).
 MAX_DOCUMENT_CHARS = int(os.getenv("MAX_DOCUMENT_CHARS", "60000"))
 
+# Wix sync (optional). Without WIX_API_KEY nothing is sent to Wix.
+WIX_API_KEY = os.getenv("WIX_API_KEY", "")
+WIX_SITE_ID = os.getenv("WIX_SITE_ID", "")
+WIX_FUNDS_COLLECTION = os.getenv("WIX_FUNDS_COLLECTION", "FilmFunds")
+WIX_EVENTS_COLLECTION = os.getenv("WIX_EVENTS_COLLECTION", "FilmEvents")
+
 
 def require(name: str, value: str) -> str:
     if not value:
