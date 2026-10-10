@@ -1,35 +1,417 @@
 {
   "_note": "Official pages watched for changes. Seeded from the UK research report (Oct 2026). Add more here, then run: python -m pipeline seed",
   "organisations": [
-    {"name": "BFI", "website": "https://www.bfi.org.uk"},
-    {"name": "Doc Society", "website": "https://docsociety.org"},
-    {"name": "The Whickers", "website": "https://www.whickerawards.com"},
-    {"name": "Sheffield DocFest", "website": "https://www.sheffdocfest.com"}
+    {
+      "name": "BFI",
+      "website": "https://www.bfi.org.uk"
+    },
+    {
+      "name": "Doc Society",
+      "website": "https://docsociety.org"
+    },
+    {
+      "name": "The Whickers",
+      "website": "https://www.whickerawards.com"
+    },
+    {
+      "name": "Sheffield DocFest",
+      "website": "https://www.sheffdocfest.com"
+    },
+    {
+      "name": "BFI Network",
+      "website": "https://www.bfi.org.uk/get-funding-support/bfi-network"
+    },
+    {
+      "name": "Film Hub North",
+      "website": "https://filmhubnorth.org.uk"
+    },
+    {
+      "name": "Watershed (BFI Network South West)",
+      "website": "https://watershed.co.uk"
+    },
+    {
+      "name": "North East Screen",
+      "website": "https://northeastscreen.org"
+    },
+    {
+      "name": "Northern Ireland Screen",
+      "website": "https://northernirelandscreen.co.uk"
+    },
+    {
+      "name": "Screen Scotland",
+      "website": "https://www.screen.scot"
+    },
+    {
+      "name": "Film London",
+      "website": "https://filmlondon.org.uk"
+    },
+    {
+      "name": "BAFTA",
+      "website": "https://www.bafta.org"
+    },
+    {
+      "name": "Channel 4",
+      "website": "https://www.channel4.com"
+    },
+    {
+      "name": "Sky Documentaries",
+      "website": "https://docshorts.sky.com"
+    },
+    {
+      "name": "Catapult Film Fund",
+      "website": "https://www.catapultfilmfund.org"
+    },
+    {
+      "name": "Sundance Institute",
+      "website": "https://www.sundance.org"
+    },
+    {
+      "name": "Hot Docs",
+      "website": "https://www.hotdocs.ca"
+    },
+    {
+      "name": "IDFA",
+      "website": "https://professionals.idfa.nl"
+    },
+    {
+      "name": "Beacons",
+      "website": "https://www.beaconsfunding.org"
+    },
+    {
+      "name": "Jerwood Arts / Art Fund"
+    },
+    {
+      "name": "Edinburgh International Film Festival",
+      "website": "https://www.edfilmfest.org"
+    },
+    {
+      "name": "Aesthetica Short Film Festival",
+      "website": "https://www.asff.co.uk"
+    },
+    {
+      "name": "Leeds International Film Festival",
+      "website": "https://www.leedsfilm.com"
+    },
+    {
+      "name": "London Short Film Festival"
+    },
+    {
+      "name": "Iris Prize",
+      "website": "https://irisprize.org"
+    },
+    {
+      "name": "Berwick Film & Media Arts Festival",
+      "website": "https://bfmaf.org"
+    },
+    {
+      "name": "Encounters Film Festival"
+    },
+    {
+      "name": "Glasgow Film Festival"
+    },
+    {
+      "name": "Open City Documentary Festival"
+    },
+    {
+      "name": "Raindance Film Festival"
+    }
   ],
   "sources": [
     {
       "url": "https://www.bfi.org.uk/get-funding-support/create-films-tv-or-new-formats-storytelling/discovery-impact-feature-funding",
-      "organisation": "BFI", "title": "BFI Discovery (first features)", "tier": "official", "method": "html", "feeds_kind": "fund"
+      "organisation": "BFI",
+      "title": "BFI Discovery (first features)",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
     },
     {
       "url": "https://www.bfi.org.uk/get-funding-support/create-films-tv-or-new-formats-storytelling/development-funding",
-      "organisation": "BFI", "title": "BFI Development funding", "tier": "official", "method": "html", "feeds_kind": "fund"
+      "organisation": "BFI",
+      "title": "BFI Development funding",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
     },
     {
       "url": "https://bfi.docsociety.org/funds/features-development/",
-      "organisation": "Doc Society", "title": "BFI Doc Society Features Development", "tier": "official", "method": "html", "feeds_kind": "fund"
+      "organisation": "Doc Society",
+      "title": "BFI Doc Society Features Development",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
     },
     {
       "url": "https://www.whickerawards.com/apply/film-and-tv/",
-      "organisation": "The Whickers", "title": "Whickers Film & TV Funding Award", "tier": "official", "method": "html", "feeds_kind": "fund"
+      "organisation": "The Whickers",
+      "title": "Whickers Film & TV Funding Award",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
     },
     {
       "url": "https://www.sheffdocfest.com/film-programme-entries",
-      "organisation": "Sheffield DocFest", "title": "Sheffield DocFest film programme entries", "tier": "official", "method": "html", "feeds_kind": "event"
+      "organisation": "Sheffield DocFest",
+      "title": "Sheffield DocFest film programme entries",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
     },
     {
       "url": "https://www.sheffdocfest.com/key-dates",
-      "organisation": "Sheffield DocFest", "title": "Sheffield DocFest key dates", "tier": "official", "method": "html", "feeds_kind": "event"
+      "organisation": "Sheffield DocFest",
+      "title": "Sheffield DocFest key dates",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://www.bfi.org.uk/get-funding-support/bfi-network/bfi-network-england-short-film-funding",
+      "organisation": "BFI Network",
+      "title": "BFI Network England short film funding",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.bfi.org.uk/get-funding-support/bfi-network/bfi-network-funding",
+      "organisation": "BFI Network",
+      "title": "BFI Network funding overview",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.bfi.org.uk/get-funding-support/create-films-tv-or-new-formats-storytelling/future-takes",
+      "organisation": "BFI",
+      "title": "BFI Future Takes",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://filmhubnorth.org.uk/filmmaker/short-film-funding",
+      "organisation": "Film Hub North",
+      "title": "Film Hub North short film funding",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://watershed.co.uk/filmhub/making-films/bfi-network-short-film-fund",
+      "organisation": "Watershed (BFI Network South West)",
+      "title": "BFI Network South West short film fund",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://northeastscreen.org/funding/",
+      "organisation": "North East Screen",
+      "title": "North East Screen funding",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://northernirelandscreen.co.uk/funding/funding-calls/",
+      "organisation": "Northern Ireland Screen",
+      "title": "Northern Ireland Screen funding calls",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://screen.scot/funding-and-support/screen-scotland-funding/development-funding",
+      "organisation": "Screen Scotland",
+      "title": "Screen Scotland development funding",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://filmlondon.org.uk/latest/flamin-fellowship-2026-27-open-for-entries",
+      "organisation": "Film London",
+      "title": "FLAMIN Fellowship 2026-27",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.bafta.org/media-centre/press-releases/applications-open-breakthrough-uk-2026/",
+      "organisation": "BAFTA",
+      "title": "BAFTA Breakthrough UK",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://www.channel4.com/4producers/first-cut-pitch-2026",
+      "organisation": "Channel 4",
+      "title": "Channel 4 First Cut pitch",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://docshorts.sky.com",
+      "organisation": "Sky Documentaries",
+      "title": "Sky Docs Shorts",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.catapultfilmfund.org/how-to-apply",
+      "organisation": "Catapult Film Fund",
+      "title": "Catapult Film Fund: how to apply",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://apply.sundance.org/prog/2027_documentary_fund_grant/",
+      "organisation": "Sundance Institute",
+      "title": "Sundance Documentary Fund 2027",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.hotdocs.ca/i/hd-big-fund-how-to-apply",
+      "organisation": "Hot Docs",
+      "title": "Hot Docs funds: how to apply",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://professionals.idfa.nl/training-funding/funding/about-the-idfa-bertha-fund/",
+      "organisation": "IDFA",
+      "title": "IDFA Bertha Fund",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www2.fundsforngos.org/individuals/beacons-short-film-funding-united-kingdom/",
+      "organisation": "Beacons",
+      "title": "Beacons short film funding (listing)",
+      "tier": "aggregator",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www2.fundsforngos.org/individuals/bfi-doc-society-fund-production-uk/",
+      "organisation": "Doc Society",
+      "title": "BFI Doc Society production (listing)",
+      "tier": "aggregator",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www2.fundsforngos.org/innovation/call-for-applications-jerwood-art-fund-to-commission-artists-uk/",
+      "organisation": "Jerwood Arts / Art Fund",
+      "title": "Jerwood / Art Fund artist commissions (listing)",
+      "tier": "aggregator",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.edfilmfest.org/submission",
+      "organisation": "Edinburgh International Film Festival",
+      "title": "Edinburgh IFF submissions",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://www.asff.co.uk/submit/",
+      "organisation": "Aesthetica Short Film Festival",
+      "title": "Aesthetica Short Film Festival submissions",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://www.leedsfilm.com/liff-2026-6ftb",
+      "organisation": "Leeds International Film Festival",
+      "title": "Leeds IFF",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://filmfreeway.com/LondonShortFilmFestival",
+      "organisation": "London Short Film Festival",
+      "title": "London Short Film Festival (FilmFreeway)",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://irisprize.org/",
+      "organisation": "Iris Prize",
+      "title": "Iris Prize",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://bfmaf.org/news/save-the-date-2026/",
+      "organisation": "Berwick Film & Media Arts Festival",
+      "title": "Berwick Film & Media Arts Festival",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://www.sheffdocfest.com/meetmarket-application-guidelines",
+      "organisation": "Sheffield DocFest",
+      "title": "Sheffield DocFest MeetMarket",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://www.sheffdocfest.com/2027-festival-information",
+      "organisation": "Sheffield DocFest",
+      "title": "Sheffield DocFest 2027 information",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://asianfilmfestivals.com/2025/12/29/encounters-film-festival-call-for-entry-2026/",
+      "organisation": "Encounters Film Festival",
+      "title": "Encounters call for entry (listing)",
+      "tier": "aggregator",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://asianfilmfestivals.com/2026/07/21/glasgow-film-festival-call-for-entry-2027/",
+      "organisation": "Glasgow Film Festival",
+      "title": "Glasgow FF 2027 call for entry (listing)",
+      "tier": "aggregator",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://asianfilmfestivals.com/2026/07/21/open-city-documentary-festival-call-for-entry-2027/",
+      "organisation": "Open City Documentary Festival",
+      "title": "Open City 2027 call for entry (listing)",
+      "tier": "aggregator",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://asianfilmfestivals.com/2026/08/14/raindance-film-festival-call-for-entry-2027/",
+      "organisation": "Raindance Film Festival",
+      "title": "Raindance 2027 call for entry (listing)",
+      "tier": "aggregator",
+      "method": "html",
+      "feeds_kind": "event"
     }
   ]
 }
