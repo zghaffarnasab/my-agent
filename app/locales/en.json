@@ -37,6 +37,8 @@
   "dash.upcoming_title": "Next {days} days",
   "dash.open_calendar": "Open Google Calendar",
   "dash.calendar_error": "Could not read the calendar:",
+  "dash.reconnect_text": "Your Google connection has expired, so new emails and the calendar can't be read. Connect the same account again; nothing is lost.",
+  "dash.reconnect_btn": "Reconnect Google",
   "dash.nothing_upcoming": "Nothing on your calendar for these days.",
   "dash.all_day": "All day",
   "dash.untitled": "(untitled)",

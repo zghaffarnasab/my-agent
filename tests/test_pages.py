@@ -181,3 +181,13 @@ def test_adding_a_multi_day_event_uses_the_end_date_and_rejects_cancelled(client
         db.commit()
     client.post(f"/events/{again.id}/add", data=dict(bad, date="2026-12-01"), follow_redirects=False)
     assert seen["end"] == ""
+
+
+def test_expired_google_token_shows_reconnect_button(client, monkeypatch):
+    def expired(*a, **k):
+        raise gmail_client.ReconnectNeeded("invalid_grant: Token has been expired or revoked.")
+    monkeypatch.setattr(calendar_client, "upcoming", expired)
+    page = client.get("/").text
+    assert "Reconnect Google" in page
+    assert 'href="/auth/google"' in page
+    assert "invalid_grant" not in page

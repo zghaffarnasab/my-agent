@@ -54,7 +54,12 @@
 </div>
 {% endif %}
 
-{% if calendar_ok %}
+{% if reconnect_needed %}
+<div class="connect">
+  <span>{{ t("dash.reconnect_text") }}</span>
+  <a class="btn btn-primary" href="/auth/google">{{ t("dash.reconnect_btn") }}</a>
+</div>
+{% elif calendar_ok %}
 <section class="upcoming" aria-labelledby="up-h">
   <h2 id="up-h">{{ t("dash.upcoming_title", days=upcoming_days) }}
     <a href="https://calendar.google.com" target="_blank" rel="noopener">{{ t("dash.open_calendar") }}</a></h2>

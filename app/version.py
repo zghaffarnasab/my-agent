@@ -8,9 +8,27 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.9.1"
+VERSION = "1.9.2"
 
 CHANGELOG = [
+    {
+        "version": "1.9.2",
+        "date": "2026-10-12",
+        "title": {
+            "en": "Clear message when the Google connection expires",
+            "fa": "پیام روشن وقتی اتصال گوگل منقضی می‌شود",
+        },
+        "changes": {
+            "en": [
+                "When Google rejects the saved login (expired or revoked), the dashboard shows a \"Reconnect Google\" button instead of a raw error.",
+                "Reconnecting with the same account keeps all tasks and events.",
+            ],
+            "fa": [
+                "وقتی گوگل ورود ذخیره‌شده را رد کند (منقضی یا لغو شده)، داشبورد به جای خطای خام یک دکمه‌ی «اتصال دوباره‌ی گوگل» نشان می‌دهد.",
+                "اتصال دوباره با همان حساب، همه‌ی کارها و رویدادها را نگه می‌دارد.",
+            ],
+        },
+    },
     {
         "version": "1.9.1",
         "date": "2026-10-10",

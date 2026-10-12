@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from email.message import EmailMessage
 from email.utils import getaddresses, parseaddr
 
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
@@ -22,6 +23,9 @@ SYSTEM_SENDER_PATTERN = re.compile(r"(mailer-daemon|postmaster|bounce)", re.I)
 
 
 # ---------- OAuth ----------
+
+class ReconnectNeeded(RuntimeError):
+    """Google refused the saved token (expired or revoked): the owner must connect the account again."""
 
 def make_flow(state: str | None = None) -> Flow:
     client_config = {
@@ -61,7 +65,11 @@ def load_credentials() -> Credentials | None:
         # No scopes argument: keep exactly what was granted, so older Gmail-only tokens still refresh
         creds = Credentials.from_authorized_user_info(json.loads(row.token_json))
     if creds.expired and creds.refresh_token:
-        creds.refresh(Request())
+        try:
+            creds.refresh(Request())
+        except RefreshError as exc:
+            # invalid_grant: the refresh token is dead (7-day limit of a "Testing" OAuth app, or access revoked)
+            raise ReconnectNeeded(str(exc)) from exc
         save_credentials(creds)
     return creds
 

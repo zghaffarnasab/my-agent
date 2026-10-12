@@ -170,6 +170,8 @@ def main() -> None:
                 n = process_new_emails()
                 if n:
                     log.info("Created %d new draft(s).", n)
+        except gmail_client.ReconnectNeeded as exc:
+            log.warning("Google token expired or revoked (%s). Reconnect the account from the dashboard.", exc)
         except Exception:
             log.exception("Polling cycle failed")
         time.sleep(config.POLL_INTERVAL_SECONDS)

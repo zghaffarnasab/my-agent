@@ -37,6 +37,8 @@
   "dash.upcoming_title": "برنامه‌های {days} روز آینده",
   "dash.open_calendar": "باز کردن Google Calendar",
   "dash.calendar_error": "خواندن تقویم ناموفق بود:",
+  "dash.reconnect_text": "اتصال گوگل منقضی شده و ایمیل‌های جدید و تقویم خوانده نمی‌شوند. همان حساب را دوباره وصل کن؛ چیزی پاک نمی‌شود.",
+  "dash.reconnect_btn": "اتصال دوباره‌ی گوگل",
   "dash.nothing_upcoming": "برنامه‌ای در این روزها نداری.",
   "dash.all_day": "تمام روز",
   "dash.untitled": "(بدون عنوان)",
