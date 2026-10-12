@@ -363,14 +363,17 @@ def index(request: Request, tab: str = "", status: str = "", archived: int = 0,
         tasks_with_events = {ev.task_id for ev, _ in all_events}
     gmail = gmail_client.connected_email()
     calendar_ok = bool(gmail) and gmail_client.has_calendar_access()
-    upcoming, upcoming_error = [], None
+    upcoming, upcoming_error, reconnect_needed = [], None, False
     if calendar_ok:
         try:
             upcoming = calendar_client.upcoming()
+        except gmail_client.ReconnectNeeded:
+            reconnect_needed = True
         except Exception as exc:
             upcoming_error = str(exc)[:300]
     return templates.TemplateResponse(request, "index.html", {
         "calendar_ok": calendar_ok,
+        "reconnect_needed": reconnect_needed,
         "upcoming": upcoming,
         "upcoming_error": upcoming_error,
         "upcoming_days": config.UPCOMING_DAYS,
