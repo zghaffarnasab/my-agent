@@ -1,7 +1,7 @@
 import asyncio
 import os
 import secrets
-from datetime import timezone
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from email.utils import parseaddr
 
@@ -73,6 +73,8 @@ MAX_EVENT_CARDS = 50
 def fmt_date(value):
     if not value:
         return ""
+    if isinstance(value, str):
+        value = datetime.fromisoformat(value)
     if value.tzinfo is None:
         value = value.replace(tzinfo=timezone.utc)
     return value.astimezone(ZoneInfo(settings.get_timezone())).strftime("%Y-%m-%d %H:%M")
@@ -121,6 +123,8 @@ templates.env.filters["sender"] = sender_name
 templates.env.globals["APP_VERSION"] = VERSION
 templates.env.globals["film_enabled"] = filmdash.enabled
 templates.env.globals["registration_mailto"] = siterequests.registration_mailto
+templates.env.globals["draft_registration"] = siterequests.draft_registration
+templates.env.globals["update_mailto"] = siterequests.update_mailto
 
 
 @app.on_event("startup")
@@ -839,6 +843,7 @@ def request_detail(request: Request, request_id: int):
     return templates.TemplateResponse(request, "request_detail.html", {
         "flash": pop_flash(request), "req": req, "offer": offer, "statuses": siterequests.STATUSES,
         "mail_configured": siterequests.mail_configured(),
+        "imap_configured": siterequests.imap_configured(), "confirm_url": siterequests.confirm_url(req["profile"]),
         "offer_mailto": siterequests.mailto(req["email"], offer.get("subject", ""), offer.get("body", "")) if offer else "",
     })
 
@@ -884,6 +889,26 @@ def request_send(request: Request, request_id: int, subject: str = Form(...), bo
         flash(request, "flash.request_send_failed", "error", error=exc)
         return _to_request(request_id)
     flash(request, "flash.request_marked_sent" if manual else "flash.request_sent")
+    return _to_request(request_id)
+
+
+@app.post("/requests/{request_id}/submit")
+def request_submit(request: Request, request_id: int, key: str = Form(...), subject: str = Form(...),
+                   body: str = Form(...)):
+    require_login(request)
+    if not siterequests.mail_configured():
+        raise HTTPException(status_code=400, detail="Mail is not configured")
+    try:
+        siterequests.send_registration(request_id, key, subject, body)
+    except siterequests.NotFound:
+        raise HTTPException(status_code=404, detail="Not found")
+    except filmdash.Unavailable:
+        flash(request, "flash.film_unavailable", "error")
+        return RedirectResponse("/requests", status_code=303)
+    except Exception as exc:
+        flash(request, "flash.request_send_failed", "error", error=exc)
+        return _to_request(request_id)
+    flash(request, "flash.request_registration_sent")
     return _to_request(request_id)
 
 

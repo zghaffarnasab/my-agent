@@ -195,3 +195,13 @@ def clean_request_picks(data: dict, allowed_keys: set[str], max_picks: int) -> l
         if len(picks) == max_picks:
             break
     return picks
+
+
+REPLY_OUTCOMES = ("received", "accepted", "rejected", "needs_info", "other")
+
+
+def clean_reply_outcome(data: dict) -> dict:
+    """An organiser's reply: one fixed outcome code and a short plain-text summary."""
+    outcome = data.get("outcome")
+    return {"outcome": outcome if outcome in REPLY_OUTCOMES else "other",
+            "summary": clean_text(data.get("summary"), 240)}

@@ -52,6 +52,14 @@ REQUESTS_MAIL_PORT = int(_get("REQUESTS_MAIL_PORT", "465"))   # 465 = SSL, anyth
 REQUESTS_MAIL_USER = _get("REQUESTS_MAIL_USER", "")
 REQUESTS_MAIL_PASSWORD = _get("REQUESTS_MAIL_PASSWORD", "")
 REQUESTS_MAIL_FROM = _get("REQUESTS_MAIL_FROM", "")
+# The website's confirmation page, e.g. https://<your-domain>/confirm . Empty = the offer asks for a reply instead.
+REQUESTS_CONFIRM_URL = _get("REQUESTS_CONFIRM_URL", "")
+# IMAP of the same mailbox, to read the organisers' replies (read-only; nothing is marked as read).
+REQUESTS_IMAP_HOST = _get("REQUESTS_IMAP_HOST", "")
+REQUESTS_IMAP_PORT = int(_get("REQUESTS_IMAP_PORT", "993"))
+REQUESTS_IMAP_USER = _get("REQUESTS_IMAP_USER", "") or REQUESTS_MAIL_USER
+REQUESTS_IMAP_PASSWORD = _get("REQUESTS_IMAP_PASSWORD", "") or REQUESTS_MAIL_PASSWORD
+REQUESTS_IMAP_FOLDER = _get("REQUESTS_IMAP_FOLDER", "INBOX")
 
 # --- Worker ---
 POLL_INTERVAL_SECONDS = int(_get("POLL_INTERVAL_SECONDS", "180"))

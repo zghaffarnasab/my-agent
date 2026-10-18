@@ -170,6 +170,18 @@ def main() -> None:
         except Exception:
             log.exception("Matching website requests failed")
         try:
+            n = siterequests.sync_confirmations()
+            if n:
+                log.info("Copied %d visitor confirmation(s) from the website.", n)
+        except Exception:
+            log.exception("Reading website confirmations failed")
+        try:
+            n = siterequests.poll_replies()
+            if n:
+                log.info("Found %d organiser repl(ies) to registrations.", n)
+        except Exception:
+            log.exception("Reading organiser replies failed")
+        try:
             if gmail_client.connected_email() is None:
                 log.info("Gmail not connected yet. Waiting...")
             else:
