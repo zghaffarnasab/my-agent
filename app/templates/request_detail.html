@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block wrapclass %}narrow{% endblock %}
+{% block title %}{{ req.name }}{% endblock %}
+{% block head %}<style>{% include "_film_style.css" %}
+.picks { list-style: none; margin: 0; padding: 0; }
+.nowrap { white-space: nowrap; }
+.picks li { align-items: start; padding: 12px 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
+.picks li:first-child { border-top: none; padding-top: 0; }
+.pick-body p { margin: 4px 0 0; font-size: 14px; }
+.links { display: flex; flex-wrap: wrap; gap: 12px; font-size: 14px; margin-top: 6px; }
+.review input[type=text] { width: 100%; font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line-strong);
+  border-radius: 8px; background: var(--surface); color: var(--ink); margin-bottom: 8px; unicode-bidi: plaintext; }
+.review textarea.mail { min-height: 280px; }
+.message { white-space: pre-wrap; margin: 0; overflow-wrap: anywhere; }
+</style>{% endblock %}
+{% block body %}
+{% set picks = req.profile.picks or [] %}
+{% set chosen = picks | selectattr("chosen") | list %}
+<header class="top">
+  <h1><a href="/requests">{{ t("req.title") }}</a></h1>
+  <div class="account">{% include "_header_tools.html" %}<a href="/requests?status={{ req.status }}">{{ t("nav.back_to_list") }}</a></div>
+</header>
+
+{% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
+
+<h2 style="font-size:20px;margin:0 0 4px;" class="ltr-auto">{{ req.name }} <span class="badge">{{ t("req_status." ~ req.status) }}</span></h2>
+<p class="muted" style="margin:0 0 16px;"><span dir="ltr">{{ req.email }}</span> · <span dir="ltr">{{ req.created_at | dt }}</span>
+  · {{ t("req.wrote_in", language=t("language." ~ (req.lang or "en"))) }}</p>
+
+<section class="panel">
+  <h3>{{ t("req.request") }}</h3>
+  <dl class="facts">
+    {% if req.country %}<dt>{{ t("req.country") }}</dt><dd class="ltr-auto">{{ req.country }}</dd>{% endif %}
+    {% if req.film_title %}<dt>{{ t("req.film_title") }}</dt><dd class="ltr-auto">{{ req.film_title }}</dd>{% endif %}
+    {% if req.film_type %}<dt>{{ t("req.film_type") }}</dt><dd>{{ req.film_type }}</dd>{% endif %}
+    {% if req.stage %}<dt>{{ t("req.stage") }}</dt><dd>{{ req.stage }}</dd>{% endif %}
+    {% if req.needs %}<dt>{{ t("req.needs") }}</dt><dd>{% for n in req.needs %}<span class="badge">{{ t("need." ~ n) }}</span> {% endfor %}</dd>{% endif %}
+  </dl>
+  <p class="message" dir="auto" style="margin-top:12px;">{{ req.message }}</p>
+</section>
+
+<section class="panel review">
+  <h3>{{ t("req.suggestions") }}</h3>
+  {% if not req.profile.matched_at %}
+    <p class="muted">{{ t("req.not_matched") }}</p>
+  {% elif not picks %}
+    <p class="muted">{{ t("req.no_matches") }}</p>
+  {% else %}
+  <form method="post" action="/requests/{{ req.id }}/choose">
+    <ul class="picks">
+      {% for p in picks %}
+      <li>
+        <input type="checkbox" name="keys" value="{{ p.key }}" id="pick-{{ loop.index }}"{% if p.chosen %} checked{% endif %}>
+        <div class="pick-body">
+          <label for="pick-{{ loop.index }}" class="film-name ltr-auto"><span class="kind">{{ t("req_type." ~ p.type) }}</span>{{ p.name }}{% if p.sub %} · {{ p.sub }}{% endif %}</label>
+          <div class="film-meta">{% if p.org %}<span class="ltr-auto">{{ p.org }}</span>{% endif %}
+            {%- if p.next_date %}{% if p.org %} · {% endif %}<span dir="ltr">{{ p.next_date }}</span>{% endif %}
+            {%- if p.money %}{% if p.org or p.next_date %} · {% endif %}<span dir="ltr" class="nowrap">{{ p.money }}</span>{% endif %}</div>
+          {% if p.reason %}<p dir="auto">{{ p.reason }}</p>{% endif %}
+          <div class="links"><a href="/film/{{ p.kind }}/{{ p.id }}">{{ t("req.open_record") }}</a>
+            {% if p.url %}<a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">{{ t("req.open_page") }}</a>{% endif %}</div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    <label for="note" class="muted">{{ t("req.note") }}</label>
+    <textarea id="note" name="note" dir="auto">{{ req.profile.note or "" }}</textarea>
+    <div class="actions"><button class="btn-primary" type="submit">{{ t("req.write_offer") }}</button></div>
+  </form>
+  {% endif %}
+  {% if req.profile.manual_needs %}
+    <p class="muted">{{ t("req.manual_needs") }} {% for n in req.profile.manual_needs %}<span class="badge">{{ t("need." ~ n) }}</span> {% endfor %}</p>
+  {% endif %}
+  <form method="post" action="/requests/{{ req.id }}/match" class="actions">
+    <button type="submit">{{ t("req.match_again" if req.profile.matched_at else "req.match_now") }}</button>
+  </form>
+</section>
+
+{% if offer %}
+<section class="panel review">
+  <h3>{{ t("req.offer") }}</h3>
+  {% if offer.sent_at %}
+    <p class="muted">{{ t("req.offer_sent_smtp" if offer.via == "smtp" else "req.offer_sent_manual", when=offer.sent_at[:16].replace("T", " ")) }}</p>
+    <p class="muted ltr-auto"><strong>{{ offer.subject }}</strong></p>
+    <p class="message" dir="auto">{{ offer.body }}</p>
+  {% else %}
+  <form method="post" action="/requests/{{ req.id }}/send">
+    <label for="subject" class="muted">{{ t("req.subject") }}</label>
+    <input type="text" id="subject" name="subject" dir="auto" value="{{ offer.subject }}">
+    <textarea class="mail" name="body" dir="auto" aria-label="{{ t('req.offer') }}">{{ offer.body }}</textarea>
+    <div class="actions">
+      {% if mail_configured %}
+        <button class="btn-primary" type="submit" onclick='return confirm({{ t("req.send_confirm") | tojson }})'>{{ t("req.send") }}</button>
+      {% else %}
+        <a class="btn" href="{{ offer_mailto }}">{{ t("req.open_mail_app") }}</a>
+        <button type="submit" name="manual" value="1">{{ t("req.mark_sent") }}</button>
+      {% endif %}
+    </div>
+  </form>
+  <p class="muted" style="margin:10px 0 0;">{{ t("req.offer_help" if mail_configured else "req.offer_help_manual") }}</p>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if req.status in ("offered", "confirmed", "registered") and chosen %}
+<section class="panel review">
+  <h3>{{ t("req.registration") }}</h3>
+  {% if req.status == "offered" %}
+    <p class="muted">{{ t("req.wait_for_yes") }}</p>
+    <form method="post" action="/requests/{{ req.id }}/status" class="actions">
+      <button class="btn-primary" type="submit" name="status" value="confirmed">{{ t("req.visitor_said_yes") }}</button>
+    </form>
+  {% else %}
+    <ul class="picks">
+      {% for p in chosen %}
+      {% set reg_mail = registration_mailto(req, p) %}
+      <li>
+        <form method="post" action="/requests/{{ req.id }}/registered">
+          <input type="hidden" name="key" value="{{ p.key }}">
+          {% if not p.registered %}<input type="hidden" name="done" value="1">{% endif %}
+          <button type="submit">{{ t("req.undo_registered" if p.registered else "req.mark_registered") }}</button>
+        </form>
+        <div class="pick-body">
+          <span class="film-name ltr-auto">{{ p.name }}</span>{% if p.registered %} <span class="badge uk-yes">{{ t("req.registered") }}</span>{% endif %}
+          <p class="muted">{{ t("req.how_email" if reg_mail else "req.how_site") }}</p>
+          <div class="links">
+            {% if reg_mail %}<a href="{{ reg_mail }}">{{ t("req.write_registration") }}</a>{% endif %}
+            {% if p.url and not p.url.startswith("mailto:") %}<a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">{{ t("req.open_page") }}</a>{% endif %}
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="panel review">
+  <form method="post" action="/requests/{{ req.id }}/status" class="actions">
+    {% if req.status != "closed" %}<button class="btn-danger" type="submit" name="status" value="closed">{{ t("req.close") }}</button>
+    {% else %}<button type="submit" name="status" value="{{ 'matched' if req.profile.matched_at else 'new' }}">{{ t("req.reopen") }}</button>{% endif %}
+  </form>
+</section>
+{% endblock %}

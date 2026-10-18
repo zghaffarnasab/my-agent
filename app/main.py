@@ -13,7 +13,7 @@ from markupsafe import Markup
 from sqlalchemy import delete, func, select, update
 from starlette.middleware.sessions import SessionMiddleware
 
-from app import ai, calendar_client, config, events, filmdash, gmail_client, i18n, settings, validation
+from app import ai, calendar_client, config, events, filmdash, gmail_client, i18n, settings, siterequests, validation
 from app.version import CHANGELOG, VERSION
 from app.db import EventStatus, EventSuggestion, SessionLocal, Task, TaskStatus, init_db, utcnow
 
@@ -120,6 +120,7 @@ templates.env.filters["dt"] = fmt_date
 templates.env.filters["sender"] = sender_name
 templates.env.globals["APP_VERSION"] = VERSION
 templates.env.globals["film_enabled"] = filmdash.enabled
+templates.env.globals["registration_mailto"] = siterequests.registration_mailto
 
 
 @app.on_event("startup")
@@ -799,6 +800,105 @@ def film_review(request: Request, kind: str, record_id: int, status: str = Form(
     flash(request, f"flash.film_{status}")
     return RedirectResponse("/film", status_code=303)
 
+
+
+# ---------- Website requests (/requests): match each visitor to published funds and events ----------
+
+def _unavailable_key(exc: filmdash.Unavailable) -> str:
+    return {"not configured": "not_configured", "no table": "no_table"}.get(str(exc), "unreachable")
+
+
+def _to_request(request_id: int) -> RedirectResponse:
+    return RedirectResponse(f"/requests/{request_id}", status_code=303)
+
+
+@app.get("/requests", response_class=HTMLResponse)
+def requests_list(request: Request, status: str = "matched"):
+    require_login(request)
+    status = status if status in siterequests.STATUSES else "matched"
+    context = {"flash": pop_flash(request), "status": status, "statuses": siterequests.STATUSES,
+               "rows": [], "counts": {}, "unavailable": None}
+    try:
+        context["rows"], context["counts"] = siterequests.overview(status)
+    except filmdash.Unavailable as exc:
+        context["unavailable"] = _unavailable_key(exc)
+    return templates.TemplateResponse(request, "requests_list.html", context)
+
+
+@app.get("/requests/{request_id}", response_class=HTMLResponse)
+def request_detail(request: Request, request_id: int):
+    require_login(request)
+    try:
+        req = siterequests.get(request_id)
+    except filmdash.Unavailable:
+        flash(request, "flash.film_unavailable", "error")
+        return RedirectResponse("/requests", status_code=303)
+    if req is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    offer = req["profile"].get("offer") or {}
+    return templates.TemplateResponse(request, "request_detail.html", {
+        "flash": pop_flash(request), "req": req, "offer": offer, "statuses": siterequests.STATUSES,
+        "mail_configured": siterequests.mail_configured(),
+        "offer_mailto": siterequests.mailto(req["email"], offer.get("subject", ""), offer.get("body", "")) if offer else "",
+    })
+
+
+def _request_action(request: Request, request_id: int, action, ok_key: str):
+    require_login(request)
+    try:
+        action()
+    except siterequests.NotFound:
+        raise HTTPException(status_code=404, detail="Not found")
+    except filmdash.Unavailable:
+        flash(request, "flash.film_unavailable", "error")
+        return RedirectResponse("/requests", status_code=303)
+    flash(request, ok_key)
+    return _to_request(request_id)
+
+
+@app.post("/requests/{request_id}/match")
+def request_match(request: Request, request_id: int):
+    return _request_action(request, request_id, lambda: siterequests.match(request_id), "flash.request_matched")
+
+
+@app.post("/requests/{request_id}/choose")
+def request_choose(request: Request, request_id: int, keys: list[str] = Form([]), note: str = Form("")):
+    return _request_action(request, request_id, lambda: siterequests.choose(request_id, keys, note),
+                           "flash.request_chosen")
+
+
+@app.post("/requests/{request_id}/send")
+def request_send(request: Request, request_id: int, subject: str = Form(...), body: str = Form(...),
+                 manual: str = Form("")):
+    require_login(request)
+    if not manual and not siterequests.mail_configured():
+        raise HTTPException(status_code=400, detail="Mail is not configured")
+    try:
+        siterequests.send_offer(request_id, subject, body, manual=bool(manual))
+    except siterequests.NotFound:
+        raise HTTPException(status_code=404, detail="Not found")
+    except filmdash.Unavailable:
+        flash(request, "flash.film_unavailable", "error")
+        return RedirectResponse("/requests", status_code=303)
+    except Exception as exc:
+        flash(request, "flash.request_send_failed", "error", error=exc)
+        return _to_request(request_id)
+    flash(request, "flash.request_marked_sent" if manual else "flash.request_sent")
+    return _to_request(request_id)
+
+
+@app.post("/requests/{request_id}/registered")
+def request_registered(request: Request, request_id: int, key: str = Form(...), done: str = Form("")):
+    return _request_action(request, request_id, lambda: siterequests.set_registered(request_id, key, bool(done)),
+                           "flash.request_updated")
+
+
+@app.post("/requests/{request_id}/status")
+def request_status(request: Request, request_id: int, status: str = Form(...)):
+    if status not in siterequests.STATUSES:
+        raise HTTPException(status_code=400, detail="Bad status")
+    return _request_action(request, request_id, lambda: siterequests.set_status(request_id, status),
+                           "flash.request_updated")
 
 # ---------- Calendar ----------
 

@@ -8,9 +8,33 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.9.2"
+VERSION = "1.10.0"
 
 CHANGELOG = [
+    {
+        "version": "1.10.0",
+        "date": "2026-10-18",
+        "title": {
+            "en": "Website requests: suggestions, offer email and registration",
+            "fa": "درخواست‌های سایت: پیشنهاد، ایمیل پیشنهاد و ثبت‌نام",
+        },
+        "changes": {
+            "en": [
+                "New \"Website requests\" page next to the film dashboard: every request sent through the website form, by status.",
+                "Each new request gets up to 5 suggestions from the published funds and events that are still open, chosen by what the visitor needs (festival, fund, workshop), film type, stage and country, each with a one-line reason in the visitor's language.",
+                "Tick the right ones, add a note, and an email to the visitor is written for you. Edit it and send it from the website mailbox, or open it in your own mail app.",
+                "When the visitor says yes, each option shows how to register: a ready email to the organiser when they take registrations by email, otherwise the official page. Mark each one as registered.",
+                "Nothing is sent to anyone without your click, and nothing is filled in on other websites automatically.",
+            ],
+            "fa": [
+                "صفحه‌ی تازه‌ی «درخواست‌های سایت» کنار داشبورد فیلم: همه‌ی درخواست‌هایی که از فرم سایت می‌رسند، بر اساس وضعیت.",
+                "برای هر درخواست تازه تا ۵ پیشنهاد از فاندها و رویدادهای منتشرشده‌ای که هنوز باز هستند پیدا می‌شود، بر اساس نیاز متقاضی (جشنواره، بودجه، کارگاه)، نوع فیلم، مرحله و کشور، هر کدام با یک خط دلیل به زبان خود متقاضی.",
+                "گزینه‌های درست را تیک بزن و یادداشت بگذار تا ایمیل متقاضی برایت نوشته شود. ویرایشش کن و از صندوق ایمیل سایت بفرست، یا در برنامه‌ی ایمیل خودت بازش کن.",
+                "وقتی متقاضی موافقت کرد، برای هر گزینه روش ثبت‌نام نشان داده می‌شود: اگر ثبت‌نام با ایمیل است یک ایمیل آماده به برگزارکننده، وگرنه صفحه‌ی رسمی. هر کدام را به‌عنوان ثبت‌نام‌شده علامت بزن.",
+                "بدون کلیک تو چیزی برای کسی فرستاده نمی‌شود و هیچ فرمی در سایت‌های دیگر خودکار پر نمی‌شود.",
+            ],
+        },
+    },
     {
         "version": "1.9.2",
         "date": "2026-10-12",

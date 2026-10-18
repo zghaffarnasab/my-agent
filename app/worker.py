@@ -18,7 +18,7 @@ from email.utils import parseaddr
 
 from sqlalchemy import select
 
-from app import ai, config, events, gmail_client
+from app import ai, config, events, gmail_client, siterequests
 from app.db import SessionLocal, Task, TaskStatus, init_db
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [worker] %(levelname)s %(message)s")
@@ -163,6 +163,12 @@ def main() -> None:
     init_db()
     log.info("Worker started. Polling every %s seconds.", config.POLL_INTERVAL_SECONDS)
     while True:
+        try:
+            n = siterequests.match_new(config.REQUESTS_MATCH_PER_RUN)
+            if n:
+                log.info("Matched %d new website request(s).", n)
+        except Exception:
+            log.exception("Matching website requests failed")
         try:
             if gmail_client.connected_email() is None:
                 log.info("Gmail not connected yet. Waiting...")
