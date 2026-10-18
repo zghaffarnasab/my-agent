@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block wrapclass %}narrow{% endblock %}
+{% block title %}{{ t("req.title") }}{% endblock %}
+{% block head %}<style>{% include "_film_style.css" %}</style>{% endblock %}
+{% block body %}
+<header class="top">
+  <h1><a href="/requests">{{ t("req.title") }}</a></h1>
+  <div class="account">{% include "_header_tools.html" %}<a href="/film">{{ t("nav.film") }}</a><a href="/">{{ t("nav.back_to_dashboard") }}</a></div>
+</header>
+
+{% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
+
+{% if unavailable %}
+  <div class="flash error">{{ t("req." ~ unavailable) }}</div>
+{% else %}
+  <p class="muted">{{ t("req.intro") }}</p>
+  <nav class="tabs" aria-label="{{ t('req.tabs_label') }}">
+    {% for key in statuses %}
+      <a class="tab{% if key == status %} on{% endif %}" href="/requests?status={{ key }}"{% if key == status %} aria-current="page"{% endif %}>
+        {{ t("req_status." ~ key) }}<span class="n">{{ counts[key] }}</span></a>
+    {% endfor %}
+  </nav>
+  {% if rows %}
+    <ul class="film-list">
+      {% for r in rows %}
+      <li class="film-item"><a href="/requests/{{ r.id }}">
+        <span class="film-name ltr-auto">{{ r.name }}{% if r.film_title %} · {{ r.film_title }}{% endif %}</span>
+        <span class="film-when">{{ r.created_at | dt }}</span>
+        <span class="film-meta ltr-auto">{{ r.preview }}</span>
+        <span>{% for n in r.needs %}<span class="badge">{{ t("need." ~ n) }}</span> {% endfor %}</span>
+      </a></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">{{ t("req.empty") }}</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

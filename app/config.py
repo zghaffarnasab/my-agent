@@ -43,6 +43,24 @@ UPCOMING_DAYS = int(_get("UPCOMING_DAYS", "7"))
 # Postgres of the pipeline in pipeline/, e.g. postgresql://filmdash:pass@filmdash-db:5432/filmdash. Empty = hidden.
 FILMDASH_DATABASE_URL = _get("FILMDASH_DATABASE_URL", "")
 
+# --- Website requests (/requests, same database as the film dashboard) ---
+REQUESTS_MATCH_PER_RUN = int(_get("REQUESTS_MATCH_PER_RUN", "5"))   # new requests matched by the worker per run
+REQUESTS_SIGNATURE = _get("REQUESTS_SIGNATURE", "")    # sender name and last line of the offer email
+# SMTP for the offer email (e.g. the site's shared mailbox). Empty host = the page offers a mailto: link instead.
+REQUESTS_MAIL_HOST = _get("REQUESTS_MAIL_HOST", "")
+REQUESTS_MAIL_PORT = int(_get("REQUESTS_MAIL_PORT", "465"))   # 465 = SSL, anything else = STARTTLS
+REQUESTS_MAIL_USER = _get("REQUESTS_MAIL_USER", "")
+REQUESTS_MAIL_PASSWORD = _get("REQUESTS_MAIL_PASSWORD", "")
+REQUESTS_MAIL_FROM = _get("REQUESTS_MAIL_FROM", "")
+# The website's confirmation page, e.g. https://<your-domain>/confirm . Empty = the offer asks for a reply instead.
+REQUESTS_CONFIRM_URL = _get("REQUESTS_CONFIRM_URL", "")
+# IMAP of the same mailbox, to read the organisers' replies (read-only; nothing is marked as read).
+REQUESTS_IMAP_HOST = _get("REQUESTS_IMAP_HOST", "")
+REQUESTS_IMAP_PORT = int(_get("REQUESTS_IMAP_PORT", "993"))
+REQUESTS_IMAP_USER = _get("REQUESTS_IMAP_USER", "") or REQUESTS_MAIL_USER
+REQUESTS_IMAP_PASSWORD = _get("REQUESTS_IMAP_PASSWORD", "") or REQUESTS_MAIL_PASSWORD
+REQUESTS_IMAP_FOLDER = _get("REQUESTS_IMAP_FOLDER", "INBOX")
+
 # --- Worker ---
 POLL_INTERVAL_SECONDS = int(_get("POLL_INTERVAL_SECONDS", "180"))
 # Gmail search query for the emails to read (every one is classified; only some get a reply draft)

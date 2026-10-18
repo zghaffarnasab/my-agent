@@ -5,7 +5,7 @@
 {% block body %}
 <header class="top">
   <h1><a href="/film">{{ t("film.title") }}</a></h1>
-  <div class="account">{% include "_header_tools.html" %}<a href="/">{{ t("nav.back_to_dashboard") }}</a></div>
+  <div class="account">{% include "_header_tools.html" %}<a href="/requests">{{ t("nav.requests") }}</a><a href="/">{{ t("nav.back_to_dashboard") }}</a></div>
 </header>
 
 {% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}

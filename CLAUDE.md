@@ -82,6 +82,15 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
 - Wix sync (`pipeline/wix.py`, `python -m pipeline wix-sync [--dry-run]`, also at the end of `run` when `WIX_API_KEY`
   is set): one-way, only `published` records, to CMS collections `FilmFunds`/`FilmEvents`; unpublished records are
   removed from Wix. Item ids are uuid5 of the record id; `wix_sync_hash` skips unchanged items. Tests fake the Wix API.
+- Website requests `/requests` (since 1.10.0, `app/siterequests.py`): the website inserts rows into `site_requests` in the
+  same Postgres; this app only changes their `status` and `profile` JSON. The worker matches `new` rows (rules on the
+  published records, then one cheap AI call that may only choose given keys, validated in `validation.clean_request_picks`).
+  Statuses: new -> matched -> offered -> confirmed -> registered, or closed. The owner ticks options, edits and sends the
+  offer email (SMTP `REQUESTS_MAIL_*`, else a mailto link). The offer links to the website's `/confirm/<token>` page
+  (`profile.confirm`, `REQUESTS_CONFIRM_URL`); the site stores the answer in `site_confirmations` and the worker copies it
+  back (`sync_confirmations`). Email registrations go from the company address with the visitor in Cc and a `[PF-..]`
+  subject tag; the worker reads replies over IMAP read-only with BODY.PEEK (`poll_replies`, last UID in the `settings`
+  table) and classifies them with one cheap AI call (`validation.clean_reply_outcome`). Other sites stay manual.
 - DB tests need `PIPELINE_TEST_DATABASE_URL` (an empty throwaway database; the test wipes it), otherwise they skip.
 
 ## Rules for every change

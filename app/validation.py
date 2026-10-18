@@ -179,3 +179,29 @@ def clean_classification(data, *, is_bulk: bool) -> dict:
         "related_events": clean_related(data.get("related_events")),
         "action_items": clean_action_items(data.get("action_items")),
     }
+
+
+def clean_request_picks(data: dict, allowed_keys: set[str], max_picks: int) -> list[dict]:
+    """Keep only known option keys, once each, with a short plain-text reason."""
+    picks, seen = [], set()
+    for item in data.get("picks") or []:
+        if not isinstance(item, dict):
+            continue
+        key = clean_text(item.get("key"), 40)
+        if key not in allowed_keys or key in seen:
+            continue
+        seen.add(key)
+        picks.append({"key": key, "reason": clean_text(item.get("reason"), 240)})
+        if len(picks) == max_picks:
+            break
+    return picks
+
+
+REPLY_OUTCOMES = ("received", "accepted", "rejected", "needs_info", "other")
+
+
+def clean_reply_outcome(data: dict) -> dict:
+    """An organiser's reply: one fixed outcome code and a short plain-text summary."""
+    outcome = data.get("outcome")
+    return {"outcome": outcome if outcome in REPLY_OUTCOMES else "other",
+            "summary": clean_text(data.get("summary"), 240)}
