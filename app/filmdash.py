@@ -13,6 +13,7 @@ TABLES = {"fund": "funds", "event": "events"}
 STATUSES = ("draft", "published", "rejected")
 DATE_STATUSES = ("confirmed", "expected", "unverified", "conflict", "closed")
 UK_ELIGIBLE = ("yes", "no", "partial", "unknown")
+OPEN_TO_GROUPS = ("WORLD", "EUROPE", "EU", "EEA", "MEDIA")   # translated as film_open.<group>; codes stay as they are
 
 # (field, translation key) shown on the detail page, in this order.
 FUND_FIELDS = [
@@ -61,13 +62,13 @@ def _money(lo, hi, currency) -> str:
 
 _LIST_SQL = """
 SELECT 'fund' AS kind, f.id, f.name, f.strand AS sub, o.name::text AS org, o.country,
-       f.uk_eligible::text AS uk_eligible,
+       f.uk_eligible::text AS uk_eligible, f.open_to,
        f.status::text AS status, f.source_url::text AS source_url, f.updated_at,
        (SELECT min(d.date_value) FROM current_dates d WHERE d.fund_id = f.id AND d.date_value >= current_date)
          AS next_date
 FROM funds f LEFT JOIN organisations o ON o.id = f.organisation_id WHERE f.status = %(status)s
 UNION ALL
-SELECT 'event', e.id, e.name, e.edition_year::text, o.name::text, coalesce(e.country, o.country), e.uk_eligible::text,
+SELECT 'event', e.id, e.name, e.edition_year::text, o.name::text, coalesce(e.country, o.country), e.uk_eligible::text, e.open_to,
        e.status::text, e.source_url::text, e.updated_at,
        (SELECT min(d.date_value) FROM current_dates d WHERE d.event_id = e.id AND d.date_value >= current_date)
 FROM events e LEFT JOIN organisations o ON o.id = e.organisation_id WHERE e.status = %(status)s

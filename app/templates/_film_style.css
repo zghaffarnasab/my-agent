@@ -17,6 +17,8 @@
 .uk-yes { background: var(--ok-bg); color: var(--ok-ink); }
 .uk-no { background: var(--err-bg); color: var(--danger); }
 .uk-partial { background: var(--wait-bg); color: var(--wait); }
+.film-badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.open-to { background: var(--neutral-bg); color: var(--ink); }
 .uk-unknown { background: var(--neutral-bg); color: var(--muted); }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 22px; margin-bottom: 16px; box-shadow: var(--shadow); }
 .panel h3 { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }

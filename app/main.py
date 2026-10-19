@@ -767,7 +767,7 @@ def film_list(request: Request, status: str = "draft"):
     require_login(request)
     status = status if status in filmdash.STATUSES else "draft"
     context = {"flash": pop_flash(request), "status": status, "statuses": filmdash.STATUSES,
-               "records": [], "counts": {}, "unavailable": None}
+               "open_to_groups": filmdash.OPEN_TO_GROUPS, "records": [], "counts": {}, "unavailable": None}
     try:
         context["records"], context["counts"] = filmdash.overview(status)
     except filmdash.Unavailable as exc:

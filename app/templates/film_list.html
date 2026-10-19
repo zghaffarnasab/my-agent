@@ -27,7 +27,8 @@
         <span class="film-name ltr-auto"><span class="kind">{{ t("film_kind." ~ r.kind) }}</span>{{ r.name }}{% if r.sub %} · {{ r.sub }}{% endif %}</span>
         <span class="film-when">{% if r.next_date %}{{ r.next_date }}{% endif %}</span>
         <span class="film-meta ltr-auto">{{ r.org or "" }}{% if r.country %} · {{ r.country }}{% endif %}</span>
-        <span><span class="badge uk-{{ r.uk_eligible }}">{{ t("film_uk." ~ r.uk_eligible) }}</span></span>
+        <span class="film-badges"><span class="badge uk-{{ r.uk_eligible }}">{{ t("film_uk." ~ r.uk_eligible) }}</span>
+          {%- if r.open_to %}<span class="badge open-to">{{ t("film_open.label") }} <span dir="ltr">{% for c in r.open_to %}{{ t("film_open." ~ c) if c in open_to_groups else c }}{% if not loop.last %}, {% endif %}{% endfor %}</span></span>{% endif %}</span>
       </a></li>
       {% endfor %}
     </ul>
