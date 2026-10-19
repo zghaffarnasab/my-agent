@@ -318,3 +318,48 @@ def test_confirm_submit_and_track(client, site_db, monkeypatch):
     assert FakeImap.commands[0][1][-1] == "7:*"
     page = client.get(f"/requests/{req_id}").text
     assert "They need a poster." in page and "mailto:sara@example.com" in page
+
+
+@needs_db
+def test_registration_on_organiser_site(client, site_db, monkeypatch):
+    req_id, ids = site_db
+    lab = f"event:{ids['doc-lab']}"
+    with siterequests._connect() as conn:
+        conn.execute("UPDATE events SET submit_platform = 'filmfreeway', submit_url = 'https://filmfreeway.example.org/doclab'"
+                     " WHERE id = %s", (ids["doc-lab"],))
+        conn.commit()
+    monkeypatch.setattr(ai, "_ask_json", lambda **kw: {"picks": [{"key": lab, "reason": "Fits."}]})
+    siterequests.match(req_id)
+    client.post(f"/requests/{req_id}/choose", data={"keys": [lab], "note": ""})
+    client.post(f"/requests/{req_id}/send", data={"subject": "s", "body": "b", "manual": "1"})
+    with siterequests._connect() as conn:
+        profile = siterequests._load(conn, req_id)["profile"]
+        profile["materials"] = {"synopsis": "A river story.", "screenerUrl": "https://vimeo.example.org/1"}
+        siterequests._save(conn, req_id, profile, "confirmed")
+
+    req = siterequests.get(req_id)
+    pick = req["profile"]["picks"][0]
+    assert siterequests.draft_registration(req, pick) == {}                 # no email for an online form
+    pack = dict(siterequests.form_pack(req, pick))
+    assert pack["name"] == "Sara" and pack["email"] == "sara@example.com" and pack["synopsis"] == "A river story."
+    assert "stage" in pack and "screenerPassword" not in pack                # empty fields are left out
+    page = client.get(f"/requests/{req_id}").text
+    assert "copy-btn" in page and "https://vimeo.example.org/1" in page
+    assert f'action="/requests/{req_id}/form-registered"' in page and f'action="/requests/{req_id}/registered"' not in page
+
+    client.post(f"/requests/{req_id}/form-registered", data={"key": lab, "ref": "FF-123", "note": "Paid £10"})
+    req = siterequests.get(req_id)
+    sub = req["profile"]["picks"][0]["submission"]
+    assert req["status"] == "registered" and sub["manual"] and sub["ref"] == "FF-123" and sub["via"] == "filmfreeway"
+    page = client.get(f"/requests/{req_id}").text
+    assert "FF-123" in page and f'action="/requests/{req_id}/outcome"' in page
+
+    assert client.post(f"/requests/{req_id}/outcome", data={"key": lab, "outcome": "bogus"}).status_code == 400
+    client.post(f"/requests/{req_id}/outcome", data={"key": lab, "outcome": "accepted"})
+    assert siterequests.get(req_id)["profile"]["picks"][0]["outcome"] == "accepted"
+    assert "mailto:sara@example.com" in client.get(f"/requests/{req_id}").text   # tell the visitor
+
+    client.post(f"/requests/{req_id}/registered", data={"key": lab})        # undo
+    req = siterequests.get(req_id)
+    assert req["status"] == "confirmed" and "submission" not in req["profile"]["picks"][0]
+    assert client.post(f"/requests/{req_id}/form-registered", data={"key": "event:999"}).status_code == 404

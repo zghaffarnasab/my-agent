@@ -8,9 +8,29 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.11.1"
+VERSION = "1.12.0"
 
 CHANGELOG = [
+    {
+        "version": "1.12.0",
+        "date": "2026-10-19",
+        "title": {
+            "en": "Website requests: registrations on an organiser's own site",
+            "fa": "درخواست‌های سایت: ثبت‌نام در سایت خود برگزارکننده",
+        },
+        "changes": {
+            "en": [
+                "When an event or fund takes registrations through a form on its own site (or FilmFreeway), the request page now shows everything that form needs, ready to copy one by one or all at once.",
+                "After registering by hand, \"I registered on their site\" records the date, an optional reference number and a note, so the request is tracked like the emailed ones.",
+                "For these registrations you can record the organiser's answer yourself (received, accepted, not accepted, needs more) and open a short update email to the visitor.",
+            ],
+            "fa": [
+                "وقتی ثبت‌نام یک رویداد یا فاند با فرمی در سایت خودش (یا FilmFreeway) است، صفحه‌ی درخواست حالا همه‌ی اطلاعات لازم آن فرم را آماده‌ی کپی نشان می‌دهد، تک‌تک یا همه با هم.",
+                "بعد از ثبت‌نام دستی، دکمه‌ی «در سایتشان ثبت کردم» تاریخ، شماره‌ی پیگیری (اختیاری) و یک یادداشت را نگه می‌دارد تا پیگیری درخواست مثل ثبت‌نام‌های ایمیلی در سیستم بماند.",
+                "برای این ثبت‌نام‌ها می‌توانی جواب برگزارکننده را خودت ثبت کنی (دریافت شد، پذیرفته شد، پذیرفته نشد، اطلاعات بیشتر لازم است) و یک ایمیل کوتاه خبر برای متقاضی باز کنی.",
+            ],
+        },
+    },
     {
         "version": "1.11.1",
         "date": "2026-10-19",
