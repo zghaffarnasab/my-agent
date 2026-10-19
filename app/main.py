@@ -124,6 +124,8 @@ templates.env.globals["APP_VERSION"] = VERSION
 templates.env.globals["film_enabled"] = filmdash.enabled
 templates.env.globals["registration_mailto"] = siterequests.registration_mailto
 templates.env.globals["draft_registration"] = siterequests.draft_registration
+templates.env.globals["form_pack"] = siterequests.form_pack
+templates.env.globals["reply_outcomes"] = validation.REPLY_OUTCOMES
 templates.env.globals["update_mailto"] = siterequests.update_mailto
 
 
@@ -915,6 +917,22 @@ def request_submit(request: Request, request_id: int, key: str = Form(...), subj
 @app.post("/requests/{request_id}/registered")
 def request_registered(request: Request, request_id: int, key: str = Form(...), done: str = Form("")):
     return _request_action(request, request_id, lambda: siterequests.set_registered(request_id, key, bool(done)),
+                           "flash.request_updated")
+
+
+@app.post("/requests/{request_id}/form-registered")
+def request_form_registered(request: Request, request_id: int, key: str = Form(...), ref: str = Form(""),
+                            note: str = Form("")):
+    return _request_action(request, request_id,
+                           lambda: siterequests.record_form_registration(request_id, key, ref, note),
+                           "flash.request_updated")
+
+
+@app.post("/requests/{request_id}/outcome")
+def request_outcome(request: Request, request_id: int, key: str = Form(...), outcome: str = Form(...)):
+    if outcome not in validation.REPLY_OUTCOMES:
+        raise HTTPException(status_code=400, detail="Bad outcome")
+    return _request_action(request, request_id, lambda: siterequests.set_outcome(request_id, key, outcome),
                            "flash.request_updated")
 
 

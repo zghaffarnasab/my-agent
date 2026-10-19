@@ -27,7 +27,7 @@ from urllib.parse import quote
 import psycopg
 from psycopg.types.json import Jsonb
 
-from app import ai, config, countries, filmdash, i18n, settings
+from app import ai, config, countries, filmdash, i18n, settings, validation
 
 log = logging.getLogger(__name__)
 
@@ -484,6 +484,47 @@ def registration_mailto(req: dict, pick: dict) -> str:
     return mailto(draft["to"], draft["subject"], draft["body"], draft["cc"]) if draft else ""
 
 
+def form_pack(req: dict, pick: dict) -> list[tuple[str, str]]:
+    """What an organiser's online form usually asks, ready to copy: the owner fills that form by hand.
+
+    Labels stay English (the forms are), values are what the visitor sent. No bot fills any form.
+    """
+    materials = (req["profile"] or {}).get("materials") or {}
+    rows = [("name", req["name"]), ("email", req["email"]), ("country", req["country"]),
+            ("film", req["film_title"]), ("film_type", req["film_type"]), ("stage", req["stage"])]
+    rows += [(f, materials.get(f)) for f in MATERIAL_FIELDS]
+    return [(k, str(v).strip()) for k, v in rows if v and str(v).strip()]
+
+
+def record_form_registration(request_id: int, key: str, ref: str, note: str) -> None:
+    """The owner registered on the organiser's own site: keep where, when and the reference, for tracking."""
+    with _connect() as conn:
+        req = _load(conn, request_id)
+        profile = dict(req["profile"] or {})
+        pick = next((p for p in profile.get("picks", []) if p["key"] == key and p.get("chosen")), None)
+        if pick is None or organiser_address(pick):
+            raise NotFound(key)
+        pick["submission"] = {"manual": True, "via": _how(pick), "ref": ref.strip()[:200],
+                              "note": note.strip()[:2000], "sent_at": _now()}
+        pick["registered"] = True
+        _save(conn, request_id, profile, _finish_status(req, profile))
+
+
+def set_outcome(request_id: int, key: str, outcome: str) -> None:
+    """For registrations made on a website: the owner records what the organiser said (no email to read)."""
+    if outcome not in validation.REPLY_OUTCOMES:
+        raise ValueError(outcome)
+    with _connect() as conn:
+        req = _load(conn, request_id)
+        profile = dict(req["profile"] or {})
+        pick = next((p for p in profile.get("picks", []) if p["key"] == key and p.get("submission")), None)
+        if pick is None:
+            raise NotFound(key)
+        pick["outcome"] = outcome
+        pick["outcome_at"] = _now()
+        _save(conn, request_id, profile)
+
+
 def _finish_status(req: dict, profile: dict) -> str:
     chosen = [p for p in profile.get("picks", []) if p.get("chosen")]
     if chosen and all(p.get("registered") for p in chosen):
@@ -518,6 +559,10 @@ def set_registered(request_id: int, key: str, done: bool) -> None:
         for p in profile.get("picks", []):
             if p["key"] == key:
                 p["registered"] = done
+                if not done and (p.get("submission") or {}).get("manual"):
+                    p.pop("submission")       # an emailed registration stays on record, a hand-made one is undone
+                    p.pop("outcome", None)
+                    p.pop("outcome_at", None)
         _save(conn, request_id, profile, _finish_status(req, profile))
 
 
