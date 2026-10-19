@@ -145,3 +145,10 @@ def test_fetch_error_is_recorded(conn):
     src = conn.execute("SELECT * FROM sources").fetchone()
     assert src["last_error"] == "HTTP 503" and src["last_http_status"] == 503
     assert runner.pending_snapshots(conn) == []
+
+
+def test_seed_can_switch_a_source_off(conn):
+    sources.seed(conn, {**SEED, "sources": [{**SEED["sources"][0], "active": False}]})
+    assert conn.execute("SELECT is_active FROM sources WHERE url = %s", (PAGE_URL,)).fetchone()["is_active"] is False
+    sources.seed(conn, SEED)
+    assert conn.execute("SELECT is_active FROM sources WHERE url = %s", (PAGE_URL,)).fetchone()["is_active"] is True

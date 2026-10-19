@@ -30,13 +30,13 @@ def seed(conn, data: dict | None = None) -> int:
     count = 0
     for s in data["sources"]:
         conn.execute(
-            """INSERT INTO sources (url, organisation_id, title, tier, method, feeds_kind)
-               VALUES (%s, %s, %s, %s, %s, %s)
+            """INSERT INTO sources (url, organisation_id, title, tier, method, feeds_kind, is_active)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)
                ON CONFLICT (url) DO UPDATE SET organisation_id = EXCLUDED.organisation_id,
                  title = EXCLUDED.title, tier = EXCLUDED.tier, method = EXCLUDED.method,
-                 feeds_kind = EXCLUDED.feeds_kind""",
+                 feeds_kind = EXCLUDED.feeds_kind, is_active = EXCLUDED.is_active""",
             (s["url"], org_id(conn, s.get("organisation")), s.get("title"), s["tier"], s["method"],
-             s.get("feeds_kind")),
+             s.get("feeds_kind"), s.get("active", True)),
         )
         count += 1
     conn.commit()

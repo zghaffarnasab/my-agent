@@ -112,6 +112,8 @@ Never run `docker compose down -v`: it deletes all data.
 
 Add the page to `sources.json` and run `seed` again. Use `tier` `official` for the organization's own page, and `aggregator` for listing sites (their dates are never marked "confirmed"). Give each organisation a `country`: an ISO 3166-1 alpha-2 code (`GB`, `DE`), or `EU`, `EUROPE` or `INT` for pan-European and international bodies.
 
+To stop watching a page (removed page, dead domain), keep its entry and add `"active": false`; `seed` then switches it off. Deleting the entry does not remove it from the database.
+
 ## Geography
 
 Each fund and event has two eligibility fields, both filled only from quotes on the page:

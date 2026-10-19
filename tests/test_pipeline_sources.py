@@ -20,3 +20,4 @@ def test_every_source_is_valid_and_unique():
         assert s["method"] in METHODS
         assert s["feeds_kind"] in KINDS
         assert s["organisation"] in orgs, s["organisation"]
+        assert isinstance(s.get("active", True), bool)
