@@ -8,9 +8,25 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.11.0"
+VERSION = "1.11.1"
 
 CHANGELOG = [
+    {
+        "version": "1.11.1",
+        "date": "2026-10-19",
+        "title": {
+            "en": "Film dashboard: who can apply, in the list",
+            "fa": "داشبورد فیلم: چه کسی می‌تواند درخواست بدهد، در فهرست",
+        },
+        "changes": {
+            "en": [
+                "Each fund and event in the review list now shows an \"Open to\" badge next to the UK badge (for example DK, FI, NO, SE, or worldwide), when the page says who may apply.",
+            ],
+            "fa": [
+                "هر فاند و رویداد در فهرست بررسی حالا کنار نشان بریتانیا یک نشان «باز برای» هم دارد (مثلاً DK، FI، NO، SE یا همه‌ی کشورها)، اگر صفحه گفته باشد چه کسانی می‌توانند درخواست بدهند.",
+            ],
+        },
+    },
     {
         "version": "1.11.0",
         "date": "2026-10-19",

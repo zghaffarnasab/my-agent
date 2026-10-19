@@ -24,6 +24,8 @@ def test_film_keys_exist_in_both_languages():
         assert f"film_uk.{u}" in known
     for k in filmdash.TABLES:
         assert f"film_kind.{k}" in known
+    for g in filmdash.OPEN_TO_GROUPS:
+        assert f"film_open.{g}" in known
     for _, key in filmdash.FUND_FIELDS + filmdash.EVENT_FIELDS:
         assert key in known
 
@@ -63,6 +65,7 @@ def test_list_detail_and_approve(client, film_db):
     assert 'href="/film"' in client.get("/").text
     page = client.get("/film")
     assert "Documentary Development Fund" in page.text and "2026-11-09" in page.text
+    assert "Open to:" in page.text and '<span dir="ltr">GB</span>' in page.text
 
     detail = client.get(f"/film/fund/{film_db}")
     assert detail.status_code == 200
