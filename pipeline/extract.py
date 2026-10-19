@@ -7,7 +7,7 @@ from pathlib import Path
 from pipeline import config
 
 PROMPTS = Path(__file__).parent / "prompts"
-SYSTEM_PROMPT = (PROMPTS / "extract-v1.txt").read_text()
+SYSTEM_PROMPT = (PROMPTS / "extract-v2.txt").read_text()
 TOOL = json.loads((PROMPTS / "record_extraction.json").read_text())
 
 USER_TEMPLATE = """TODAY: {today_iso}

@@ -20,6 +20,8 @@ STAGES = {"development", "production", "post_production", "distribution", "festi
 DEADLINE_MODES = {"fixed", "rolling", "rounds", "unknown"}
 UK_ELIGIBLE = {"yes", "no", "partial", "unknown"}
 QUALIFYING_BODIES = {"BAFTA", "BIFA", "Oscars", "BAFTA Cymru", "Other"}
+# Groups allowed in open_to besides ISO 3166-1 alpha-2 codes (see sql/002_europe.sql).
+OPEN_TO_GROUPS = {"EU", "EEA", "MEDIA", "EUROPE", "WORLD"}
 # Text fields that are cleared unless an evidence entry with a found quote backs them.
 FIELDS_NEEDING_EVIDENCE = ("residency_rule", "nationality_rule", "other_eligibility")
 
@@ -99,6 +101,10 @@ def _url(value):
 
 def _currency(value):
     return value.upper() if isinstance(value, str) and re.fullmatch(r"[A-Za-z]{3}", value) else None
+
+
+def _country(value):
+    return value.upper() if isinstance(value, str) and re.fullmatch(r"[A-Za-z]{2}", value) else None
 
 
 def _number(value):
@@ -222,6 +228,17 @@ def _validate_item(raw: dict, doc: str, tier: str, rejected: list[dict]) -> dict
     item["uk_eligible"] = uk
     item["uk_not_eligible_reason"] = reason if uk == "no" else None
 
+    # Who may apply: country codes or groups, kept only when a quote backs them.
+    open_to = []
+    for code in raw.get("open_to") or []:
+        code = str(code).strip().upper()
+        if (code in OPEN_TO_GROUPS or re.fullmatch(r"[A-Z]{2}", code)) and code not in open_to:
+            open_to.append(code)
+    if open_to and not quotes_for("open_to"):
+        reject("open_to", "no evidence quote", open_to)
+        open_to = []
+    item["open_to"] = open_to
+
     for name_ in FIELDS_NEEDING_EVIDENCE:
         value = (raw.get(name_) or "").strip() or None
         if value and not quotes_for(name_):
@@ -271,6 +288,7 @@ def _validate_item(raw: dict, doc: str, tier: str, rejected: list[dict]) -> dict
             "edition_year": year if isinstance(year, int) and 1900 < year < 2100 else None,
             "format": _enum(raw.get("format"), FORMATS, "unknown"),
             "city": raw.get("city") or None,
+            "country": _country(raw.get("country")),
             "submit_platform": platform,
             "submit_url": _url(raw.get("submit_url")),
             "fee_min": fmin, "fee_max": fmax,

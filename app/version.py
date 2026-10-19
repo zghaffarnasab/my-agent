@@ -8,9 +8,31 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.10.0"
+VERSION = "1.11.0"
 
 CHANGELOG = [
+    {
+        "version": "1.11.0",
+        "date": "2026-10-19",
+        "title": {
+            "en": "Funds and events across Europe",
+            "fa": "فاندها و رویدادهای سراسر اروپا",
+        },
+        "changes": {
+            "en": [
+                "The pipeline now also watches 17 European pages: Eurimages, Creative Europe MEDIA, Hubert Bals Fund, Screen Ireland, the Danish and Swedish film institutes, Nordisk Film & TV Fond, CNC, CPH:DOX, DOK Leipzig, IDFA, Visions du Réel, Berlinale, TorinoFilmLab, Biennale College and Thessaloniki. All UK sources stay.",
+                "Each fund and event now records which countries may apply (\"open to\"), and events record the country they take place in. The UK eligibility badge stays as it was.",
+                "Website request suggestions use this: a visitor from Germany is no longer offered a fund only open to Denmark, and a UK visitor is not offered Creative Europe MEDIA calls.",
+                "The film dashboard shows the country next to each organisation and the \"open to\" list on the detail page.",
+            ],
+            "fa": [
+                "پایپ‌لاین حالا ۱۷ صفحه‌ی اروپایی را هم دنبال می‌کند: Eurimages، Creative Europe MEDIA، Hubert Bals Fund، Screen Ireland، مؤسسه‌های فیلم دانمارک و سوئد، Nordisk Film & TV Fond، CNC، CPH:DOX، DOK Leipzig، IDFA، Visions du Réel، برلیناله، TorinoFilmLab، Biennale College و تسالونیکی. همه‌ی منابع بریتانیا سر جایشان هستند.",
+                "برای هر فاند و رویداد ثبت می‌شود که متقاضی از چه کشورهایی می‌تواند درخواست بدهد، و برای رویدادها کشور برگزاری. نشان «مناسب بریتانیا» مثل قبل می‌ماند.",
+                "پیشنهادهای درخواست‌های سایت از این استفاده می‌کنند: به متقاضی آلمانی فاندی که فقط برای دانمارک باز است پیشنهاد نمی‌شود، و به متقاضی بریتانیایی فراخوان‌های Creative Europe MEDIA.",
+                "داشبورد فیلم کشور هر سازمان را کنار نامش، و فهرست کشورهای مجاز را در صفحه‌ی جزئیات نشان می‌دهد.",
+            ],
+        },
+    },
     {
         "version": "1.10.0",
         "date": "2026-10-18",

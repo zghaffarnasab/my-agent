@@ -100,6 +100,22 @@ def test_candidates_follow_the_needs(site_db):
 
 
 @needs_db
+def test_candidates_respect_open_to(site_db):
+    req_id, ids = site_db
+    with siterequests._connect() as conn:
+        req = dict(conn.execute("SELECT * FROM site_requests WHERE id = %s", (req_id,)).fetchone())
+        conn.execute("UPDATE funds SET open_to = '{DK,SE}'")
+        conn.execute("UPDATE events SET open_to = '{MEDIA}' WHERE id = %s", (ids["doc-lab"],))
+        keys = [c["key"] for c in siterequests.candidates(conn, req)]       # visitor in the UK
+        assert not any(k.startswith("fund:") for k in keys)
+        assert f"event:{ids['doc-lab']}" not in keys
+        req["country"] = "Denmark"
+        keys = [c["key"] for c in siterequests.candidates(conn, req)]
+        assert any(k.startswith("fund:") for k in keys) and f"event:{ids['doc-lab']}" in keys
+        conn.rollback()
+
+
+@needs_db
 def test_full_flow(client, site_db, monkeypatch):
     req_id, ids = site_db
     lab = f"event:{ids['doc-lab']}"

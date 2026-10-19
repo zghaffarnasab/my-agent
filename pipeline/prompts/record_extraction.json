@@ -23,6 +23,7 @@
             "edition_year": { "type": ["integer", "null"] },
             "format": { "enum": ["in_person", "online", "hybrid", "unknown", null] },
             "city": { "type": ["string", "null"] },
+            "country": { "type": ["string", "null"], "description": "events only: ISO 3166-1 alpha-2 code of where the event takes place" },
             "submit_platform": { "enum": ["filmfreeway", "own_site", "email", "bfi_portal", "other", "unknown", null] },
             "submit_url": { "type": ["string", "null"] },
             "fee_min": { "type": ["number", "null"] },
@@ -59,6 +60,7 @@
 
             "uk_eligible": { "enum": ["yes", "no", "partial", "unknown"] },
             "uk_not_eligible_reason": { "type": ["string", "null"] },
+            "open_to": { "type": "array", "items": { "type": "string" }, "description": "who may apply: ISO 3166-1 alpha-2 codes or EU, EEA, MEDIA, EUROPE, WORLD; empty if the document does not say" },
 
             "dates": {
               "type": "array",

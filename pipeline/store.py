@@ -11,11 +11,11 @@ from pipeline.sources import org_id
 
 FUND_FIELDS = ("name", "strand", "organisation_id", "stages", "forms", "genres", "amount_min", "amount_max",
                "amount_currency", "amount_status", "amount_note", "deadline_mode", "residency_rule",
-               "nationality_rule", "other_eligibility", "uk_eligible", "uk_not_eligible_reason", "is_accepting",
-               "apply_url", "summary")
-EVENT_FIELDS = ("name", "edition_year", "organisation_id", "event_type", "format", "city", "fee_min", "fee_max",
-                "fee_currency", "fee_note", "genres", "submit_platform", "submit_url", "uk_eligible",
-                "eligibility_note", "summary")
+               "nationality_rule", "other_eligibility", "uk_eligible", "uk_not_eligible_reason", "open_to",
+               "is_accepting", "apply_url", "summary")
+EVENT_FIELDS = ("name", "edition_year", "organisation_id", "event_type", "format", "city", "country", "fee_min",
+                "fee_max", "fee_currency", "fee_note", "genres", "submit_platform", "submit_url", "uk_eligible",
+                "open_to", "eligibility_note", "summary")
 SOURCE_FIELDS = ("source_url", "source_id", "source_tier", "content_hash", "confidence")
 
 

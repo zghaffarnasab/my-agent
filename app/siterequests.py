@@ -27,7 +27,7 @@ from urllib.parse import quote
 import psycopg
 from psycopg.types.json import Jsonb
 
-from app import ai, config, filmdash, i18n, settings
+from app import ai, config, countries, filmdash, i18n, settings
 
 log = logging.getLogger(__name__)
 
@@ -48,11 +48,6 @@ STAGE_FIT = {
     "production": ("production",), "post": ("post_production",),
     "finished": ("distribution", "festival_travel"),
 }
-UK_NAMES = {"uk", "u.k.", "united kingdom", "great britain", "britain", "gb", "england", "scotland", "wales",
-            "northern ireland", "london",
-            # The same in Persian (data, not UI text; escaped so the no-hardcoded-Persian test stays simple).
-            "\u0628\u0631\u06cc\u062a\u0627\u0646\u06cc\u0627", "\u0627\u0646\u06af\u0644\u06cc\u0633", "\u0627\u0646\u06af\u0644\u0633\u062a\u0627\u0646", "\u0627\u0633\u06a9\u0627\u062a\u0644\u0646\u062f", "\u0648\u0644\u0632"}
-
 MAX_CANDIDATES = 12       # sent to the AI to choose from
 MAX_PICKS = 5
 CONFIRM_DAYS = 30         # how long the confirmation link works
@@ -111,7 +106,8 @@ def get(request_id: int) -> dict | None:
 
 _FUNDS_SQL = """
 SELECT 'fund' AS kind, f.id, f.name, f.strand AS sub, o.name::text AS org, f.uk_eligible::text AS uk_eligible,
-       f.stages::text[] AS stages, f.forms, f.genres, f.summary, f.amount_min, f.amount_max, f.amount_currency,
+       f.open_to, f.stages::text[] AS stages, f.forms, f.genres, f.summary, f.amount_min, f.amount_max,
+       f.amount_currency,
        NULL::numeric AS fee_min, NULL::numeric AS fee_max, NULL::text AS fee_currency, NULL::text AS event_type,
        coalesce(f.apply_url, f.source_url::text) AS url, NULL::text AS platform, f.apply_email,
        nd.d AS next_date
@@ -125,7 +121,7 @@ WHERE f.status = 'published' AND f.is_accepting IS DISTINCT FROM false
 
 _EVENTS_SQL = """
 SELECT 'event' AS kind, e.id, e.name, e.edition AS sub, o.name::text AS org, e.uk_eligible::text AS uk_eligible,
-       '{}'::text[] AS stages, '{}'::text[] AS forms, e.genres, e.summary, NULL::numeric AS amount_min,
+       e.open_to, '{}'::text[] AS stages, '{}'::text[] AS forms, e.genres, e.summary, NULL::numeric AS amount_min,
        NULL::numeric AS amount_max, NULL::text AS amount_currency, e.fee_min, e.fee_max, e.fee_currency::text,
        e.event_type::text AS event_type, coalesce(e.submit_url, e.source_url::text) AS url,
        e.submit_platform::text AS platform, NULL::text AS apply_email, nd.d AS next_date
@@ -138,17 +134,19 @@ WHERE e.status = 'published' AND e.event_type::text = ANY(%s)
 """
 
 
-def _is_uk(country: str | None) -> bool:
-    return (country or "").strip().lower() in UK_NAMES
-
-
 def _score(rec: dict, req: dict, today: date) -> int | None:
     """Rule-based fit. None = clearly not a fit (dropped before the AI sees it)."""
     score = 0
-    in_uk = _is_uk(req.get("country"))
+    country = countries.code(req.get("country"))
+    in_uk = country == "GB"
     if rec["uk_eligible"] == "no" and in_uk:
         return None
     if rec["uk_eligible"] == "yes" and in_uk:
+        score += 1
+    open_to = countries.covers(rec["open_to"], country)
+    if open_to is False:
+        return None
+    if open_to and not in_uk:
         score += 1
     film_type = req.get("film_type") or ""
     tags = {t.lower() for t in (rec["forms"] or []) + (rec["genres"] or [])}

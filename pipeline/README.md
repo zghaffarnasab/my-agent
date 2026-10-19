@@ -4,9 +4,9 @@ This folder is separate from the Gmail assistant (`app/`): it has its own Postgr
 
 What it does today (first version):
 
-1. Reads the official pages listed in `sources.json` (currently BFI, Doc Society, Whickers and Sheffield DocFest).
+1. Reads the pages listed in `sources.json`: UK funds and festivals, pan-European funds (Eurimages, Creative Europe MEDIA), national European film funds, European festivals, markets and labs, and a few international documentary funds.
 2. Extracts the main text of each page with trafilatura and hashes it. A new snapshot is stored only if the text has changed.
-3. Sends each new snapshot to Claude with the prompt `prompts/extract-v1.txt`.
+3. Sends each new snapshot to Claude with the prompt `prompts/extract-v2.txt`.
 4. Checks that every date and amount has a quote that appears **verbatim** in the page text, and that the value itself is inside that quote. Anything that fails this check is recorded in `extraction_runs.rejected_items`.
 5. Saves the result in Postgres as a `draft`. Nothing is published automatically.
 
@@ -110,7 +110,16 @@ Never run `docker compose down -v`: it deletes all data.
 
 ## Adding a new page
 
-Add the page to `sources.json` and run `seed` again. Use `tier` `official` for the organization's own page, and `aggregator` for listing sites (their dates are never marked "confirmed").
+Add the page to `sources.json` and run `seed` again. Use `tier` `official` for the organization's own page, and `aggregator` for listing sites (their dates are never marked "confirmed"). Give each organisation a `country`: an ISO 3166-1 alpha-2 code (`GB`, `DE`), or `EU`, `EUROPE` or `INT` for pan-European and international bodies.
+
+## Geography
+
+Each fund and event has two eligibility fields, both filled only from quotes on the page:
+
+- `uk_eligible` (yes, no, partial, unknown): can a UK-based company or filmmaker apply. Shown as the badge on the dashboard and the website.
+- `open_to`: who may apply, as ISO codes or the groups `EU`, `EEA`, `MEDIA` (Creative Europe MEDIA countries), `EUROPE`, `WORLD`. Empty when the page does not say. The website request matcher uses it to skip records the visitor's country cannot apply to (`app/countries.py`).
+
+Events also store `country`, where the event takes place.
 
 ## Tests
 
