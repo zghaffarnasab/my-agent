@@ -364,7 +364,8 @@
       "title": "Sky Docs Shorts",
       "tier": "official",
       "method": "html",
-      "feeds_kind": "fund"
+      "feeds_kind": "fund",
+      "active": false
     },
     {
       "url": "https://www.catapultfilmfund.org/how-to-apply",
@@ -385,10 +386,27 @@
     {
       "url": "https://www.hotdocs.ca/i/hd-big-fund-how-to-apply",
       "organisation": "Hot Docs",
-      "title": "Hot Docs funds: how to apply",
+      "title": "Hot Docs Big Fund (page removed)",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund",
+      "active": false
+    },
+    {
+      "url": "https://hotdocs.ca/industry/film-funds",
+      "organisation": "Hot Docs",
+      "title": "Hot Docs current funds and programs",
       "tier": "official",
       "method": "html",
       "feeds_kind": "fund"
+    },
+    {
+      "url": "https://hotdocs.ca/industry/conference/hot-docs-forum/submit-forum",
+      "organisation": "Hot Docs",
+      "title": "Hot Docs Forum and Deal Maker submissions",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
     },
     {
       "url": "https://professionals.idfa.nl/training-funding/funding/about-the-idfa-bertha-fund/",
