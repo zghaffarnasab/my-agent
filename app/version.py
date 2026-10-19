@@ -8,9 +8,27 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.12.0"
+VERSION = "1.13.0"
 
 CHANGELOG = [
+    {
+        "version": "1.13.0",
+        "date": "2026-10-19",
+        "title": {
+            "en": "Website visit statistics",
+            "fa": "آمار بازدید سایت",
+        },
+        "changes": {
+            "en": [
+                "New page \"Website visits\" (/stats): visitors and page views of the company website for the last 7, 30 or 90 days, views per day, the most visited pages, which websites people came from, phone or computer, and the site language they used.",
+                "The website counts visits itself, without cookies and without any outside analytics service; no IP address is stored.",
+            ],
+            "fa": [
+                "صفحه‌ی تازه‌ی «بازدیدهای سایت» (/stats): تعداد بازدیدکننده‌ها و بازدید صفحه‌های سایت شرکت در ۷، ۳۰ یا ۹۰ روز گذشته، بازدید هر روز، صفحه‌های پربازدید، سایت‌هایی که بازدیدکننده‌ها از آن‌ها آمده‌اند، گوشی یا کامپیوتر، و زبانی که در سایت انتخاب کرده‌اند.",
+                "سایت خودش بازدیدها را می‌شمارد، بدون کوکی و بدون هیچ سرویس آمار بیرونی؛ هیچ آدرس IP ذخیره نمی‌شود.",
+            ],
+        },
+    },
     {
         "version": "1.12.0",
         "date": "2026-10-19",

@@ -93,6 +93,8 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
   table) and classifies them with one cheap AI call (`validation.clean_reply_outcome`). Online-form sites (FilmFreeway,
   organiser websites) stay manual, never a bot: the page shows a copy pack (`form_pack`), the owner records the
   registration (`record_form_registration`, `submission.manual`) and the organiser's answer (`set_outcome`).
+- Website visits `/stats` (since 1.13.0, `app/sitestats.py`): read-only statistics from the website's `site_visits` table
+  (anonymous page views, no cookie/IP; `visitor` is a hash that changes daily, so visitors are counted per day).
 - DB tests need `PIPELINE_TEST_DATABASE_URL` (an empty throwaway database; the test wipes it), otherwise they skip.
 
 ## Rules for every change

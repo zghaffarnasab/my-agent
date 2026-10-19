@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block wrapclass %}narrow{% endblock %}
+{% block title %}{{ t("stats.title") }}{% endblock %}
+{% block head %}<style>{% include "_film_style.css" %}
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; box-shadow: var(--shadow); }
+.kpi .n { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+.kpi .l { font-size: 13px; color: var(--muted); }
+.chart { display: flex; align-items: flex-end; gap: 2px; height: 140px; direction: ltr; }
+.chart .bar { flex: 1; min-width: 2px; height: 100%; display: flex; align-items: flex-end; }
+.chart .bar span { display: block; width: 100%; background: var(--brand); border-radius: 3px 3px 0 0; min-height: 1px; opacity: .85; }
+.chart .bar:hover span { opacity: 1; }
+.chart .bar.zero span { background: var(--line); }
+.chart-axis { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); direction: ltr; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.rows { width: 100%; border-collapse: collapse; font-size: 14px; }
+.rows th { text-align: start; font-weight: 500; color: var(--muted); font-size: 12px; padding: 0 0 6px; }
+.rows td { padding: 6px 0; border-top: 1px solid var(--line); }
+.rows .num { text-align: end; font-variant-numeric: tabular-nums; width: 80px; }
+.rows .path { font-size: 12px; color: var(--muted); margin: 0 8px; }
+.share { display: grid; grid-template-columns: 110px 1fr 48px; gap: 8px; align-items: center; font-size: 14px; margin: 6px 0; }
+.share .track { height: 8px; background: var(--neutral-bg); border-radius: 999px; overflow: hidden; }
+.share .track span { display: block; height: 100%; background: var(--brand); }
+.share .pct { text-align: end; font-variant-numeric: tabular-nums; direction: ltr; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 16px; }
+</style>{% endblock %}
+{% block body %}
+<header class="top">
+  <h1><a href="/stats">{{ t("stats.title") }}</a></h1>
+  <div class="account">{% include "_header_tools.html" %}<a href="/film">{{ t("nav.film") }}</a><a href="/requests">{{ t("nav.requests") }}</a><a href="/">{{ t("nav.back_to_dashboard") }}</a></div>
+</header>
+
+{% if unavailable %}
+  <div class="flash error">{{ t("stats." ~ unavailable) }}</div>
+{% else %}
+  <p class="muted">{{ t("stats.intro") }}</p>
+  <nav class="tabs" aria-label="{{ t('stats.period_label') }}">
+    {% for n in periods %}
+      <a class="tab{% if n == s.days %} on{% endif %}" href="/stats?days={{ n }}"{% if n == s.days %} aria-current="page"{% endif %}>{{ t("stats.days", n=n) }}</a>
+    {% endfor %}
+  </nav>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n">{{ s.visitors }}</div><div class="l">{{ t("stats.visitors") }}</div></div>
+    <div class="kpi"><div class="n">{{ s.views }}</div><div class="l">{{ t("stats.views") }}</div></div>
+    <div class="kpi"><div class="n">{{ s.today.visitors }} / {{ s.today.views }}</div><div class="l">{{ t("stats.today") }}</div></div>
+  </div>
+
+  {% if not s.views %}
+    <p class="muted">{{ t("stats.empty") }}</p>
+  {% else %}
+  <section class="panel">
+    <h3>{{ t("stats.per_day") }}</h3>
+    <div class="chart" role="img" aria-label="{{ t('stats.per_day') }}">
+      {% for d in s.daily %}
+        <div class="bar{% if not d.views %} zero{% endif %}" title="{{ d.day.isoformat() }} · {{ t('stats.bar_title', views=d.views, visitors=d.visitors) }}"><span style="height: {{ d.pct }}%"></span></div>
+      {% endfor %}
+    </div>
+    <div class="chart-axis"><span>{{ s.first.isoformat() }}</span><span>{{ s.today.day.isoformat() }}</span></div>
+  </section>
+
+  <section class="panel">
+    <h3>{{ t("stats.pages") }}</h3>
+    <table class="rows">
+      <tr><th>{{ t("stats.page") }}</th><th class="num">{{ t("stats.visitors") }}</th><th class="num">{{ t("stats.views") }}</th></tr>
+      {% for p in s.pages %}
+      <tr><td>{% if p.label %}{{ t("stats_path." ~ p.label) }}<bdi class="path" dir="ltr">{{ p.path }}</bdi>{% else %}<bdi dir="ltr">{{ p.path }}</bdi>{% endif %}</td>
+          <td class="num">{{ p.visitors }}</td><td class="num">{{ p.views }}</td></tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  <section class="panel">
+    <h3>{{ t("stats.referrers") }}</h3>
+    {% if s.referrers %}
+    <table class="rows">
+      {% for r in s.referrers %}
+      <tr><td><bdi dir="ltr">{{ r.referrer }}</bdi></td><td class="num">{{ r.views }}</td></tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p class="muted">{{ t("stats.no_referrers") }}</p>
+    {% endif %}
+  </section>
+
+  <div class="two">
+    <section class="panel">
+      <h3>{{ t("stats.devices") }}</h3>
+      {% for d in s.devices %}
+      <div class="share"><span>{{ t("stats_device." ~ d.key) }}</span><span class="track"><span style="width: {{ d.pct }}%"></span></span><span class="pct">{{ d.pct }}%</span></div>
+      {% endfor %}
+    </section>
+    <section class="panel">
+      <h3>{{ t("stats.langs") }}</h3>
+      {% for l in s.langs %}
+      <div class="share"><span>{{ t("stats_lang." ~ l.key) }}</span><span class="track"><span style="width: {{ l.pct }}%"></span></span><span class="pct">{{ l.pct }}%</span></div>
+      {% endfor %}
+    </section>
+  </div>
+  {% endif %}
+{% endif %}
+{% endblock %}
