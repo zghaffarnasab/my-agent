@@ -115,6 +115,23 @@ def test_eligibility_fields_need_evidence():
     assert res.items[0]["uk_eligible"] == "unknown"
 
 
+def test_open_to_needs_evidence_and_is_normalised():
+    quote = "This fund is open to “UK-based” filmmakers."
+    res = _run(_fund(open_to=["gb", "GB", "EUROPE", "Narnia", "xx"],
+                     evidence=[{"field": "open_to", "value": "GB", "source_quote": quote}]))
+    assert res.items[0]["open_to"] == ["GB", "EUROPE", "XX"]
+    res = _run(_fund(open_to=["GB"]))
+    assert res.items[0]["open_to"] == []
+    assert [r["what"] for r in res.rejected] == ["open_to"]
+
+
+def test_event_country_is_an_iso_code():
+    base = {"kind": "event", "slug": "x-fest-2027", "name": "X Fest", "uk_eligible": "unknown",
+            "dates": [], "evidence": [], "confidence": 0.8}
+    assert _run({**base, "country": "de"}).items[0]["country"] == "DE"
+    assert _run({**base, "country": "Germany"}).items[0]["country"] is None
+
+
 def test_event_fees_and_platform():
     res = _run({"kind": "event", "slug": "x-fest-2027", "name": "X Fest", "uk_eligible": "unknown",
                 "event_type": "festival", "edition_year": 2027, "fee_min": 40, "fee_max": 58,

@@ -9,7 +9,7 @@ DATABASE_URL = os.getenv("PIPELINE_DATABASE_URL", "")
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 EXTRACT_MODEL = os.getenv("EXTRACT_MODEL", "claude-sonnet-5-5")
-PROMPT_VERSION = "extract-v1"
+PROMPT_VERSION = "extract-v2"
 
 # Identifies the bot to the sites it reads.
 USER_AGENT = os.getenv("PIPELINE_USER_AGENT", "filmdash-pipeline/0.1 (+change detection of public funding pages)")

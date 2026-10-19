@@ -1,119 +1,224 @@
 {
-  "_note": "Official pages watched for changes. Seeded from the UK research report (Oct 2026). Add more here, then run: python -m pipeline seed",
+  "_note": "Pages watched for changes: UK (from the UK research report, Oct 2026) plus pan-European and national European funds, festivals and labs (Oct 2026). Organisation country is ISO 3166-1 alpha-2, or EU / EUROPE / INT for pan-European and international bodies. Add more here, then run: python -m pipeline seed",
   "organisations": [
     {
       "name": "BFI",
-      "website": "https://www.bfi.org.uk"
+      "website": "https://www.bfi.org.uk",
+      "country": "GB"
     },
     {
       "name": "Doc Society",
-      "website": "https://docsociety.org"
+      "website": "https://docsociety.org",
+      "country": "GB"
     },
     {
       "name": "The Whickers",
-      "website": "https://www.whickerawards.com"
+      "website": "https://www.whickerawards.com",
+      "country": "GB"
     },
     {
       "name": "Sheffield DocFest",
-      "website": "https://www.sheffdocfest.com"
+      "website": "https://www.sheffdocfest.com",
+      "country": "GB"
     },
     {
       "name": "BFI Network",
-      "website": "https://www.bfi.org.uk/get-funding-support/bfi-network"
+      "website": "https://www.bfi.org.uk/get-funding-support/bfi-network",
+      "country": "GB"
     },
     {
       "name": "Film Hub North",
-      "website": "https://filmhubnorth.org.uk"
+      "website": "https://filmhubnorth.org.uk",
+      "country": "GB"
     },
     {
       "name": "Watershed (BFI Network South West)",
-      "website": "https://watershed.co.uk"
+      "website": "https://watershed.co.uk",
+      "country": "GB"
     },
     {
       "name": "North East Screen",
-      "website": "https://northeastscreen.org"
+      "website": "https://northeastscreen.org",
+      "country": "GB"
     },
     {
       "name": "Northern Ireland Screen",
-      "website": "https://northernirelandscreen.co.uk"
+      "website": "https://northernirelandscreen.co.uk",
+      "country": "GB"
     },
     {
       "name": "Screen Scotland",
-      "website": "https://www.screen.scot"
+      "website": "https://www.screen.scot",
+      "country": "GB"
     },
     {
       "name": "Film London",
-      "website": "https://filmlondon.org.uk"
+      "website": "https://filmlondon.org.uk",
+      "country": "GB"
     },
     {
       "name": "BAFTA",
-      "website": "https://www.bafta.org"
+      "website": "https://www.bafta.org",
+      "country": "GB"
     },
     {
       "name": "Channel 4",
-      "website": "https://www.channel4.com"
+      "website": "https://www.channel4.com",
+      "country": "GB"
     },
     {
       "name": "Sky Documentaries",
-      "website": "https://docshorts.sky.com"
+      "website": "https://docshorts.sky.com",
+      "country": "GB"
     },
     {
       "name": "Catapult Film Fund",
-      "website": "https://www.catapultfilmfund.org"
+      "website": "https://www.catapultfilmfund.org",
+      "country": "US"
     },
     {
       "name": "Sundance Institute",
-      "website": "https://www.sundance.org"
+      "website": "https://www.sundance.org",
+      "country": "US"
     },
     {
       "name": "Hot Docs",
-      "website": "https://www.hotdocs.ca"
+      "website": "https://www.hotdocs.ca",
+      "country": "CA"
     },
     {
       "name": "IDFA",
-      "website": "https://professionals.idfa.nl"
+      "website": "https://professionals.idfa.nl",
+      "country": "NL"
     },
     {
       "name": "Beacons",
-      "website": "https://www.beaconsfunding.org"
+      "website": "https://www.beaconsfunding.org",
+      "country": "GB"
     },
     {
-      "name": "Jerwood Arts / Art Fund"
+      "name": "Jerwood Arts / Art Fund",
+      "country": "GB"
     },
     {
       "name": "Edinburgh International Film Festival",
-      "website": "https://www.edfilmfest.org"
+      "website": "https://www.edfilmfest.org",
+      "country": "GB"
     },
     {
       "name": "Aesthetica Short Film Festival",
-      "website": "https://www.asff.co.uk"
+      "website": "https://www.asff.co.uk",
+      "country": "GB"
     },
     {
       "name": "Leeds International Film Festival",
-      "website": "https://www.leedsfilm.com"
+      "website": "https://www.leedsfilm.com",
+      "country": "GB"
     },
     {
-      "name": "London Short Film Festival"
+      "name": "London Short Film Festival",
+      "country": "GB"
     },
     {
       "name": "Iris Prize",
-      "website": "https://irisprize.org"
+      "website": "https://irisprize.org",
+      "country": "GB"
     },
     {
       "name": "Berwick Film & Media Arts Festival",
-      "website": "https://bfmaf.org"
+      "website": "https://bfmaf.org",
+      "country": "GB"
     },
     {
-      "name": "Encounters Film Festival"
+      "name": "Encounters Film Festival",
+      "country": "GB"
     },
     {
-      "name": "Glasgow Film Festival"
+      "name": "Glasgow Film Festival",
+      "country": "GB"
     },
     {
-      "name": "Open City Documentary Festival"
+      "name": "Open City Documentary Festival",
+      "country": "GB"
     },
     {
-      "name": "Raindance Film Festival"
+      "name": "Raindance Film Festival",
+      "country": "GB"
+    },
+    {
+      "name": "Eurimages",
+      "website": "https://www.coe.int/en/web/eurimages",
+      "country": "EUROPE"
+    },
+    {
+      "name": "Creative Europe MEDIA",
+      "website": "https://culture.ec.europa.eu/creative-europe/creative-europe-media-strand",
+      "country": "EU"
+    },
+    {
+      "name": "IFFR",
+      "website": "https://iffr.com",
+      "country": "NL"
+    },
+    {
+      "name": "Screen Ireland",
+      "website": "https://www.screenireland.ie",
+      "country": "IE"
+    },
+    {
+      "name": "Danish Film Institute",
+      "website": "https://www.dfi.dk",
+      "country": "DK"
+    },
+    {
+      "name": "Nordisk Film & TV Fond",
+      "website": "https://nordiskfilmogtvfond.com",
+      "country": "NO"
+    },
+    {
+      "name": "Swedish Film Institute",
+      "website": "https://www.filminstitutet.se",
+      "country": "SE"
+    },
+    {
+      "name": "CNC",
+      "website": "https://www.cnc.fr",
+      "country": "FR"
+    },
+    {
+      "name": "CPH:DOX",
+      "website": "https://cphdox.dk",
+      "country": "DK"
+    },
+    {
+      "name": "DOK Leipzig",
+      "website": "https://www.dok-leipzig.de",
+      "country": "DE"
+    },
+    {
+      "name": "Visions du Réel",
+      "website": "https://www.visionsdureel.ch",
+      "country": "CH"
+    },
+    {
+      "name": "Berlinale",
+      "website": "https://www.berlinale.de",
+      "country": "DE"
+    },
+    {
+      "name": "TorinoFilmLab",
+      "website": "https://torinofilmlab.it",
+      "country": "IT"
+    },
+    {
+      "name": "La Biennale di Venezia",
+      "website": "https://www.labiennale.org",
+      "country": "IT"
+    },
+    {
+      "name": "Thessaloniki International Documentary Festival",
+      "website": "https://www.filmfestival.gr",
+      "country": "GR"
     }
   ],
   "sources": [
@@ -409,6 +514,142 @@
       "url": "https://asianfilmfestivals.com/2026/08/14/raindance-film-festival-call-for-entry-2027/",
       "organisation": "Raindance Film Festival",
       "title": "Raindance 2027 call for entry (listing)",
+      "tier": "aggregator",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://www.coe.int/en/web/eurimages/deadlines",
+      "organisation": "Eurimages",
+      "title": "Eurimages co-production support deadlines",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://culture.ec.europa.eu/creative-europe/creative-europe-media-strand/content-cluster",
+      "organisation": "Creative Europe MEDIA",
+      "title": "Creative Europe MEDIA content cluster (development, co-development)",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://iffr.com/en/hbf-practical-info-deadlines",
+      "organisation": "IFFR",
+      "title": "Hubert Bals Fund deadlines",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.screenireland.ie/funding/development-loans/documentary-development-loans",
+      "organisation": "Screen Ireland",
+      "title": "Screen Ireland first stage documentary development",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.screenireland.ie/funding/production-loans/documentary-production-creative-co-production",
+      "organisation": "Screen Ireland",
+      "title": "Screen Ireland documentary creative co-production",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.dfi.dk/en/node/34181",
+      "organisation": "Danish Film Institute",
+      "title": "DFI minority co-production deadlines",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://nordiskfilmogtvfond.com/funding/applying-for-funding",
+      "organisation": "Nordisk Film & TV Fond",
+      "title": "Nordisk Film & TV Fond: applying for funding",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.filminstitutet.se/en/funding/funding-from-the-swedish-film-institute/funding-for-producing-swedish-film/production-funding-for-film-projects--international-co-productions/",
+      "organisation": "Swedish Film Institute",
+      "title": "Swedish Film Institute international co-production funding",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://www.cnc.fr/professionnels/aides-et-financements/multi-sectoriel/production/aide-aux-cinemas-du-monde_190862",
+      "organisation": "CNC",
+      "title": "CNC Aide aux cinémas du monde (French page)",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "fund"
+    },
+    {
+      "url": "https://cphdox.dk/forum/forum-rules-and-regulations/",
+      "organisation": "CPH:DOX",
+      "title": "CPH:FORUM rules and deadlines",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://www.dok-leipzig.de/en/calls-entries",
+      "organisation": "DOK Leipzig",
+      "title": "DOK Leipzig calls for entries (films, Co-Pro Market)",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://professionals.idfa.nl/program/festival-entries",
+      "organisation": "IDFA",
+      "title": "IDFA festival entries",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://www.visionsdureel.ch/en/call-for-entries/",
+      "organisation": "Visions du Réel",
+      "title": "Visions du Réel call for films and projects",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://www.berlinale.de/en/film-entry/guidelines/general-guidelines.html",
+      "organisation": "Berlinale",
+      "title": "Berlinale submission guidelines and deadlines",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://torinofilmlab.it/labs/featurelab/featurelab-2027",
+      "organisation": "TorinoFilmLab",
+      "title": "TorinoFilmLab FeatureLab 2027",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://www.labiennale.org/en/news/biennale-college-cinema-international-and-immersive-calls-2026-2027",
+      "organisation": "La Biennale di Venezia",
+      "title": "Biennale College Cinema calls 2026-2027",
+      "tier": "official",
+      "method": "html",
+      "feeds_kind": "event"
+    },
+    {
+      "url": "https://asianfilmfestivals.com/2026/08/14/thessaloniki-international-documentary-festival-call-for-entry-2027/",
+      "organisation": "Thessaloniki International Documentary Festival",
+      "title": "Thessaloniki Doc Festival 2027 call for entry (listing)",
       "tier": "aggregator",
       "method": "html",
       "feeds_kind": "event"

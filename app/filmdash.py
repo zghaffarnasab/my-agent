@@ -20,11 +20,13 @@ FUND_FIELDS = [
     ("stages", "film.field.stages"), ("forms", "film.field.forms"), ("genres", "film.field.genres"),
     ("deadline_mode", "film.field.deadline_mode"), ("is_accepting", "film.field.is_accepting"),
     ("residency_rule", "film.field.residency_rule"), ("nationality_rule", "film.field.nationality_rule"),
-    ("other_eligibility", "film.field.other_eligibility"), ("apply_url", "film.field.apply_url"),
+    ("other_eligibility", "film.field.other_eligibility"), ("open_to", "film.field.open_to"),
+    ("org_country", "film.field.org_country"), ("apply_url", "film.field.apply_url"),
 ]
 EVENT_FIELDS = [
     ("event_type", "film.field.event_type"), ("edition_year", "film.field.edition_year"),
-    ("format", "film.field.format"), ("city", "film.field.city"), ("fee", "film.field.fee"),
+    ("format", "film.field.format"), ("city", "film.field.city"), ("country", "film.field.country"),
+    ("open_to", "film.field.open_to"), ("fee", "film.field.fee"),
     ("fee_note", "film.field.fee_note"), ("genres", "film.field.genres"),
     ("submit_platform", "film.field.submit_platform"), ("submit_url", "film.field.submit_url"),
 ]
@@ -58,13 +60,14 @@ def _money(lo, hi, currency) -> str:
 
 
 _LIST_SQL = """
-SELECT 'fund' AS kind, f.id, f.name, f.strand AS sub, o.name::text AS org, f.uk_eligible::text AS uk_eligible,
+SELECT 'fund' AS kind, f.id, f.name, f.strand AS sub, o.name::text AS org, o.country,
+       f.uk_eligible::text AS uk_eligible,
        f.status::text AS status, f.source_url::text AS source_url, f.updated_at,
        (SELECT min(d.date_value) FROM current_dates d WHERE d.fund_id = f.id AND d.date_value >= current_date)
          AS next_date
 FROM funds f LEFT JOIN organisations o ON o.id = f.organisation_id WHERE f.status = %(status)s
 UNION ALL
-SELECT 'event', e.id, e.name, e.edition_year::text, o.name::text, e.uk_eligible::text,
+SELECT 'event', e.id, e.name, e.edition_year::text, o.name::text, coalesce(e.country, o.country), e.uk_eligible::text,
        e.status::text, e.source_url::text, e.updated_at,
        (SELECT min(d.date_value) FROM current_dates d WHERE d.event_id = e.id AND d.date_value >= current_date)
 FROM events e LEFT JOIN organisations o ON o.id = e.organisation_id WHERE e.status = %(status)s
@@ -89,7 +92,8 @@ def get(kind: str, record_id: int) -> dict | None:
     with _connect() as conn:
         rec = conn.execute(
             f"""SELECT r.*, r.status::text AS status, r.uk_eligible::text AS uk_eligible,
-                       r.source_tier::text AS source_tier, r.source_url::text AS source_url, o.name::text AS org
+                       r.source_tier::text AS source_tier, r.source_url::text AS source_url, o.name::text AS org,
+                       o.country AS org_country
                        {", r.stages::text[] AS stages_list" if kind == "fund" else ""}
                 FROM {table} r LEFT JOIN organisations o ON o.id = r.organisation_id WHERE r.id = %s""",
             (record_id,),

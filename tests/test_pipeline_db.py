@@ -34,7 +34,7 @@ def _tool_output(closes="2026-12-21", closes_quote="closes on 21 December 2026 a
             "stages": ["development"], "forms": ["documentary", "feature"], "genres": [],
             "amount_min": 25000, "amount_max": 40000, "amount_currency": "GBP", "amount_status": "confirmed",
             "deadline_mode": "rounds", "is_accepting": True, "residency_rule": "Lead director resident in the UK",
-            "uk_eligible": "yes",
+            "uk_eligible": "yes", "open_to": ["GB"],
             "dates": [
                 {"kind": "opens", "label": "Round 2", "status": "confirmed", "date_value": "2026-11-09",
                  "time_value": "13:00", "tz": "Europe/London",
@@ -52,6 +52,7 @@ def _tool_output(closes="2026-12-21", closes_quote="closes on 21 December 2026 a
                 {"field": "amount", "value": "25000-40000",
                  "source_quote": "grants of between £25,000 and £40,000"},
                 {"field": "uk_eligible", "value": "yes", "source_quote": "The lead director must be resident in the UK."},
+                {"field": "open_to", "value": "GB", "source_quote": "The lead director must be resident in the UK."},
                 {"field": "residency_rule", "value": "UK resident director",
                  "source_quote": "The lead director must be resident in the UK."},
             ],
@@ -83,7 +84,7 @@ def conn():
         c.autocommit = True
         c.execute("DROP SCHEMA public CASCADE; CREATE SCHEMA public;")
         c.autocommit = False
-        assert db.migrate(c) == ["001_schema.sql"]
+        assert db.migrate(c) == ["001_schema.sql", "002_europe.sql"]
         assert db.migrate(c) == []          # second run does nothing
         sources.seed(c, SEED)
         yield c
@@ -102,7 +103,7 @@ def test_full_run_stores_drafts_with_quotes(conn):
     assert "calling the record_extraction tool" in message
 
     fund = conn.execute("SELECT *, stages::text[] AS stages FROM funds").fetchone()
-    assert fund["status"] == "draft" and fund["uk_eligible"] == "yes"
+    assert fund["status"] == "draft" and fund["uk_eligible"] == "yes" and fund["open_to"] == ["GB"]
     assert (fund["amount_min"], fund["amount_max"], fund["amount_status"]) == (25000, 40000, "confirmed")
     assert fund["stages"] == ["development"]
 
@@ -112,7 +113,7 @@ def test_full_run_stores_drafts_with_quotes(conn):
     run = conn.execute("SELECT * FROM extraction_runs").fetchone()
     assert run["ok"] and run["input_tokens"] == 1000
     assert [r["what"] for r in run["rejected_items"]] == ["date:event_start:"]
-    assert conn.execute("SELECT count(*) AS n FROM field_evidence").fetchone()["n"] == 3
+    assert conn.execute("SELECT count(*) AS n FROM field_evidence").fetchone()["n"] == 4
     assert conn.execute("SELECT count(*) AS n FROM review_queue").fetchone()["n"] == 1
 
     # Same page again: no new snapshot, no new Claude call.

@@ -9,14 +9,16 @@ def load(path: Path = SOURCES_FILE) -> dict:
     return json.loads(path.read_text())
 
 
-def org_id(conn, name: str | None, website: str | None = None) -> int | None:
+def org_id(conn, name: str | None, website: str | None = None, country: str | None = None) -> int | None:
     if not name:
         return None
+    # The seed file is the authority on country; extraction (no country) never overwrites it.
     row = conn.execute(
-        """INSERT INTO organisations (name, website) VALUES (%s, %s)
-           ON CONFLICT (name) DO UPDATE SET website = coalesce(organisations.website, EXCLUDED.website)
+        """INSERT INTO organisations (name, website, country) VALUES (%s, %s, %s)
+           ON CONFLICT (name) DO UPDATE SET website = coalesce(organisations.website, EXCLUDED.website),
+             country = coalesce(EXCLUDED.country, organisations.country)
            RETURNING id""",
-        (name, website),
+        (name, website, country),
     ).fetchone()
     return row["id"]
 
@@ -24,7 +26,7 @@ def org_id(conn, name: str | None, website: str | None = None) -> int | None:
 def seed(conn, data: dict | None = None) -> int:
     data = data or load()
     for org in data.get("organisations", []):
-        org_id(conn, org["name"], org.get("website"))
+        org_id(conn, org["name"], org.get("website"), org.get("country"))
     count = 0
     for s in data["sources"]:
         conn.execute(
