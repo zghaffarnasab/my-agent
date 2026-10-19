@@ -13,7 +13,7 @@ from markupsafe import Markup
 from sqlalchemy import delete, func, select, update
 from starlette.middleware.sessions import SessionMiddleware
 
-from app import ai, calendar_client, config, events, filmdash, gmail_client, i18n, settings, siterequests, validation
+from app import ai, calendar_client, config, events, filmdash, gmail_client, i18n, settings, siterequests, sitestats, validation
 from app.version import CHANGELOG, VERSION
 from app.db import EventStatus, EventSuggestion, SessionLocal, Task, TaskStatus, init_db, utcnow
 
@@ -806,6 +806,19 @@ def film_review(request: Request, kind: str, record_id: int, status: str = Form(
     flash(request, f"flash.film_{status}")
     return RedirectResponse("/film", status_code=303)
 
+
+
+# ---------- Website visits (/stats): anonymous page views stored by the website ----------
+
+@app.get("/stats", response_class=HTMLResponse)
+def stats_page(request: Request, days: int = 30):
+    require_login(request)
+    context = {"periods": sitestats.PERIODS, "s": None, "unavailable": None}
+    try:
+        context["s"] = sitestats.summary(days)
+    except filmdash.Unavailable as exc:
+        context["unavailable"] = _unavailable_key(exc)
+    return templates.TemplateResponse(request, "stats.html", context)
 
 
 # ---------- Website requests (/requests): match each visitor to published funds and events ----------
