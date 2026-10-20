@@ -3,10 +3,9 @@
 {% block title %}{{ t("film.title") }}{% endblock %}
 {% block head %}<style>{% include "_film_style.css" %}</style>{% endblock %}
 {% block body %}
-<header class="top">
-  <h1><a href="/film">{{ t("film.title") }}</a></h1>
-  <div class="account">{% include "_header_tools.html" %}<a href="/requests">{{ t("nav.requests") }}</a><a href="/stats">{{ t("nav.stats") }}</a><a href="/">{{ t("nav.back_to_dashboard") }}</a></div>
-</header>
+{% from "_app_header.html" import app_header, back_link with context %}
+{{ app_header("film") }}
+<div class="page-head"><h1>{{ t("film.title") }}</h1></div>
 
 {% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
 

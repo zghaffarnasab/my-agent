@@ -20,23 +20,20 @@
 </style>
 {% endblock %}
 {% block body %}
+{% from "_app_header.html" import app_header, back_link with context %}
 {% from "_task_row.html" import task_row with context %}
 {% from "_event_row.html" import event_row with context %}
 {% from "_event_card.html" import tz_datalist with context %}
-<header class="top">
-  <h1><a href="/">{{ t("app.name") }}</a></h1>
-  <div class="account">
-    {% include "_header_tools.html" %}
-    {% if gmail %}
-      <span class="ltr-auto">{{ gmail }}</span>
-      <a href="/auth/google" onclick='return confirm({{ t("dash.change_account_confirm") | tojson }})'>{{ t("nav.change_account") }}</a>
-      <form class="inline" method="post" action="/poll-now"><button type="submit">{{ t("nav.check_mail") }}</button></form>
-    {% endif %}
-    {% if film_enabled() %}<a href="/film">{{ t("nav.film") }}</a><a href="/requests">{{ t("nav.requests") }}</a><a href="/stats">{{ t("nav.stats") }}</a>{% endif %}
-    <a href="/settings">{{ t("nav.settings") }}</a>
-    <form class="inline" method="post" action="/logout"><button class="btn-link" type="submit">{{ t("nav.logout") }}</button></form>
-  </div>
-</header>
+{{ app_header("mail") }}
+
+<div class="page-head">
+  <h1>{{ t("app.name") }}</h1>
+  {% if gmail %}<div class="tools">
+    <span class="ltr-auto">{{ gmail }}</span>
+    <a href="/auth/google" onclick='return confirm({{ t("dash.change_account_confirm") | tojson }})'>{{ t("nav.change_account") }}</a>
+    <form class="inline" method="post" action="/poll-now"><button type="submit">{{ t("nav.check_mail") }}</button></form>
+  </div>{% endif %}
+</div>
 
 {% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
 

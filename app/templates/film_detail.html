@@ -3,15 +3,14 @@
 {% block title %}{{ rec.name }}{% endblock %}
 {% block head %}<style>{% include "_film_style.css" %}</style>{% endblock %}
 {% block body %}
-<header class="top">
-  <h1><a href="/film">{{ t("film.title") }}</a></h1>
-  <div class="account">{% include "_header_tools.html" %}<a href="/film?status={{ rec.status }}">{{ t("nav.back_to_list") }}</a></div>
-</header>
+{% from "_app_header.html" import app_header, back_link with context %}
+{{ app_header("film") }}
+{{ back_link("/film?status=" ~ rec.status, t("nav.back_to_list")) }}
 
 {% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
 
-<h2 style="font-size:20px;margin:0 0 4px;" class="ltr-auto">{{ rec.name }}{% if rec.strand %} · {{ rec.strand }}{% endif %}
-  <span class="badge">{{ t("film_status." ~ rec.status) }}</span></h2>
+<h1 class="detail-title ltr-auto">{{ rec.name }}{% if rec.strand %} · {{ rec.strand }}{% endif %}
+  <span class="badge">{{ t("film_status." ~ rec.status) }}</span></h1>
 <p class="muted" style="margin:0 0 16px;">
   <span class="kind">{{ t("film_kind." ~ kind) }}</span><span class="ltr-auto">{{ rec.org or "" }}</span>
   <span class="badge uk-{{ rec.uk_eligible }}">{{ t("film_uk." ~ rec.uk_eligible) }}</span>
@@ -65,7 +64,7 @@
   <h3>{{ t("film.evidence") }}</h3>
   <ul class="dates">
     {% for e in rec.evidence %}
-    <li><div class="date-head"><span class="ltr-auto" dir="ltr">{{ e.field_name }}</span><span class="ltr-auto">{{ e.value_text }}</span></div>
+    <li><div class="date-head">{% set fkey = "film.field." ~ e.field_name %}{% set label = t(fkey) %}<span class="ev-field">{% if label == fkey %}<span dir="ltr">{{ e.field_name }}</span>{% else %}{{ label }}{% endif %}</span><span class="ltr-auto">{{ e.value_text }}</span></div>
       <blockquote class="quote" dir="auto">“{{ e.source_quote }}”</blockquote></li>
     {% endfor %}
     {% for q in rec.qualifications %}

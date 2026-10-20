@@ -12,7 +12,7 @@
 .film-name { font-weight: 600; }
 .film-name:hover { color: var(--accent); }
 .film-meta { font-size: 13px; color: var(--muted); }
-.film-when { font-size: 13px; text-align: end; direction: ltr; font-variant-numeric: tabular-nums; }
+.film-when { justify-self: end; font-size: 13px; text-align: end; direction: ltr; font-variant-numeric: tabular-nums; }
 .kind { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--brand); font-weight: 600; margin-inline-end: 8px; }
 .uk-yes { background: var(--ok-bg); color: var(--ok-ink); }
 .uk-no { background: var(--err-bg); color: var(--danger); }
@@ -38,3 +38,4 @@
   border-radius: 8px; background: var(--surface); color: var(--ink); unicode-bidi: plaintext; }
 .review .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .muted { color: var(--muted); font-size: 14px; }
+.ev-field { color: var(--muted); font-size: 13px; }

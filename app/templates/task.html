@@ -7,15 +7,13 @@
 </style>
 {% endblock %}
 {% block body %}
+{% from "_app_header.html" import app_header, back_link with context %}
 {% from "_event_card.html" import tz_datalist with context %}
-<header class="top">
-  <h1><a href="/">{{ t("app.name") }}</a></h1>
-  <div class="account">
-    {% include "_header_tools.html" %}
-    <a href="/">{{ t("nav.back_to_list") }}</a>
-    {% if next_task %}<a href="/tasks/{{ next_task.id }}">{{ t("nav.next_task") }}</a>{% endif %}
-  </div>
-</header>
+{{ app_header("mail") }}
+<div class="page-head">
+  {{ back_link("/", t("nav.back_to_list")) }}
+  {% if next_task %}<div class="tools"><a href="/tasks/{{ next_task.id }}">{{ t("nav.next_task") }}</a></div>{% endif %}
+</div>
 
 {% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
 

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block wrapclass %}narrow{% endblock %}
 {% block title %}{{ t("settings.title") }}{% endblock %}
 {% block head %}
 <style>
@@ -11,14 +12,12 @@
 </style>
 {% endblock %}
 {% block body %}
-<header class="top">
-  <h1><a href="/">{{ t("app.name") }}</a></h1>
-  <div class="account">{% include "_header_tools.html" %}<a href="/">{{ t("nav.back_to_dashboard") }}</a></div>
-</header>
+{% from "_app_header.html" import app_header, back_link with context %}
+{{ app_header("settings") }}
 
 {% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
 
-<h2 style="font-size:18px;margin:0 0 16px;">{{ t("settings.title") }}</h2>
+<div class="page-head"><h1>{{ t("settings.title") }}</h1></div>
 <form class="box" method="post" action="/settings">
   <label for="language">{{ t("settings.language") }}</label>
   <select id="language" name="language">

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block wrapclass %}narrow{% endblock %}
 {% block title %}{{ t("changelog.title") }}{% endblock %}
 {% block head %}
 <style>
@@ -14,13 +15,11 @@
 </style>
 {% endblock %}
 {% block body %}
-<header class="top">
-  <h1><a href="/">{{ t("app.name") }}</a></h1>
-  <div class="account">{% include "_header_tools.html" %}<a href="/">{{ t("nav.back_to_dashboard") }}</a></div>
-</header>
+{% from "_app_header.html" import app_header, back_link with context %}
+{{ app_header() }}
 
 <div class="log">
-  <h2 style="font-size:18px;margin:0 0 16px;">{{ t("changelog.title") }}</h2>
+  <div class="page-head"><h1>{{ t("changelog.title") }}</h1></div>
   {% for rel in changelog %}
   <article class="rel">
     <div class="rel-head">
