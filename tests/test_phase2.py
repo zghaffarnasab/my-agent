@@ -335,3 +335,76 @@ def test_invite_link_is_kept_in_the_calendar_description(monkeypatch):
     monkeypatch.setattr(calendar_client, "_service", lambda: SimpleNamespace(events=lambda: Ev()))
     calendar_client.create_event(_s(url="https://events.example.com/abc123", description="Drinks"))
     assert sent["body"]["description"] == "Drinks\n\nhttps://events.example.com/abc123"
+
+
+# ---------- urgent emails and deadlines (1.14.0) ----------
+
+REGISTRY_BODY = ("EXAMPLE FILMS LIMITED - 00000000\n\nYour confirmation statement is due for filing - urgent action is "
+                 "required. This is the second reminder. It must be delivered to the registrar by 21/10/2026. "
+                 "Failure to meet the deadline may result in the company being struck off the register.")
+
+
+def test_registry_reminder_is_urgent_and_its_deadline_becomes_a_suggestion(run):
+    mail = make_email("reg1", "Your confirmation statement is due", REGISTRY_BODY,
+                      from_addr="eReminders <noreply@registry.example.gov>", bulk=True)
+    claude = FakeClaude({"second reminder": classification(
+        category="receipt_notification", summary="Confirmation statement due 21/10/2026.",
+        action_items=[{"text": "File the confirmation statement", "due": "2026-10-21"}],
+        urgent=True, urgent_reason="Company may be struck off if not filed by 21/10/2026.")})
+    assert run([mail], claude) == 0
+    t = task_by("reg1")
+    assert t.status == TaskStatus.INFO and t.is_urgent and t.urgent_reason.startswith("Company may be struck off")
+    (ev,) = events_of("reg1")
+    assert ev.title == "Deadline: File the confirmation statement"
+    assert (ev.date, ev.start_time, ev.end_date) == ("2026-10-21", "", "") and ev.status == EventStatus.SUGGESTED
+    assert "urgent_reason" in claude.calls[0]["system"]
+
+
+def test_promotions_are_never_urgent_and_their_deadlines_are_not_suggested(run):
+    mails = [make_email("promo", "Last chance!", "URGENT: sale ends 30/10/2026", bulk=True),
+             make_email("bulkinfo", "Newsletter", "Submit your film by 25/10/2026", bulk=True)]
+    claude = FakeClaude({
+        "sale ends": classification(category="newsletter_promo", urgent=True, urgent_reason="Sale ends",
+                                    action_items=[{"text": "Buy", "due": "2026-10-30"}]),
+        "Submit your film": classification(category="info_fyi", action_items=[{"text": "Submit", "due": "2026-10-25"}]),
+    })
+    run(mails, claude)
+    promo = task_by("promo")
+    assert promo.is_urgent is False and promo.urgent_reason == ""
+    assert events_of("promo") == [] and events_of("bulkinfo") == []   # bulk mail that is not urgent: no deadline cards
+
+
+def test_personal_deadline_is_suggested_once_and_past_deadlines_are_skipped(run):
+    mail = make_email("dl", "Script notes", "Please send the notes by 12 October and the script by 2 October.")
+    claude = FakeClaude({"send the notes": classification(
+        category="info_fyi", events=[event(title="Notes due", date="2026-10-12", start_time="", end_time="")],
+        action_items=[{"text": "Send the notes", "due": "2026-10-12"}, {"text": "Send the script", "due": "2026-10-02"}])})
+    run([mail], claude)
+    # the model's own all-day item on the same day is kept; the deadline is not added twice; 2 October was already over
+    assert [(e.title, e.date) for e in events_of("dl")] == [("Notes due", "2026-10-12")]
+    assert task_by("dl").is_urgent is False
+
+
+def test_check_again_marks_an_old_email_urgent_without_changing_its_status(run, monkeypatch):
+    with SessionLocal() as s:
+        old = Task(gmail_message_id="old-reg", thread_id="t", from_addr="eReminders <noreply@registry.example.gov>",
+                   reply_to="x", subject="Confirmation statement", original_body=REGISTRY_BODY,
+                   status=TaskStatus.INFO, received_at=RECEIVED, is_bulk=True, category="other")
+        s.add(old)
+        s.commit()
+    monkeypatch.setattr(ai, "client", FakeClaude({"second reminder": classification(
+        category="needs_reply", needs_reply=True, urgent=True, urgent_reason="Strike-off risk.",
+        action_items=[{"text": "File the confirmation statement", "due": "2026-10-21"}])}))
+    assert events.reread_task(old) == 1
+    t = task_by("old-reg")
+    assert t.is_urgent and t.urgent_reason == "Strike-off risk." and t.status == TaskStatus.INFO and t.category == "other"
+    assert t.action_items[0]["due"] == "2026-10-21"
+    assert events.reread_task(old) == 0                 # pressing it twice does not duplicate the deadline
+
+
+def test_urgent_flag_and_reason_are_validated():
+    clean = validation.clean_classification({"category": "other", "urgent": "yes", "urgent_reason": "x"}, is_bulk=False)
+    assert clean["urgent"] is False and clean["urgent_reason"] == ""
+    clean = validation.clean_classification({"category": "bogus", "urgent": True, "urgent_reason": "  a\n" * 200},
+                                            is_bulk=False)
+    assert clean["urgent"] is True and clean["category"] == "other" and len(clean["urgent_reason"]) <= 200

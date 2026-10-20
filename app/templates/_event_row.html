@@ -1,6 +1,6 @@
 {# One accordion row on the Events tab. The panel holds the editable event card. #}
 {% macro event_row(ev, ev_task, is_open, panel_html) %}
-<li class="row{% if is_open %} open{% endif %}" id="event-{{ ev.id }}" data-row="event:{{ ev.id }}">
+<li class="row{% if is_open %} open{% endif %}{% if ev_task and ev_task.is_urgent %} urgent{% endif %}" id="event-{{ ev.id }}" data-row="event:{{ ev.id }}">
   <form class="head-form" method="get" action="/">
     <input type="hidden" name="tab" value="events">
     <button class="head" type="submit" name="open" value="{{ ev.id }}" id="head-event-{{ ev.id }}"

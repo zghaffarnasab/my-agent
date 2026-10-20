@@ -54,6 +54,11 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
 - Bulk headers mean "no reply draft", not "ignore" (`PROCESS_BULK`, `MAX_BULK_PER_RUN`, `MAX_EMAILS_PER_RUN`, `SKIP_SENDERS`).
 - Forwards and bulk mail never get an automatic draft, whatever the model says (enforced in `validation.clean_classification`).
 - Never fetch or open links from emails; they are only displayed (`rel="noopener noreferrer"`).
+- Urgent mail (since 1.14.0): the classify call returns `urgent` + `urgent_reason` (legal/tax/registry deadlines, final
+  reminders, payment or account risk; never for `newsletter_promo`, enforced in validation). Stored as `tasks.is_urgent`;
+  the row is red and sorted first in the reply/other tabs. Dated `action_items` become all-day "Deadline: ..." suggestions
+  (`events.deadline_events`; not for newsletters, nor for bulk mail unless urgent). "Check this email again" re-runs the
+  full classification (`events.reread_task`) without changing status, category or draft.
 
 ## Dashboard (since 1.6.0)
 - Tabs: `reply` (pending + failed) | `events` (suggested events not yet over, all emails, by date) | `other` (info; `?archived=1` shows done) | `sent` | `rejected`. Old `/?status=` links map to them.

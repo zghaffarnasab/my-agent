@@ -1,6 +1,6 @@
 {# One accordion row. The header is a real button; the details (panel) are loaded when the row is opened. #}
 {% macro task_row(item, tab, archived, is_open, panel_html, has_event) %}
-<li class="row{% if is_open %} open{% endif %}" id="task-{{ item.id }}" data-row="task:{{ item.id }}">
+<li class="row{% if is_open %} open{% endif %}{% if item.is_urgent %} urgent{% endif %}" id="task-{{ item.id }}" data-row="task:{{ item.id }}">
   <div class="row-top">
   <form class="head-form" method="get" action="/">
     <input type="hidden" name="tab" value="{{ tab }}">
@@ -12,7 +12,7 @@
           <span class="from ltr-auto">{{ item.from_addr | sender }}</span>
           <span class="date" dir="ltr">{{ (item.sent_at if tab == 'sent' else item.received_at) | dt }}</span>
         </span>
-        <span class="subj"><span class="ltr-auto">{{ item.subject or t("dash.no_subject") }}</span>{% if has_event %}<span class="mtg">{{ t("dash.tag_event") }}</span>{% endif %}</span>
+        <span class="subj">{% if item.is_urgent %}<span class="tag-urgent">{{ t("dash.tag_urgent") }}</span>{% endif %}<span class="ltr-auto">{{ item.subject or t("dash.no_subject") }}</span>{% if has_event %}<span class="mtg">{{ t("dash.tag_event") }}</span>{% endif %}</span>
         {% if item.status == 'failed' %}
           <span class="prev err">{{ t("dash.draft_failed") }}</span>
         {% elif item.status in ['info', 'done'] %}

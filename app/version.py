@@ -8,9 +8,29 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.13.1"
+VERSION = "1.14.0"
 
 CHANGELOG = [
+    {
+        "version": "1.14.0",
+        "date": "2026-10-20",
+        "title": {
+            "en": "Urgent emails stand out, and deadlines become calendar suggestions",
+            "fa": "ایمیل‌های فوری برجسته می‌شوند و مهلت‌ها پیشنهاد تقویم می‌شوند",
+        },
+        "changes": {
+            "en": [
+                "Emails where something real is at stake (a government, tax or company-registry deadline, a final reminder, a failed payment, an account at risk) are marked Urgent: the row is red, sits at the top of its tab, and the email shows what is at stake.",
+                "Deadlines with a date (for example \"file by 21/10/2026\") now also appear as all-day \"Deadline: ...\" suggestions you can add to Google Calendar, even when the email needs no reply. Newsletters and promotions are left out.",
+                "\"Check this email again\" now reads the whole email again, so older emails can be marked urgent and get their deadline suggestions too. Your draft and the email's tab do not change.",
+            ],
+            "fa": [
+                "ایمیل‌هایی که پای چیز مهمی در میان است (مهلت اداره‌ی دولتی، مالیات یا ثبت شرکت، یادآوری نهایی، پرداخت ناموفق، خطر بسته شدن حساب) «فوری» علامت می‌خورند: ردیف قرمز می‌شود، بالای فهرست همان بخش می‌آید و در خود ایمیل نوشته می‌شود چه چیزی در خطر است.",
+                "مهلت‌های تاریخ‌دار (مثلاً «تا ۲۱/۱۰/۲۰۲۶ ثبت شود») حالا به‌صورت پیشنهاد تمام‌روزِ «مهلت: ...» هم می‌آیند تا به تقویم گوگل اضافه کنی، حتی اگر ایمیل جواب نخواهد. خبرنامه‌ها و تبلیغات حساب نمی‌شوند.",
+                "دکمه‌ی «بررسی دوباره‌ی این ایمیل» حالا کل ایمیل را دوباره می‌خواند، پس ایمیل‌های قبلی هم می‌توانند فوری علامت بخورند و پیشنهاد مهلت بگیرند. پیش‌نویس و بخش ایمیل عوض نمی‌شود.",
+            ],
+        },
+    },
     {
         "version": "1.13.1",
         "date": "2026-10-20",
