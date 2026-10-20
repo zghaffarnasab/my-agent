@@ -2,10 +2,11 @@
 {% block wrapclass %}narrow{% endblock %}
 {% block title %}{{ t("stats.title") }}{% endblock %}
 {% block head %}<style>{% include "_film_style.css" %}
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
 .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; box-shadow: var(--shadow); }
 .kpi .n { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
 .kpi .l { font-size: 13px; color: var(--muted); }
+@media (max-width: 520px) { .kpi { padding: 12px 14px; } .kpi .n { font-size: 22px; } .kpi .l { font-size: 12px; line-height: 1.4; } }
 .chart { display: flex; align-items: flex-end; gap: 2px; height: 140px; direction: ltr; }
 .chart .bar { flex: 1; min-width: 2px; height: 100%; display: flex; align-items: flex-end; }
 .chart .bar span { display: block; width: 100%; background: var(--brand); border-radius: 3px 3px 0 0; min-height: 1px; opacity: .85; }
@@ -24,10 +25,9 @@
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 16px; }
 </style>{% endblock %}
 {% block body %}
-<header class="top">
-  <h1><a href="/stats">{{ t("stats.title") }}</a></h1>
-  <div class="account">{% include "_header_tools.html" %}<a href="/film">{{ t("nav.film") }}</a><a href="/requests">{{ t("nav.requests") }}</a><a href="/">{{ t("nav.back_to_dashboard") }}</a></div>
-</header>
+{% from "_app_header.html" import app_header, back_link with context %}
+{{ app_header("stats") }}
+<div class="page-head"><h1>{{ t("stats.title") }}</h1></div>
 
 {% if unavailable %}
   <div class="flash error">{{ t("stats." ~ unavailable) }}</div>

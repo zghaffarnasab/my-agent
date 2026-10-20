@@ -1,0 +1,24 @@
+{# The header on every signed-in page: the same section links everywhere (current one marked), then language and log out.
+   `section` is one of mail | film | requests | stats | settings, or "" for pages outside the sections. #}
+{% macro app_header(section="") %}
+<header class="top">
+  <nav class="app-nav" aria-label="{{ t('nav.sections') }}">
+    {%- set links = [("mail", "/", t("app.name"))] %}
+    {%- if film_enabled() %}{% set links = links + [("film", "/film", t("nav.film")), ("requests", "/requests", t("nav.requests")), ("stats", "/stats", t("nav.stats"))] %}{% endif %}
+    {%- set links = links + [("settings", "/settings", t("nav.settings"))] %}
+    {%- for key, href, label in links %}
+    <a href="{{ href }}"{% if key == section %} class="on" aria-current="page"{% endif %}>{{ label }}</a>
+    {%- endfor %}
+  </nav>
+  <script>(function () { var a = document.querySelector('.app-nav a.on'); if (a) a.scrollIntoView({ block: 'nearest', inline: 'nearest' }); })();</script>
+  <div class="account">
+    {% include "_header_tools.html" %}
+    <form class="inline" method="post" action="/logout"><button class="btn-link" type="submit">{{ t("nav.logout") }}</button></form>
+  </div>
+</header>
+{% endmacro %}
+
+{# A "back" link above a detail page's heading. #}
+{% macro back_link(href, label) %}
+<a class="back" href="{{ href }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>{{ label }}</a>
+{% endmacro %}

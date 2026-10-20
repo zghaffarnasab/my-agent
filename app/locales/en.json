@@ -210,7 +210,7 @@
   "film.approve": "Approve",
   "film.reject": "Reject",
   "film.back_to_draft": "Back to review",
-  "film.approve_help": "Approving only marks the record as checked. It will appear on the website once the Wix sync is built.",
+  "film.approve_help": "Approved records are shown on the website's opportunities page. Rejected ones are never shown.",
   "film.dates": "Dates",
   "film.no_dates": "No dates were found on the page.",
   "film.details": "Details",
@@ -424,5 +424,7 @@
   "stats.empty": "No visits counted in this period yet.",
   "stats.not_configured": "Set FILMDASH_DATABASE_URL in .env to see the website visits.",
   "stats.unreachable": "The database cannot be reached right now.",
-  "stats.no_table": "The website has not created its visits table in this database yet (it does so on its next start after the update)."
+  "stats.no_table": "The website has not created its visits table in this database yet (it does so on its next start after the update).",
+  "nav.sections": "Sections",
+  "film.field.uk_eligible": "UK eligible"
 }

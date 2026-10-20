@@ -8,9 +8,33 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.13.0"
+VERSION = "1.13.1"
 
 CHANGELOG = [
+    {
+        "version": "1.13.1",
+        "date": "2026-10-20",
+        "title": {
+            "en": "Tidier pages and one menu everywhere",
+            "fa": "صفحه‌های مرتب‌تر و یک منوی یکسان در همه‌جا",
+        },
+        "changes": {
+            "en": [
+                "Every page now has the same menu at the top (Reply queue, Film dashboard, Website requests, Website visits, Settings); the current page is underlined. Language and Log out are always on the right.",
+                "\"Check for new emails\" and \"Change account\" moved next to the Reply queue title. Detail pages have a \"Back to the list\" link above the title.",
+                "Event cards: the start and end time boxes no longer stick out of the card.",
+                "Film dashboard: in Persian the date sits at the end of each row again; quotes show readable field names; the approve note no longer mentions Wix.",
+                "Settings and Changelog use the same page width as the other pages.",
+            ],
+            "fa": [
+                "حالا بالای همه‌ی صفحه‌ها یک منوی یکسان هست (صف جواب‌ها، داشبورد فیلم، درخواست‌های سایت، بازدیدهای سایت، تنظیمات) و صفحه‌ی فعلی زیرخط دارد. زبان و خروج همیشه در گوشه‌ی بالا هستند.",
+                "«بررسی ایمیل‌های جدید» و «تغییر حساب» کنار عنوان صف جواب‌ها آمدند. صفحه‌های جزئیات بالای عنوان یک پیوند «بازگشت به فهرست» دارند.",
+                "کارت رویدادها: کادرهای ساعت شروع و پایان دیگر از کارت بیرون نمی‌زنند.",
+                "داشبورد فیلم: در فارسی تاریخ دوباره در انتهای هر ردیف است؛ نقل‌قول‌ها نام خوانای فیلد را نشان می‌دهند؛ توضیح تأیید دیگر از Wix حرف نمی‌زند.",
+                "تنظیمات و تاریخچه‌ی تغییرات همان عرض صفحه‌های دیگر را دارند.",
+            ],
+        },
+    },
     {
         "version": "1.13.0",
         "date": "2026-10-19",

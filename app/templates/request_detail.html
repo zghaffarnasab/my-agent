@@ -21,16 +21,15 @@
   border-radius: 8px; background: var(--surface); color: var(--ink); unicode-bidi: plaintext; }
 </style>{% endblock %}
 {% block body %}
+{% from "_app_header.html" import app_header, back_link with context %}
 {% set picks = req.profile.picks or [] %}
 {% set chosen = picks | selectattr("chosen") | list %}
-<header class="top">
-  <h1><a href="/requests">{{ t("req.title") }}</a></h1>
-  <div class="account">{% include "_header_tools.html" %}<a href="/requests?status={{ req.status }}">{{ t("nav.back_to_list") }}</a></div>
-</header>
+{{ app_header("requests") }}
+{{ back_link("/requests?status=" ~ req.status, t("nav.back_to_list")) }}
 
 {% if flash %}<div class="flash {{ flash.kind }}">{{ t(flash.key, **flash.params) }}</div>{% endif %}
 
-<h2 style="font-size:20px;margin:0 0 4px;" class="ltr-auto">{{ req.name }} <span class="badge">{{ t("req_status." ~ req.status) }}</span></h2>
+<h1 class="detail-title ltr-auto">{{ req.name }} <span class="badge">{{ t("req_status." ~ req.status) }}</span></h1>
 <p class="muted" style="margin:0 0 16px;"><span dir="ltr">{{ req.email }}</span> · <span dir="ltr">{{ req.created_at | dt }}</span>
   · {{ t("req.wrote_in", language=t("language." ~ (req.lang or "en"))) }}</p>
 
