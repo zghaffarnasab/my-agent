@@ -426,5 +426,8 @@
   "stats.unreachable": "الان به پایگاه داده دسترسی نیست.",
   "stats.no_table": "سایت هنوز جدول بازدیدها را در این پایگاه داده نساخته است (بعد از به‌روزرسانی، با اولین اجرا می‌سازد).",
   "nav.sections": "بخش‌ها",
-  "film.field.uk_eligible": "برای بریتانیا"
+  "film.field.uk_eligible": "برای بریتانیا",
+  "dash.tag_urgent": "فوری",
+  "task.urgent": "فوری:",
+  "ev.deadline_prefix": "مهلت:"
 }

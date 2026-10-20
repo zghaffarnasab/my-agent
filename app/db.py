@@ -68,6 +68,8 @@ class Task(Base):
     original_date: Mapped[str] = mapped_column(String(64), default="")
     related_json: Mapped[str] = mapped_column(Text, default="")              # [{"title", "url"}], no dates
     action_items_json: Mapped[str] = mapped_column(Text, default="")         # [{"text", "due"}]
+    is_urgent: Mapped[bool] = mapped_column(Boolean, default=False)          # legal/tax/payment risk: row shown in red
+    urgent_reason: Mapped[str] = mapped_column(Text, default="")
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
@@ -161,6 +163,8 @@ COLUMN_MIGRATIONS = [
     ("tasks", "original_date", "VARCHAR(64) NOT NULL DEFAULT ''"),
     ("tasks", "related_json", "TEXT NOT NULL DEFAULT ''"),
     ("tasks", "action_items_json", "TEXT NOT NULL DEFAULT ''"),
+    ("tasks", "is_urgent", "BOOLEAN NOT NULL DEFAULT {false}"),                       # 1.14.0
+    ("tasks", "urgent_reason", "TEXT NOT NULL DEFAULT ''"),
 ]
 
 

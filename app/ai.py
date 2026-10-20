@@ -78,7 +78,8 @@ EVENT_SHAPE = (
 EVENT_RULES = """Rules for "events":
 - An event is a meeting, call, appointment, invitation, webinar, conference or similar that is proposed,
   agreed or announced with a specific day. Ignore vague mentions ("let's meet sometime") and past events.
-  Pure deadlines are NOT events (put them in "action_items" when you are asked for those).
+  Pure deadlines are NOT events (put them in "action_items" when you are asked for those; the app turns
+  dated action items into all-day deadline suggestions itself).
 - Never invent dates. An event that is only mentioned by name, without a date, is NOT an event.
 - Dates like 13.09 or 13/09 are day.month (European style) unless the text clearly uses US style
   (for example "11/17/2026" or "March 3rd"). Dates written with a month name are not ambiguous.
@@ -174,6 +175,15 @@ Fields:
 - "related_events": other events that are only mentioned by name, WITHOUT a date, each with its link if the email
   gives one. Never add a date or guess a link for them.
 - "action_items": things the owner must do or deadlines (not events): {{"text": "", "due": "YYYY-MM-DD or empty"}}.
+  "text" is short (one line) and written in {language}. "due" is the deadline itself, never the date the email was sent.
+- "urgent": true ONLY if ignoring this email could cost the owner something real: a legal, government, tax,
+  registrar, court or regulator deadline (for example a company filing, confirmation statement, tax return,
+  fine, penalty, strike-off), a final or repeated reminder ("second reminder", "final notice", "overdue"),
+  a failed or overdue payment, or a risk that one of the owner's accounts, services, domain or company is
+  suspended, closed or lost. Marketing that only SAYS "urgent", "last chance" or "ends tonight" is never urgent,
+  and neither are newsletters, promotions or ordinary notifications. When unsure, false.
+- "urgent_reason": when urgent is true, ONE short sentence (at most 120 characters) in {language} saying what is
+  at stake and by when; otherwise an empty string.
 
 {event_rules}
 
@@ -182,7 +192,8 @@ Respond with ONLY a JSON object, no markdown, in exactly this shape:
   "original": {{"from": "", "subject": "", "date": ""}},
   "events": [{event_shape}],
   "related_events": [{{"title": "", "url": ""}}],
-  "action_items": [{{"text": "", "due": ""}}]}}
+  "action_items": [{{"text": "", "due": ""}}],
+  "urgent": false, "urgent_reason": ""}}
 Use empty lists when there is nothing."""
 
 

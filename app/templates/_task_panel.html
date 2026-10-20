@@ -4,6 +4,7 @@
 <div class="panel-inner" data-task="{{ task.id }}">
   <div class="inline-msg" role="status" aria-live="polite" hidden></div>
   {% if task.error %}<div class="inline-msg error ltr-auto">{{ task.error }}</div>{% endif %}
+  {% if task.is_urgent %}<div class="urgent-note" role="note"><strong>{{ t("task.urgent") }}</strong>{% if task.urgent_reason %} <span class="ltr-auto">{{ task.urgent_reason }}</span>{% endif %}</div>{% endif %}
 
   <h3>{{ t("task.original") }}</h3>
   <div class="orig">

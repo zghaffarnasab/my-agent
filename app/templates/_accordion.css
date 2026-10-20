@@ -35,8 +35,22 @@
 .prev { display: block; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .prev.err { color: var(--danger); }
 .mtg { display: inline-block; font-size: 12px; background: var(--wait-bg); color: var(--wait); border-radius: 999px; padding: 0 8px; margin-inline-start: 6px; font-weight: 500; }
+/* Urgent mail (legal, tax, payment or account risk): red row, red tag, red note in the panel */
+.row.urgent { background: color-mix(in srgb, var(--err-bg) 70%, var(--surface)); box-shadow: inset 4px 0 0 var(--danger); }
+html[dir=rtl] .row.urgent { box-shadow: inset -4px 0 0 var(--danger); }
+.row.urgent .head:hover { background: var(--err-bg); }
+.row.urgent .subj { color: var(--danger); font-weight: 700; }
+.tag-urgent { display: inline-block; font-size: 12px; background: var(--danger); color: var(--surface); border-radius: 999px; padding: 0 8px; margin-inline-end: 6px; font-weight: 700; }
+.urgent-note { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--err-bg); color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent); font-size: 14px; }
 .chev { flex: none; width: 20px; height: 20px; transition: transform .2s; color: var(--muted); }
-.row.open .chev { transform: rotate(180deg); }
+.row.open /* Urgent mail (legal, tax, payment or account risk): red row, red tag, red note in the panel */
+.row.urgent { background: color-mix(in srgb, var(--err-bg) 70%, var(--surface)); box-shadow: inset 4px 0 0 var(--danger); }
+html[dir=rtl] .row.urgent { box-shadow: inset -4px 0 0 var(--danger); }
+.row.urgent .head:hover { background: var(--err-bg); }
+.row.urgent .subj { color: var(--danger); font-weight: 700; }
+.tag-urgent { display: inline-block; font-size: 12px; background: var(--danger); color: var(--surface); border-radius: 999px; padding: 0 8px; margin-inline-end: 6px; font-weight: 700; }
+.urgent-note { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--err-bg); color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent); font-size: 14px; }
+.chev { transform: rotate(180deg); }
 .row.open > .row-top .head { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--accent); }
 html[dir=rtl] .row.open > .row-top .head { box-shadow: inset -3px 0 0 var(--accent); }
 .row > .body, .page-panel > .body { padding: 4px 16px 18px; background: var(--surface-2); border-top: 1px solid var(--line); }

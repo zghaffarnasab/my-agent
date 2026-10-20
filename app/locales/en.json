@@ -426,5 +426,8 @@
   "stats.unreachable": "The database cannot be reached right now.",
   "stats.no_table": "The website has not created its visits table in this database yet (it does so on its next start after the update).",
   "nav.sections": "Sections",
-  "film.field.uk_eligible": "UK eligible"
+  "film.field.uk_eligible": "UK eligible",
+  "dash.tag_urgent": "Urgent",
+  "task.urgent": "Urgent:",
+  "ev.deadline_prefix": "Deadline:"
 }

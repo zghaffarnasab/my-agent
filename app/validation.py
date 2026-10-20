@@ -166,8 +166,11 @@ def clean_classification(data, *, is_bulk: bool) -> dict:
     original = data.get("original") if isinstance(data.get("original"), dict) else {}
     raw_events = data.get("events") if isinstance(data.get("events"), list) else []
     events = [e for e in (clean_event(i) for i in raw_events if isinstance(i, dict)) if e]
+    category = category if category in CATEGORIES else "other"
+    # Safety net: a newsletter or promotion that shouts "urgent" is never flagged
+    urgent = data.get("urgent") is True and category != "newsletter_promo"
     return {
-        "category": category if category in CATEGORIES else "other",
+        "category": category,
         # Safety net: bulk mail and forwards never get an automatic reply draft
         "needs_reply": data.get("needs_reply") is True and not is_bulk and not is_forward,
         "summary": clean_text(data.get("summary"), 300),
@@ -178,6 +181,8 @@ def clean_classification(data, *, is_bulk: bool) -> dict:
         "events": events[:MAX_EVENTS],
         "related_events": clean_related(data.get("related_events")),
         "action_items": clean_action_items(data.get("action_items")),
+        "urgent": urgent,
+        "urgent_reason": clean_text(data.get("urgent_reason"), 200) if urgent else "",
     }
 
 

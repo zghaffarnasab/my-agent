@@ -361,7 +361,9 @@ def index(request: Request, tab: str = "", status: str = "", archived: int = 0,
             statuses = [TaskStatus.DONE] if show_archived else TAB_STATUSES[tab]
             tasks = db.scalars(
                 select(Task).where(Task.status.in_(statuses))
-                .order_by(Task.received_at.desc().nullslast(), Task.id.desc()).limit(200)
+                # urgent mail first in the lists you still act on; archived/sent/rejected stay by date
+                .order_by(*([Task.is_urgent.desc()] if tab in ("reply", "other") and not show_archived else []),
+                          Task.received_at.desc().nullslast(), Task.id.desc()).limit(200)
             ).all()
             if open_id in {t.id for t in tasks}:
                 open_panel_html = task_panel_html(request, db, next(t for t in tasks if t.id == open_id))
@@ -967,11 +969,11 @@ def _get_suggestion(db, event_id: int) -> EventSuggestion:
 
 @app.post("/tasks/{task_id}/find-events")
 def find_events(request: Request, task_id: int, next: str = Form("")):
-    """Manually look for events, e.g. for emails that arrived before this feature existed."""
+    """Read the email again (urgency, deadlines, events), e.g. for emails that arrived before these features existed."""
     require_login(request)
     with SessionLocal() as db:
         task = get_task_or_404(db, task_id)
-    n = events.extract_for_task(task, source="incoming", text=task.original_body)
+    n = events.reread_task(task) if task.original_body else 0
     if task.status == TaskStatus.SENT and task.draft_body:
         n += events.extract_for_task(task, source="outgoing", text=task.draft_body,
                                      reference=task.sent_at or utcnow())

@@ -91,6 +91,14 @@ def seed() -> dict:
          600, category="newsletter_promo", summary="Newsletter with a webinar about colour grading.", is_bulk=True)
     event("news_ev", "news", "Colour grading webinar", _day(8), start_time="14:00", end_time="15:00", url="https://events.example.com/webinar")
     event("news_ev2", "news", "Cancelled screening", _day(9), status="cancelled", url="https://events.example.com/off")
+    task("registry", TaskStatus.INFO, "Your confirmation statement is due", "eReminders <noreply@registry.example.gov>",
+         "EXAMPLE FILMS LIMITED\n\nYour confirmation statement is due for filing - urgent action is required. "
+         "This is the second reminder. It must be delivered by %s." % _day(1), 700,
+         category="receipt_notification", summary="Second reminder: the confirmation statement must be filed.",
+         is_bulk=True, is_urgent=True, urgent_reason="The company may be struck off if it is not filed by %s." % _day(1),
+         action_items_json='[{"text": "File the confirmation statement", "due": "%s"}]' % _day(1))
+    event("registry_ev", "registry", "Deadline: File the confirmation statement", _day(1),
+          description="The company may be struck off if it is not filed in time.")
     task("receipt", TaskStatus.INFO, "Your receipt from Example Shop", "Example Shop <no-reply@example.com>", "Thank you for your order.",
          900, category="receipt_notification", summary="Receipt for an order of 2 items.", is_bulk=True)
     task("old", TaskStatus.DONE, "Archived notice", "Notice <notice@example.com>", "Old notice.", 3000,
@@ -141,4 +149,5 @@ def install_fakes(sent_log: list | None = None) -> None:
         return "Hi,\n\nThank you for your message. I will get back to you soon." + note + "\n\nBest regards"
     ai.draft_reply = draft_reply
     events.extract_for_task = lambda *a, **k: 0
+    events.reread_task = lambda *a, **k: 0
     worker.process_new_emails = lambda: 0

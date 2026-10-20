@@ -4,7 +4,8 @@ Run with:  python -m app.worker
 
 For each new email:
   1. Skip it completely if it is our own mail, empty, a mail-system notice, or from a blocked sender.
-  2. One cheap AI call classifies it and extracts events, a summary, deadlines and related events.
+  2. One cheap AI call classifies it and extracts events, a summary, deadlines, related events and whether
+     it is urgent (legal/tax/payment risk). Dated deadlines also become all-day event suggestions.
   3. Only if a real person waits for an answer, a second AI call drafts a reply (status "pending").
      Everything else becomes "info" and is shown under "Other mail".
 Nothing is ever sent or added to the calendar here.
@@ -89,6 +90,9 @@ def _read_and_store(service, task: Task, email) -> bool:
     task.original_date = result["original_date"]
     task.related_json = json.dumps(result["related_events"], ensure_ascii=False) if result["related_events"] else ""
     task.action_items_json = json.dumps(result["action_items"], ensure_ascii=False) if result["action_items"] else ""
+    task.is_urgent = result["urgent"]
+    task.urgent_reason = result["urgent_reason"]
+    result["is_bulk"] = email.is_bulk
 
     drafted = False
     if result["needs_reply"]:
@@ -112,7 +116,7 @@ def _read_and_store(service, task: Task, email) -> bool:
         log.info("Read %s as %s (no reply needed): %s", email.id, task.category, email.subject)
 
     _save(task)
-    n = events.store_events(task.id, result["events"], source="incoming")
+    n = events.store_classified(task.id, result, email.received_at or datetime.now(timezone.utc))
     if n:
         log.info("Found %d new event(s) in %s", n, email.id)
     return drafted

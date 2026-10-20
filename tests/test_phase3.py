@@ -264,6 +264,7 @@ def test_plain_posts_land_on_the_open_row(client, world, monkeypatch):
     monkeypatch.setattr(gmail_client, "mark_as_read", lambda *a, **k: None)
     from app import events
     monkeypatch.setattr(events, "extract_for_task", lambda *a, **k: 0)
+    monkeypatch.setattr(events, "reread_task", lambda *a, **k: 0)
     monkeypatch.setattr(ai, "draft_reply", lambda **kw: "A new draft.")
     p1 = world["p1"]
     go = lambda path, **d: _loc(client.post(path, data=d, follow_redirects=False))
@@ -538,3 +539,21 @@ def _unbalanced(html: str) -> list[str]:
     return problems + [f"<{t}> never closed" for t in stack]
 
 
+
+
+def test_urgent_email_is_red_and_listed_first_with_its_reason(client, world):
+    u = add_task(TaskStatus.INFO, "Statement due", category="other", summary="Filing reminder.", is_urgent=True,
+                 urgent_reason="Strike-off risk if not filed by 21/10.")
+    with SessionLocal() as db:
+        db.get(Task, u).received_at = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        db.commit()
+    html = markup(client.get("/?tab=other").text)
+    rows = re.findall(r'<li class="row[^"]*" id="task-(\d+)"', html)
+    assert rows[0] == str(u)                                         # oldest, but urgent: on top
+    assert re.search(rf'<li class="row urgent" id="task-{u}"', html)
+    assert not re.search(rf'<li class="row[^"]*urgent[^"]*" id="task-{world["i1"]}"', html)
+    assert "Urgent" in plain(html)
+    p = panel(client, u)
+    assert 'class="urgent-note"' in p and "Strike-off risk if not filed by 21/10." in p
+    archived = markup(client.get("/?tab=other&archived=1").text)    # archived list keeps date order
+    assert f'id="task-{u}"' not in archived
