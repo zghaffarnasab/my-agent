@@ -1,9 +1,9 @@
 {# The header on every signed-in page: the same section links everywhere (current one marked), then language and log out.
-   `section` is one of mail | film | requests | stats | settings, or "" for pages outside the sections. #}
+   `section` is one of mail | board | film | requests | stats | settings, or "" for pages outside the sections. #}
 {% macro app_header(section="") %}
 <header class="top">
   <nav class="app-nav" aria-label="{{ t('nav.sections') }}">
-    {%- set links = [("mail", "/", t("app.name"))] %}
+    {%- set links = [("mail", "/", t("app.name")), ("board", "/board", t("nav.board"))] %}
     {%- if film_enabled() %}{% set links = links + [("film", "/film", t("nav.film")), ("requests", "/requests", t("nav.requests")), ("stats", "/stats", t("nav.stats"))] %}{% endif %}
     {%- set links = links + [("settings", "/settings", t("nav.settings"))] %}
     {%- for key, href, label in links %}

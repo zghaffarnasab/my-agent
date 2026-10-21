@@ -4,6 +4,7 @@ import secrets
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from email.utils import parseaddr
+from urllib.parse import quote
 
 from fastapi import BackgroundTasks, FastAPI, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -13,9 +14,9 @@ from markupsafe import Markup
 from sqlalchemy import delete, func, select, update
 from starlette.middleware.sessions import SessionMiddleware
 
-from app import ai, calendar_client, config, events, filmdash, gmail_client, i18n, settings, siterequests, sitestats, validation
+from app import ai, board, calendar_client, config, events, filmdash, gmail_client, i18n, settings, siterequests, sitestats, validation
 from app.version import CHANGELOG, VERSION
-from app.db import EventStatus, EventSuggestion, SessionLocal, Task, TaskStatus, init_db, utcnow
+from app.db import BoardStatus, EventStatus, EventSuggestion, SessionLocal, Task, TaskStatus, init_db, utcnow
 
 # Allow plain-http OAuth only for local development
 if config.BASE_URL.startswith("http://localhost") or config.BASE_URL.startswith("http://127.0.0.1"):
@@ -740,11 +741,12 @@ def settings_page(request: Request):
         "saved_timezone": settings.get("timezone"),
         "fallback_timezone": config.TIMEZONE,
         "timezones": TIMEZONE_CHOICES,
+        "board_people": settings.get("board_people"),
     })
 
 
 @app.post("/settings")
-def save_settings(request: Request, language: str = Form(...), tz: str = Form("")):
+def save_settings(request: Request, language: str = Form(...), tz: str = Form(""), board_people: str = Form("")):
     require_login(request)
     tz = tz.strip()
     if language not in i18n.SUPPORTED or (tz and not settings.is_valid_timezone(tz)):
@@ -752,10 +754,89 @@ def save_settings(request: Request, language: str = Form(...), tz: str = Form(""
         return RedirectResponse("/settings", status_code=303)
     settings.set("language", language)
     settings.set("timezone", tz)
+    settings.set("board_people", board.clean_people(board_people))
     flash(request, "flash.settings_saved")
     response = RedirectResponse("/settings", status_code=303)
     _set_lang_cookie(response, language)
     return response
+
+
+# ---------- Task board (/board): to-dos for the people named in Settings ----------
+
+def _board_url(who: str, card_id: int | None = None) -> str:
+    url = "/board" + (f"?who={quote(who)}" if who in board.people() else "")
+    return url + (f"#card-{card_id}" if card_id else "")
+
+
+def _board_reply(request: Request, ok: bool, who: str, card_id: int | None = None):
+    """Drag and drop (fetch) gets a small JSON answer; plain form posts go back to the board."""
+    if is_fetch(request):
+        return JSONResponse({"ok": ok}, status_code=200 if ok else 400)
+    if not ok:
+        flash(request, "flash.board_bad", "error")
+    return RedirectResponse(_board_url(who, card_id if ok else None), status_code=303)
+
+
+@app.get("/board", response_class=HTMLResponse)
+def board_page(request: Request, who: str = ""):
+    require_login(request)
+    names = board.people()
+    who = who if who in names else ""
+    return templates.TemplateResponse(request, "board.html", {
+        "flash": pop_flash(request),
+        "people": names,
+        "who": who,
+        "columns": board.columns(who),
+        "statuses": BoardStatus.ALL,
+        "open_counts": board.open_counts(),
+        "color_of": board.color_of,
+        "today": _today().isoformat(),
+    })
+
+
+@app.post("/board/cards")
+def board_create(request: Request, title: str = Form(""), notes: str = Form(""), assignee: str = Form(""),
+                 due: str = Form(""), status: str = Form(BoardStatus.TODO), who: str = Form("")):
+    require_login(request)
+    fields = board.clean_card(title, notes, assignee, due)
+    card_id = board.create(fields, status) if fields else None
+    if card_id:
+        flash(request, "flash.board_added")
+    return _board_reply(request, card_id is not None, who, card_id)
+
+
+@app.post("/board/cards/{card_id}/save")
+def board_save(request: Request, card_id: int, title: str = Form(""), notes: str = Form(""),
+               assignee: str = Form(""), due: str = Form(""), status: str = Form(""), who: str = Form("")):
+    require_login(request)
+    fields = board.clean_card(title, notes, assignee, due)
+    ok = fields is not None and board.update(card_id, fields, status)
+    if ok:
+        flash(request, "flash.board_saved")
+    return _board_reply(request, ok, who, card_id)
+
+
+@app.post("/board/cards/{card_id}/move")
+def board_move(request: Request, card_id: int, status: str = Form(...), before: str = Form(""), who: str = Form("")):
+    require_login(request)
+    ok = board.move(card_id, status, int(before) if before.isdigit() else None)
+    return _board_reply(request, ok, who, card_id)
+
+
+@app.post("/board/cards/{card_id}/step")
+def board_step(request: Request, card_id: int, direction: int = Form(...), who: str = Form("")):
+    require_login(request)
+    ok = direction in (-1, 1) and board.step(card_id, direction)
+    return _board_reply(request, ok, who, card_id)
+
+
+@app.post("/board/cards/{card_id}/delete")
+def board_delete(request: Request, card_id: int, who: str = Form("")):
+    require_login(request)
+    ok = board.delete(card_id)
+    if ok:
+        flash(request, "flash.board_deleted")
+    return _board_reply(request, ok, who)
 
 
 # ---------- Filmmaker dashboard review (records from pipeline/) ----------
