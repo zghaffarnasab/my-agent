@@ -147,6 +147,29 @@ class Setting(Base):
     value: Mapped[str] = mapped_column(Text, default="")
 
 
+class BoardStatus:
+    TODO = "todo"
+    DOING = "doing"
+    DONE = "done"
+    ALL = (TODO, DOING, DONE)    # the board's columns, in order
+
+
+class BoardCard(Base):
+    """A to-do on the task board (/board), owned by one of the board people. Not linked to emails."""
+    __tablename__ = "board_cards"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String(300), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    assignee: Mapped[str] = mapped_column(String(64), default="", index=True)   # a name from settings "board_people"
+    status: Mapped[str] = mapped_column(String(16), default=BoardStatus.TODO, index=True)
+    due: Mapped[str] = mapped_column(String(10), default="")                    # YYYY-MM-DD, empty = no due date
+    position: Mapped[int] = mapped_column(Integer, default=0)                   # order inside its column
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    done_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 # Columns added after the first release. create_all() never alters existing tables,
 # so each one is added here, only if it is missing. Safe to run on every start.
 COLUMN_MIGRATIONS = [

@@ -33,7 +33,7 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
 - `app/validation.py` — cleans/validates ALL AI output (links http(s) only, dates, codes, categories). Add new AI fields here
 - `app/events.py` — `store_events()` saves suggestions and dedupes across emails (same link, or same title + date); cancelled events
 - `app/filmdash.py` — film dashboard review queries (pipeline Postgres); routes `/film...` in `main.py`
-- `app/db.py` — SQLAlchemy models: Task, EventSuggestion, GoogleCredential (SQLite in Docker volume)
+- `app/db.py` — SQLAlchemy models: Task, EventSuggestion, GoogleCredential, BoardCard (SQLite in Docker volume)
 - `app/version.py` — VERSION + CHANGELOG (bilingual: each entry has "en" and "fa"; shown in the footer and /changelog)
 - `app/i18n.py` + `app/locales/{en,fa}.json` — `t()` helper and flat translation files
 - `app/settings.py` — language and time zone stored in the DB (`settings` table), falling back to `.env`
@@ -74,6 +74,14 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
   `remove` or the new row HTML. Use `notify()` (not `flash()`) in action routes so both modes work.
 - Try it with fake data: `.venv/bin/python tests/demo_server.py` (add `DEMO_HOST=0.0.0.0` for a phone on the same Wi-Fi).
   It uses a temporary database and fake Gmail/Calendar/Claude; never point it at real data.
+
+## Task board (since 1.15.0)
+- `/board` (`app/board.py`, `board.html`, `_board.js`): to-dos in three columns (`BoardStatus`: todo | doing | done),
+  table `board_cards` in the app database, not linked to emails. Each card has one `assignee` from the names typed on
+  the Settings page (settings key `board_people`, comma-separated, max 6; never hardcode real names). A person's color is
+  their place in that list. `?who=<name>` filters the board.
+- Moving works without JS (arrow buttons post to `/board/cards/{id}/step`); drag and drop posts to `/move` with
+  `X-Requested-With: fetch` and gets `{"ok": ...}` back.
 
 ## Filmmaker dashboard pipeline (`pipeline/`)
 - A separate tool in the same repo: fetches official funding/festival pages, extracts funds and events with Claude

@@ -8,9 +8,31 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.14.0"
+VERSION = "1.15.0"
 
 CHANGELOG = [
+    {
+        "version": "1.15.0",
+        "date": "2026-10-21",
+        "title": {
+            "en": "A simple task board",
+            "fa": "یک برد تسک ساده",
+        },
+        "changes": {
+            "en": [
+                "New \"Task board\" page in the menu: unfinished work in three columns (To do, In progress, Done). Drag a card to another column, or use its arrow buttons.",
+                "Every task belongs to one person, shown on the card with their own color, and the buttons at the top show one person's tasks only.",
+                "Tasks can have notes and an optional due date; overdue tasks are marked in red. Edit or delete a task from its card.",
+                "Type the names of the people on the board on the Settings page (separated by commas).",
+            ],
+            "fa": [
+                "صفحه‌ی تازه‌ی «برد تسک‌ها» در منو: کارهای ناتمام در سه ستون (برای انجام، در حال انجام، انجام شد). کارت را به ستون دیگر بکش یا از دکمه‌های فلش روی کارت استفاده کن.",
+                "هر تسک مال یک نفر است که با رنگ خودش روی کارت دیده می‌شود، و دکمه‌های بالای صفحه فقط تسک‌های یک نفر را نشان می‌دهند.",
+                "تسک می‌تواند توضیحات و مهلت اختیاری داشته باشد؛ تسک‌هایی که مهلتشان گذشته قرمز می‌شوند. ویرایش و حذف از روی خود کارت.",
+                "نام افراد برد را در صفحه‌ی تنظیمات بنویس (با ویرگول جدا کن).",
+            ],
+        },
+    },
     {
         "version": "1.14.0",
         "date": "2026-10-20",

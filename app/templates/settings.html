@@ -8,6 +8,7 @@
   .box label:first-child { margin-top: 0; }
   .box select, .box input[type=text] { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
   .box input[type=text] { direction: ltr; text-align: start; }
+  .box input[type=text][dir=auto] { direction: inherit; unicode-bidi: plaintext; }
   .help { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
 </style>
 {% endblock %}
@@ -30,6 +31,10 @@
   <input type="text" id="tz" name="tz" value="{{ saved_timezone }}" list="tzlist" dir="ltr" placeholder="{{ fallback_timezone }}">
   <datalist id="tzlist">{% for z in timezones %}<option value="{{ z }}">{% endfor %}</datalist>
   <p class="help">{{ t("settings.timezone_help") }} {{ t("settings.timezone_default", tz=fallback_timezone) }}</p>
+
+  <label for="board_people">{{ t("settings.board_people") }}</label>
+  <input type="text" id="board_people" name="board_people" value="{{ board_people }}" dir="auto" class="ltr-auto" maxlength="400">
+  <p class="help">{{ t("settings.board_people_help") }}</p>
 
   <div style="margin-top:20px;"><button class="btn-primary" type="submit">{{ t("settings.save") }}</button></div>
 </form>

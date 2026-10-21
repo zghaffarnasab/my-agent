@@ -110,6 +110,18 @@ def seed() -> dict:
          draft_body="Confirmed, thank you.", sent_at=now - timedelta(days=2))
     task("rej", TaskStatus.REJECTED, "Quick question", "Lee Example <lee@example.com>", "Do you have a minute?", 2500,
          draft_body="Sure, what is it about?")
+
+    from app import board, settings
+    settings.set("board_people", "Alex, Sam")
+    for title, who, status, due, notes in [
+        ("Set up the new database", "Alex", "todo", _day(5), "Daily backups, smallest size."),
+        ("Fill the open fields in the terms of service", "Sam", "todo", _day(-2), ""),
+        ("Unsubscribe from old newsletters", "Sam", "todo", "", "17 newsletters, list in the shared folder."),
+        ("Change the company email address", "Alex", "doing", _day(0), ""),
+        ("Review the privacy policy", "Sam", "doing", "", ""),
+        ("Turn on the captcha", "Alex", "done", "", ""),
+    ]:
+        board.create({"title": title, "assignee": who, "due": due, "notes": notes}, status)
     return ids
 
 
