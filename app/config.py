@@ -29,7 +29,8 @@ GMAIL_SCOPES = [GMAIL_SCOPE, CALENDAR_SCOPE]  # everything requested when connec
 # --- Anthropic ---
 ANTHROPIC_API_KEY = _get("ANTHROPIC_API_KEY", required=True)
 CLAUDE_MODEL = _get("CLAUDE_MODEL", "claude-sonnet-5-5")           # writes reply drafts
-CLASSIFY_MODEL = _get("CLASSIFY_MODEL", "claude-haiku-4-5-20251001")  # cheap model: classify + find events
+CLASSIFY_MODEL = _get("CLASSIFY_MODEL", "claude-haiku-5-5")  # cheap model: classify + find events
+CLASSIFY_EFFORT = _get("CLASSIFY_EFFORT", "low")  # how much the cheap model thinks: low, medium or high
 
 # --- Language ---
 DEFAULT_LANGUAGE = _get("DEFAULT_LANGUAGE", "en")   # "en" or "fa"; can be changed on the Settings page
