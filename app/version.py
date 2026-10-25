@@ -8,9 +8,27 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.15.0"
+VERSION = "1.15.1"
 
 CHANGELOG = [
+    {
+        "version": "1.15.1",
+        "date": "2026-10-25",
+        "title": {
+            "en": "A newer, cheaper model reads the emails",
+            "fa": "مدل جدیدتر و ارزان‌تر ایمیل‌ها را می‌خواند",
+        },
+        "changes": {
+            "en": [
+                "The cheap model that sorts emails, finds events and matches site requests is now Claude Haiku 5.5 (was Haiku 4.5): about ten times cheaper per token and better at following the rules.",
+                "New setting CLASSIFY_EFFORT (default low) controls how much that model thinks before answering.",
+            ],
+            "fa": [
+                "مدل ارزانی که ایمیل‌ها را دسته‌بندی می‌کند، رویدادها را پیدا می‌کند و درخواست‌های سایت را تطبیق می‌دهد حالا Claude Haiku 5.5 است (قبلاً Haiku 4.5): هر توکن حدود ده برابر ارزان‌تر و در رعایت قواعد دقیق‌تر.",
+                "تنظیم تازه‌ی CLASSIFY_EFFORT (پیش‌فرض low) تعیین می‌کند این مدل پیش از جواب دادن چقدر فکر کند.",
+            ],
+        },
+    },
     {
         "version": "1.15.0",
         "date": "2026-10-21",

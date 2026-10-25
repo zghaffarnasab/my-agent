@@ -127,7 +127,12 @@ def _ask_json(*, system: str, user: str, max_tokens: int) -> dict:
         max_tokens=max_tokens,
         system=system,
         messages=[{"role": "user", "content": user}],
+        # Haiku 5.5 thinks by default (and thinking counts toward max_tokens); low effort keeps it short.
+        # Sent as extra_body so older pinned SDK versions in the Docker image still accept it.
+        extra_body={"output_config": {"effort": config.CLASSIFY_EFFORT}},
     )
+    if getattr(response, "stop_reason", None) == "refusal":
+        raise ValueError("The AI declined to read this email")
     raw = "".join(b.text for b in response.content if b.type == "text").strip()
     raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
     try:
@@ -212,7 +217,7 @@ def classify_email(*, text: str, subject: str, from_addr: str, reference, is_bul
     )
     user = (f"<email>\nFrom: {_defang(from_addr)}\nSubject: {_defang(subject)}\n\n"
             f"{_defang(text)[:config.CLASSIFY_MAX_CHARS]}\n</email>")
-    data = _ask_json(system=system, user=user, max_tokens=2500)
+    data = _ask_json(system=system, user=user, max_tokens=4000)
     return validation.clean_classification(data, is_bulk=is_bulk)
 
 
@@ -247,7 +252,7 @@ def extract_events(*, text: str, subject: str, from_addr: str, reference, outgoi
         **{k: ctx[k] for k in ("when", "tz", "weekday")},
     )
     user = f"<email>\nFrom: {_defang(from_addr)}\nSubject: {_defang(subject)}\n\n{_defang(text)[:12000]}\n</email>"
-    data = _ask_json(system=system, user=user, max_tokens=1500)
+    data = _ask_json(system=system, user=user, max_tokens=2500)
     return [e for e in data.get("events", []) if isinstance(e, dict)] if isinstance(data.get("events"), list) else []
 
 
@@ -287,7 +292,7 @@ def rank_request_matches(*, request: dict, candidates: list[dict], max_picks: in
     data = _ask_json(
         system=MATCH_PROMPT.format(max_picks=max_picks, language=i18n.LANGUAGE_NAMES[lang]),
         user=f"<visitor_request>\n{visitor[:6000]}\n</visitor_request>\n\n<options>\n{options}\n</options>",
-        max_tokens=1200,
+        max_tokens=2000,
     )
     return validation.clean_request_picks(data, {c["key"] for c in candidates}, max_picks)
 
@@ -319,6 +324,6 @@ def classify_registration_reply(*, event: str, subject: str, text: str) -> dict:
         system=REPLY_PROMPT.format(event=_defang(event)[:200],
                                    language=i18n.LANGUAGE_NAMES[lang]),
         user=f"<email>\nSubject: {_defang(subject)[:300]}\n\n{_defang(text)[:8000]}\n</email>",
-        max_tokens=400,
+        max_tokens=1000,
     )
     return validation.clean_reply_outcome(data)
