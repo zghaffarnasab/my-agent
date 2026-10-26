@@ -8,9 +8,27 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.15.1"
+VERSION = "1.16.0"
 
 CHANGELOG = [
+    {
+        "version": "1.16.0",
+        "date": "2026-10-26",
+        "title": {
+            "en": "Website requests show the visitor's links and files",
+            "fa": "لینک‌ها و فایل‌های متقاضی در درخواست‌های سایت",
+        },
+        "changes": {
+            "en": [
+                "The website form now lets visitors share links (Google Drive, YouTube, Vimeo, ...) and attach a screenplay, treatment or synopsis. Both appear on the request page under the message.",
+                "Files download with one click (always as a download, never opened inside the app). Links are only shown, never opened by the app.",
+            ],
+            "fa": [
+                "فرم سایت حالا به متقاضی اجازه می‌دهد لینک (گوگل درایو، یوتیوب، ویمئو و ...) بفرستد و فیلم‌نامه، طرح یا خلاصه داستان پیوست کند. هر دو در صفحه‌ی درخواست زیر پیام دیده می‌شوند.",
+                "فایل‌ها با یک کلیک دانلود می‌شوند (همیشه دانلود، هیچ‌وقت داخل برنامه باز نمی‌شوند). لینک‌ها فقط نمایش داده می‌شوند و برنامه آن‌ها را باز نمی‌کند.",
+            ],
+        },
+    },
     {
         "version": "1.15.1",
         "date": "2026-10-25",

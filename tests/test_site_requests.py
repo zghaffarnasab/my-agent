@@ -6,6 +6,7 @@ tests/test_film_review.py. The `site_requests` table is created here the way the
 import os
 from urllib.parse import unquote
 
+import psycopg
 import pytest
 
 from app import ai, config, i18n, siterequests
@@ -363,3 +364,45 @@ def test_registration_on_organiser_site(client, site_db, monkeypatch):
     req = siterequests.get(req_id)
     assert req["status"] == "confirmed" and "submission" not in req["profile"]["picks"][0]
     assert client.post(f"/requests/{req_id}/form-registered", data={"key": "event:999"}).status_code == 404
+
+
+FILES_TABLE = """
+ALTER TABLE site_requests ADD COLUMN IF NOT EXISTS links text[] NOT NULL DEFAULT '{}';
+CREATE TABLE IF NOT EXISTS site_request_files (
+  id bigserial PRIMARY KEY, request_id bigint NOT NULL REFERENCES site_requests(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(), filename text NOT NULL, content_type text NOT NULL,
+  size_bytes integer NOT NULL, data bytea NOT NULL)
+"""
+
+
+@needs_db
+def test_links_and_files(client, site_db):
+    req_id, _ = site_db
+    # An older website without links or files: the page still works and shows neither.
+    page = client.get(f"/requests/{req_id}")
+    assert page.status_code == 200 and "/files/" not in page.text
+    assert client.get(f"/requests/{req_id}/files/1").status_code == 404
+
+    with psycopg.connect(URL) as c:
+        c.execute(FILES_TABLE)
+        c.execute("UPDATE site_requests SET links = %s WHERE id = %s",
+                  (["https://vimeo.com/123", "javascript:alert(1)"], req_id))
+        file_id = c.execute(
+            """INSERT INTO site_request_files (request_id, filename, content_type, size_bytes, data)
+               VALUES (%s, 'رود - فیلم‌نامه.pdf', 'application/pdf', 9, %s) RETURNING id""",
+            (req_id, b"%PDF-1.4\n")).fetchone()[0]
+        other = c.execute(
+            """INSERT INTO site_request_files (request_id, filename, content_type, size_bytes, data)
+               VALUES (%s, 'page.html', 'text/html', 6, %s) RETURNING id""", (req_id, b"<html>")).fetchone()[0]
+
+    page = client.get(f"/requests/{req_id}").text
+    assert 'href="https://vimeo.com/123"' in page and "javascript:" not in page
+    assert f"/requests/{req_id}/files/{file_id}" in page and "رود - فیلم‌نامه.pdf" in page
+
+    r = client.get(f"/requests/{req_id}/files/{file_id}")
+    assert r.status_code == 200 and r.content == b"%PDF-1.4\n"
+    assert r.headers["content-type"] == "application/pdf"
+    assert r.headers["content-disposition"].startswith("attachment;")
+    assert r.headers["x-content-type-options"] == "nosniff"
+    assert client.get(f"/requests/{req_id}/files/{other}").headers["content-type"] == "application/octet-stream"
+    assert client.get(f"/requests/{req_id + 1}/files/{file_id}").status_code == 404     # another request's file

@@ -95,10 +95,52 @@ def overview(status: str) -> tuple[list[dict], dict]:
 def get(request_id: int) -> dict | None:
     with _connect() as conn:
         row = conn.execute("SELECT * FROM site_requests WHERE id = %s", (request_id,)).fetchone()
+        if row is None:
+            return None
+        row = dict(row)
+        row["files"] = _file_list(conn, request_id)
+    row["profile"] = row.get("profile") or {}
+    # Links the visitor shared (Drive, YouTube, Vimeo, ...). Only http(s) is shown; never fetched here.
+    row["links"] = [link for link in row.get("links") or [] if validation.clean_url(link)]
+    return row
+
+
+# ---------- Files the visitor attached (site_request_files, written by the website) ----------
+
+# Types the website accepts (its Attachment.java); anything else is served as a plain download.
+FILE_TYPES = {
+    "application/pdf", "application/msword", "application/rtf", "application/xml", "text/plain; charset=utf-8",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.oasis.opendocument.text",
+}
+
+
+def _has_files_table(conn) -> bool:
+    # Older website versions have no files table yet.
+    return conn.execute("SELECT to_regclass('site_request_files') IS NOT NULL AS ok").fetchone()["ok"]
+
+
+def _file_list(conn, request_id: int) -> list[dict]:
+    if not _has_files_table(conn):
+        return []
+    return [dict(r) for r in conn.execute(
+        """SELECT id, filename, content_type, size_bytes FROM site_request_files
+           WHERE request_id = %s ORDER BY id""", (request_id,))]
+
+
+def get_file(request_id: int, file_id: int) -> dict | None:
+    """One attached file with its bytes, only when it belongs to this request."""
+    with _connect() as conn:
+        if not _has_files_table(conn):
+            return None
+        row = conn.execute(
+            """SELECT filename, content_type, data FROM site_request_files WHERE id = %s AND request_id = %s""",
+            (file_id, request_id)).fetchone()
     if row is None:
         return None
     row = dict(row)
-    row["profile"] = row.get("profile") or {}
+    if row["content_type"] not in FILE_TYPES:
+        row["content_type"] = "application/octet-stream"
+    row["data"] = bytes(row["data"])
     return row
 
 
