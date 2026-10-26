@@ -7,7 +7,7 @@ from email.utils import parseaddr
 from urllib.parse import quote
 
 from fastapi import BackgroundTasks, FastAPI, Form, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from jinja2 import pass_context
 from markupsafe import Markup
@@ -943,6 +943,26 @@ def request_detail(request: Request, request_id: int):
         "mail_configured": siterequests.mail_configured(),
         "imap_configured": siterequests.imap_configured(), "confirm_url": siterequests.confirm_url(req["profile"]),
         "offer_mailto": siterequests.mailto(req["email"], offer.get("subject", ""), offer.get("body", "")) if offer else "",
+    })
+
+
+@app.get("/requests/{request_id}/files/{file_id}")
+def request_file(request: Request, request_id: int, file_id: int):
+    """A file the visitor attached, always as a download: the browser never shows it as a page."""
+    require_login(request)
+    try:
+        f = siterequests.get_file(request_id, file_id)
+    except filmdash.Unavailable:
+        flash(request, "flash.film_unavailable", "error")
+        return RedirectResponse("/requests", status_code=303)
+    if f is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    fallback = "".join(c if c.isascii() and (c.isalnum() or c in "._- ") else "_" for c in f["filename"]) or "file"
+    return Response(f["data"], media_type=f["content_type"], headers={
+        "Content-Disposition": f"attachment; filename=\"{fallback}\"; filename*=UTF-8''{quote(f['filename'])}",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "sandbox",
+        "Cache-Control": "private, no-store",
     })
 
 
