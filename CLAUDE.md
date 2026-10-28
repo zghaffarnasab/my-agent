@@ -82,6 +82,9 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
   their place in that list. `?who=<name>` filters the board.
 - Moving works without JS (arrow buttons post to `/board/cards/{id}/step`); drag and drop posts to `/move` with
   `X-Requested-With: fetch` and gets `{"ok": ...}` back.
+- Pictures (since 1.17.0): table `board_images` (bytes in the app database, so `app.db` backups include them). The type is
+  read from the first bytes (`board.image_type`: PNG/JPEG/GIF/WebP only, never SVG), max 5 MB each and 10 per card.
+  Served by `/board/images/{id}` (login, `nosniff`, `CSP: sandbox`). Paste/drop into the form adds files to its file input.
 
 ## Filmmaker dashboard pipeline (`pipeline/`)
 - A separate tool in the same repo: fetches official funding/festival pages, extracts funds and events with Claude

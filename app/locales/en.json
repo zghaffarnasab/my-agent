@@ -467,5 +467,11 @@
   "flash.board_deleted": "Task deleted.",
   "flash.board_bad": "Write a title and choose an owner.",
   "board.move_back": "Move back one column",
-  "board.move_on": "Move to the next column"
+  "board.move_on": "Move to the next column",
+  "board.field.images": "Pictures (optional)",
+  "board.images_help": "PNG, JPEG, GIF or WebP, up to 5 MB each and 10 per task. You can also paste a screenshot into the notes box, or drop files here.",
+  "board.remove_image": "Remove",
+  "board.image_alt": "Picture {n}",
+  "board.close": "Close",
+  "flash.board_images_skipped": "Saved, but {n} file(s) were not added: only PNG, JPEG, GIF or WebP pictures up to 5 MB, and at most 10 per task."
 }

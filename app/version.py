@@ -8,9 +8,29 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.16.0"
+VERSION = "1.17.0"
 
 CHANGELOG = [
+    {
+        "version": "1.17.0",
+        "date": "2026-10-28",
+        "title": {
+            "en": "Pictures in task board tasks",
+            "fa": "عکس در تسک‌های برد",
+        },
+        "changes": {
+            "en": [
+                "A task can now hold pictures: choose files, paste a screenshot into the notes box, or drop image files on the form.",
+                "The pictures appear as small previews on the card; click one to see it large. Remove a picture from the task's edit form.",
+                "PNG, JPEG, GIF and WebP up to 5 MB each, at most 10 per task. Pictures are kept in the app's own database, so the usual backup includes them.",
+            ],
+            "fa": [
+                "تسک حالا می‌تواند عکس داشته باشد: فایل انتخاب کن، اسکرین‌شات را در کادر توضیحات paste کن یا فایل عکس را روی فرم بکش.",
+                "عکس‌ها به‌صورت پیش‌نمایش کوچک روی کارت دیده می‌شوند؛ با کلیک بزرگ می‌شوند. حذف عکس از فرم ویرایش تسک.",
+                "PNG، JPEG، GIF و WebP هر کدام تا ۵ مگابایت، حداکثر ۱۰ عکس برای هر تسک. عکس‌ها در دیتابیس خود برنامه ذخیره می‌شوند، پس بکاپ معمول آن‌ها را هم دارد.",
+            ],
+        },
+    },
     {
         "version": "1.16.0",
         "date": "2026-10-26",

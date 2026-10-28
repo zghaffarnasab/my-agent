@@ -120,3 +120,72 @@ def test_board_needs_login():
     from app import main
     r = TestClient(main.app).get("/board", follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/login"
+
+
+PNG = b"\x89PNG\r\n\x1a\n" + b"\0" * 64
+JPEG = b"\xff\xd8\xff\xe0" + b"\0" * 64
+
+
+def _images(card_id):
+    return board.image_ids().get(card_id, [])
+
+
+def test_image_type_is_read_from_the_bytes():
+    assert board.image_type(PNG) == "image/png"
+    assert board.image_type(JPEG) == "image/jpeg"
+    assert board.image_type(b"RIFF\0\0\0\0WEBPVP8 ") == "image/webp"
+    assert board.image_type(b"<svg onload=alert(1)>") == ""
+    assert board.image_type(b"\x89PNG\r\n\x1a\n" + b"\0" * board.MAX_IMAGE_BYTES) == ""
+
+
+def test_new_task_with_pictures_shows_them_on_the_card(client, people):
+    r = client.post("/board/cards", data={"title": "With screenshot", "assignee": "Alex"},
+                    files=[("images", ("shot.png", PNG, "image/png")), ("images", ("photo.jpg", JPEG, "image/jpeg"))],
+                    follow_redirects=False)
+    assert r.status_code == 303
+    card_id = _cards()["With screenshot"].id
+    ids = _images(card_id)
+    assert len(ids) == 2
+    page = client.get("/board").text
+    assert f'src="/board/images/{ids[0]}"' in page and 'enctype="multipart/form-data"' in page
+    pic = client.get(f"/board/images/{ids[0]}")
+    assert pic.status_code == 200 and pic.content == PNG
+    assert pic.headers["content-type"] == "image/png"
+    assert pic.headers["x-content-type-options"] == "nosniff" and pic.headers["content-security-policy"] == "sandbox"
+
+
+def test_files_that_are_not_pictures_are_refused(client, people):
+    client.post("/board/cards", data={"title": "Bad file", "assignee": "Alex"},
+                files=[("images", ("evil.png", b"<html><script>x</script>", "image/png"))], follow_redirects=False)
+    card_id = _cards()["Bad file"].id
+    assert _images(card_id) == []
+    assert "not added" in client.get("/board").text
+
+
+def test_edit_adds_and_removes_pictures_and_delete_clears_them(client, people):
+    card_id = _add(client, "Pics")
+    client.post(f"/board/cards/{card_id}/save", data={"title": "Pics", "assignee": "Alex"},
+                files=[("images", ("a.png", PNG, "image/png")), ("images", ("b.jpg", JPEG, "image/jpeg"))])
+    first, second = _images(card_id)
+    client.post(f"/board/cards/{card_id}/save", data={"title": "Pics", "assignee": "Alex", "remove_image": str(first)})
+    assert _images(card_id) == [second]
+    client.post(f"/board/cards/{card_id}/delete", data={})
+    assert board.get_image(second) is None
+    assert client.get(f"/board/images/{second}").status_code == 404
+
+
+def test_at_most_ten_pictures_per_task(client, people):
+    card_id = _add(client, "Many")
+    assert board.add_images(card_id, [PNG] * 12) == 2
+    assert len(_images(card_id)) == board.MAX_IMAGES
+
+
+def test_pictures_need_login(client, people):
+    from fastapi.testclient import TestClient
+
+    from app import main
+    card_id = _add(client, "Private")
+    board.add_images(card_id, [PNG])
+    image_id = _images(card_id)[0]
+    r = TestClient(main.app).get(f"/board/images/{image_id}", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/login"
