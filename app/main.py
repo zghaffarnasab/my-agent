@@ -789,6 +789,7 @@ def board_page(request: Request, who: str = ""):
         "columns": board.columns(who),
         "images": board.image_ids(),
         "statuses": BoardStatus.ALL,
+        "priorities": BoardStatus.PRIORITIES,
         "open_counts": board.open_counts(),
         "color_of": board.color_of,
         "today": _today().isoformat(),
@@ -811,9 +812,9 @@ def _saved_with_images(request: Request, card_id: int, files: list[UploadFile], 
 @app.post("/board/cards")
 def board_create(request: Request, title: str = Form(""), notes: str = Form(""), assignee: str = Form(""),
                  due: str = Form(""), status: str = Form(BoardStatus.TODO), who: str = Form(""),
-                 images: list[UploadFile] = File(default=[])):
+                 priority: str = Form("low"), images: list[UploadFile] = File(default=[])):
     require_login(request)
-    fields = board.clean_card(title, notes, assignee, due)
+    fields = board.clean_card(title, notes, assignee, due, priority)
     card_id = board.create(fields, status) if fields else None
     if card_id:
         _saved_with_images(request, card_id, images, "flash.board_added")
@@ -823,9 +824,10 @@ def board_create(request: Request, title: str = Form(""), notes: str = Form(""),
 @app.post("/board/cards/{card_id}/save")
 def board_save(request: Request, card_id: int, title: str = Form(""), notes: str = Form(""),
                assignee: str = Form(""), due: str = Form(""), status: str = Form(""), who: str = Form(""),
-               images: list[UploadFile] = File(default=[]), remove_image: list[int] = Form(default=[])):
+               priority: str = Form("low"), images: list[UploadFile] = File(default=[]),
+               remove_image: list[int] = Form(default=[])):
     require_login(request)
-    fields = board.clean_card(title, notes, assignee, due)
+    fields = board.clean_card(title, notes, assignee, due, priority)
     ok = fields is not None and board.update(card_id, fields, status)
     if ok:
         board.remove_images(card_id, remove_image)

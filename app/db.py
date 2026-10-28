@@ -152,6 +152,7 @@ class BoardStatus:
     DOING = "doing"
     DONE = "done"
     ALL = (TODO, DOING, DONE)    # the board's columns, in order
+    PRIORITIES = ("high", "medium", "low")
 
 
 class BoardCard(Base):
@@ -164,6 +165,7 @@ class BoardCard(Base):
     assignee: Mapped[str] = mapped_column(String(64), default="", index=True)   # a name from settings "board_people"
     status: Mapped[str] = mapped_column(String(16), default=BoardStatus.TODO, index=True)
     due: Mapped[str] = mapped_column(String(10), default="")                    # YYYY-MM-DD, empty = no due date
+    priority: Mapped[str] = mapped_column(String(8), default="low")             # high (red) | medium (orange) | low (no color)
     position: Mapped[int] = mapped_column(Integer, default=0)                   # order inside its column
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
@@ -199,6 +201,7 @@ COLUMN_MIGRATIONS = [
     ("tasks", "action_items_json", "TEXT NOT NULL DEFAULT ''"),
     ("tasks", "is_urgent", "BOOLEAN NOT NULL DEFAULT {false}"),                       # 1.14.0
     ("tasks", "urgent_reason", "TEXT NOT NULL DEFAULT ''"),
+    ("board_cards", "priority", "VARCHAR(8) NOT NULL DEFAULT 'low'"),                 # 1.18.0
 ]
 
 

@@ -55,12 +55,13 @@ def clean_due(value: str) -> str:
         return ""
 
 
-def clean_card(title: str, notes: str, assignee: str, due: str) -> dict | None:
+def clean_card(title: str, notes: str, assignee: str, due: str, priority: str = "low") -> dict | None:
     """Validated card fields, or None when the title is empty or the person is not on the board."""
     title = " ".join((title or "").split())[:MAX_TITLE]
     if not title or assignee not in people():
         return None
-    return {"title": title, "notes": (notes or "").strip()[:MAX_NOTES], "assignee": assignee, "due": clean_due(due)}
+    return {"title": title, "notes": (notes or "").strip()[:MAX_NOTES], "assignee": assignee, "due": clean_due(due),
+            "priority": priority if priority in BoardStatus.PRIORITIES else "low"}
 
 
 def image_type(data: bytes) -> str:

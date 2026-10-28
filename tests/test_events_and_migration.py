@@ -57,6 +57,8 @@ def test_migration_adds_every_new_column_keeps_data_and_is_repeatable(tmp_path, 
         c.execute(text("CREATE TABLE tasks (id INTEGER PRIMARY KEY, gmail_message_id VARCHAR(64), status VARCHAR(16), subject VARCHAR(1024), draft_body TEXT)"))
         c.execute(text("INSERT INTO tasks (id, gmail_message_id, status, subject, draft_body) VALUES (1, 'm1', 'pending', 'Hello', 'My draft')"))
         c.execute(text("INSERT INTO tasks (id, gmail_message_id, status, subject, draft_body) VALUES (2, 'm2', 'skipped', 'News', '')"))
+        c.execute(text("CREATE TABLE board_cards (id INTEGER PRIMARY KEY, title VARCHAR(300), status VARCHAR(16))"))   # as in 1.15.0
+        c.execute(text("INSERT INTO board_cards (id, title, status) VALUES (1, 'Old card', 'doing')"))
     monkeypatch.setattr(db, "engine", old)
 
     db.migrate()
@@ -70,6 +72,8 @@ def test_migration_adds_every_new_column_keeps_data_and_is_repeatable(tmp_path, 
     assert tuple(ev) == ("Lunch", "old note", "", "", "")
     # old rows keep their status and text; the new flags start as "false"/empty, so Needs-reply counts do not change
     assert [tuple(t) for t in tasks] == [(1, "pending", "My draft", "", 0, 0, 0, ""), (2, "skipped", "", "", 0, 0, 0, "")]
+    with old.connect() as c:   # cards from before 1.18.0 start with low priority (no color)
+        assert tuple(c.execute(text("SELECT title, status, priority FROM board_cards")).one()) == ("Old card", "doing", "low")
 
 
 def test_migration_skips_tables_that_do_not_exist_yet(tmp_path, monkeypatch):

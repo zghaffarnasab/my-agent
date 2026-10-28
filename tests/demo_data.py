@@ -121,7 +121,9 @@ def seed() -> dict:
         ("Review the privacy policy", "Sam", "doing", "", ""),
         ("Turn on the captcha", "Alex", "done", "", ""),
     ]:
-        board.create({"title": title, "assignee": who, "due": due, "notes": notes}, status)
+        priority = {"Fill the open fields in the terms of service": "high", "Change the company email address": "medium"}
+        board.create({"title": title, "assignee": who, "due": due, "notes": notes,
+                      "priority": priority.get(title, "low")}, status)
     return ids
 
 
