@@ -467,5 +467,11 @@
   "flash.board_deleted": "تسک حذف شد.",
   "flash.board_bad": "عنوان تسک را بنویسید و مسئول را انتخاب کنید.",
   "board.move_back": "برگرداندن به ستون قبلی",
-  "board.move_on": "انتقال به ستون بعدی"
+  "board.move_on": "انتقال به ستون بعدی",
+  "board.field.images": "عکس‌ها (اختیاری)",
+  "board.images_help": "PNG، JPEG، GIF یا WebP، هر کدام تا ۵ مگابایت و تا ۱۰ عکس برای هر تسک. می‌توانید اسکرین‌شات را در کادر توضیحات paste کنید یا فایل را روی فرم بکشید.",
+  "board.remove_image": "حذف",
+  "board.image_alt": "عکس {n}",
+  "board.close": "بستن",
+  "flash.board_images_skipped": "ذخیره شد، ولی {n} فایل اضافه نشد: فقط عکس PNG، JPEG، GIF یا WebP تا ۵ مگابایت، و حداکثر ۱۰ عکس برای هر تسک."
 }

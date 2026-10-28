@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 from email.utils import parseaddr
 from urllib.parse import quote
 
-from fastapi import BackgroundTasks, FastAPI, Form, HTTPException, Query, Request
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from jinja2 import pass_context
@@ -787,6 +787,7 @@ def board_page(request: Request, who: str = ""):
         "people": names,
         "who": who,
         "columns": board.columns(who),
+        "images": board.image_ids(),
         "statuses": BoardStatus.ALL,
         "open_counts": board.open_counts(),
         "color_of": board.color_of,
@@ -794,26 +795,56 @@ def board_page(request: Request, who: str = ""):
     })
 
 
+def _uploaded(files: list[UploadFile]) -> list[bytes]:
+    """The bytes of each chosen file; a file over the size limit is cut, so board.image_type() refuses it."""
+    return [data for f in files if f.filename and (data := f.file.read(board.MAX_IMAGE_BYTES + 1))]
+
+
+def _saved_with_images(request: Request, card_id: int, files: list[UploadFile], done_key: str):
+    skipped = board.add_images(card_id, _uploaded(files))
+    if skipped:
+        flash(request, "flash.board_images_skipped", "error", n=skipped)
+    else:
+        flash(request, done_key)
+
+
 @app.post("/board/cards")
 def board_create(request: Request, title: str = Form(""), notes: str = Form(""), assignee: str = Form(""),
-                 due: str = Form(""), status: str = Form(BoardStatus.TODO), who: str = Form("")):
+                 due: str = Form(""), status: str = Form(BoardStatus.TODO), who: str = Form(""),
+                 images: list[UploadFile] = File(default=[])):
     require_login(request)
     fields = board.clean_card(title, notes, assignee, due)
     card_id = board.create(fields, status) if fields else None
     if card_id:
-        flash(request, "flash.board_added")
+        _saved_with_images(request, card_id, images, "flash.board_added")
     return _board_reply(request, card_id is not None, who, card_id)
 
 
 @app.post("/board/cards/{card_id}/save")
 def board_save(request: Request, card_id: int, title: str = Form(""), notes: str = Form(""),
-               assignee: str = Form(""), due: str = Form(""), status: str = Form(""), who: str = Form("")):
+               assignee: str = Form(""), due: str = Form(""), status: str = Form(""), who: str = Form(""),
+               images: list[UploadFile] = File(default=[]), remove_image: list[int] = Form(default=[])):
     require_login(request)
     fields = board.clean_card(title, notes, assignee, due)
     ok = fields is not None and board.update(card_id, fields, status)
     if ok:
-        flash(request, "flash.board_saved")
+        board.remove_images(card_id, remove_image)
+        _saved_with_images(request, card_id, images, "flash.board_saved")
     return _board_reply(request, ok, who, card_id)
+
+
+@app.get("/board/images/{image_id}")
+def board_image(request: Request, image_id: int):
+    """A picture from a card. Its type was checked from its bytes on upload; nosniff and a sandbox keep it a picture."""
+    require_login(request)
+    img = board.get_image(image_id)
+    if img is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    return Response(img.data, media_type=img.content_type, headers={
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "sandbox",
+        "Cache-Control": "private, max-age=86400",
+    })
 
 
 @app.post("/board/cards/{card_id}/move")

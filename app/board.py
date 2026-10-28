@@ -5,15 +5,25 @@ Cards live in the app's own database and have nothing to do with emails.
 """
 from datetime import date
 
-from sqlalchemy import func, select
+from sqlalchemy import delete as sql_delete, func, select
 
 from app import settings
-from app.db import BoardCard, BoardStatus, SessionLocal, utcnow
+from app.db import BoardCard, BoardImage, BoardStatus, SessionLocal, utcnow
 
 MAX_PEOPLE = 6
 MAX_TITLE = 300
 MAX_NOTES = 4000
 PERSON_COLORS = 6     # CSS classes .who-0 ... .who-5, one per person in Settings order
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+MAX_IMAGES = 10       # per card
+
+# Only real pictures are kept, recognised by their first bytes (never by the name or the browser's claim).
+_IMAGE_MAGIC = [
+    (b"\x89PNG\r\n\x1a\n", "image/png"),
+    (b"\xff\xd8\xff", "image/jpeg"),
+    (b"GIF87a", "image/gif"),
+    (b"GIF89a", "image/gif"),
+]
 
 
 def clean_people(raw: str) -> str:
@@ -51,6 +61,55 @@ def clean_card(title: str, notes: str, assignee: str, due: str) -> dict | None:
     if not title or assignee not in people():
         return None
     return {"title": title, "notes": (notes or "").strip()[:MAX_NOTES], "assignee": assignee, "due": clean_due(due)}
+
+
+def image_type(data: bytes) -> str:
+    """The picture's media type from its first bytes, or "" when it is not a PNG, JPEG, GIF or WebP (or is too big)."""
+    if not data or len(data) > MAX_IMAGE_BYTES:
+        return ""
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return next((kind for magic, kind in _IMAGE_MAGIC if data.startswith(magic)), "")
+
+
+def add_images(card_id: int, blobs: list[bytes]) -> int:
+    """Keep the pictures among `blobs` (up to MAX_IMAGES per card). Returns how many were skipped."""
+    skipped = 0
+    with SessionLocal() as db:
+        if db.get(BoardCard, card_id) is None:
+            return len(blobs)
+        room = MAX_IMAGES - db.scalar(select(func.count()).where(BoardImage.card_id == card_id))
+        for data in blobs:
+            kind = image_type(data)
+            if not kind or room <= 0:
+                skipped += 1
+                continue
+            db.add(BoardImage(card_id=card_id, content_type=kind, data=data))
+            room -= 1
+        db.commit()
+    return skipped
+
+
+def remove_images(card_id: int, image_ids: list[int]) -> None:
+    if image_ids:
+        with SessionLocal() as db:
+            db.execute(sql_delete(BoardImage).where(BoardImage.card_id == card_id, BoardImage.id.in_(image_ids)))
+            db.commit()
+
+
+def get_image(image_id: int) -> BoardImage | None:
+    with SessionLocal() as db:
+        return db.get(BoardImage, image_id)
+
+
+def image_ids() -> dict[int, list[int]]:
+    """The picture ids of every card, oldest first (the pictures themselves are fetched one by one)."""
+    with SessionLocal() as db:
+        rows = db.execute(select(BoardImage.card_id, BoardImage.id).order_by(BoardImage.id)).all()
+    out: dict[int, list[int]] = {}
+    for card_id, image_id in rows:
+        out.setdefault(card_id, []).append(image_id)
+    return out
 
 
 def columns(who: str = "") -> dict[str, list[BoardCard]]:
@@ -139,6 +198,7 @@ def delete(card_id: int) -> bool:
         card = db.get(BoardCard, card_id)
         if card is None:
             return False
+        db.execute(sql_delete(BoardImage).where(BoardImage.card_id == card_id))   # SQLite does not cascade by itself
         db.delete(card)
         db.commit()
         return True

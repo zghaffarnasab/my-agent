@@ -37,8 +37,9 @@ def _clear_settings_cache():
 @pytest.fixture(autouse=True)
 def _clean_tables():
     """Every test starts with no tasks and no events."""
-    from app.db import BoardCard, EventSuggestion, SessionLocal, Task
+    from app.db import BoardCard, BoardImage, EventSuggestion, SessionLocal, Task
     with SessionLocal() as db:
+        db.query(BoardImage).delete()
         db.query(BoardCard).delete()
         db.query(EventSuggestion).delete()
         db.query(Task).delete()
