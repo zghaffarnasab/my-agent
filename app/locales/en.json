@@ -477,5 +477,9 @@
   "board.field.priority": "Priority",
   "priority.high": "High priority",
   "priority.medium": "Medium priority",
-  "priority.low": "Low priority"
+  "priority.low": "Low priority",
+  "login.locked": "Too many wrong passwords. Try again in {minutes} minutes.",
+  "settings.security": "Security",
+  "settings.security_help": "Signs out every browser and phone that is logged in, including this one. Use it if you think someone else has your login or the password has changed.",
+  "settings.logout_everywhere": "Sign out everywhere"
 }

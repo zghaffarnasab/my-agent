@@ -14,7 +14,7 @@ from markupsafe import Markup
 from sqlalchemy import delete, func, select, update
 from starlette.middleware.sessions import SessionMiddleware
 
-from app import ai, board, calendar_client, config, events, filmdash, gmail_client, i18n, settings, siterequests, sitestats, validation
+from app import ai, board, calendar_client, config, events, filmdash, gmail_client, i18n, security, settings, siterequests, sitestats, validation
 from app.version import CHANGELOG, VERSION
 from app.db import BoardStatus, EventStatus, EventSuggestion, SessionLocal, Task, TaskStatus, init_db, utcnow
 
@@ -23,13 +23,30 @@ if config.BASE_URL.startswith("http://localhost") or config.BASE_URL.startswith(
     os.environ.setdefault("OAUTHLIB_INSECURE_TRANSPORT", "1")
 os.environ.setdefault("OAUTHLIB_RELAX_TOKEN_SCOPE", "1")
 
-app = FastAPI(title="Gmail AI Assistant", version=VERSION)
+# No /docs, /redoc or /openapi.json: they would list every route to anyone, without login
+app = FastAPI(title="Gmail AI Assistant", version=VERSION, docs_url=None, redoc_url=None, openapi_url=None)
+HTTPS = config.BASE_URL.startswith("https://")
+
+
+@app.middleware("http")
+async def protect(request: Request, call_next):
+    """Refuse form posts sent from other websites, and add safe headers to every answer."""
+    if request.method not in ("GET", "HEAD", "OPTIONS") and not security.same_origin(
+            request.headers.get("origin"), request.headers.get("host")):
+        response = Response("Forbidden", status_code=403)
+    else:
+        response = await call_next(request)
+    for name, value in security.security_headers(HTTPS).items():
+        response.headers.setdefault(name, value)
+    return response
+
+
 app.add_middleware(
     SessionMiddleware,
     secret_key=config.SECRET_KEY,
     same_site="lax",
-    https_only=config.BASE_URL.startswith("https://"),
-    max_age=60 * 60 * 24 * 14,
+    https_only=HTTPS,
+    max_age=60 * 60 * 24 * 7,
 )
 LANG_COOKIE = "lang"
 TIMEZONE_CHOICES = [
@@ -147,7 +164,8 @@ async def login_required_handler(request: Request, exc: LoginRequired):
 
 
 def require_login(request: Request):
-    if not request.session.get("auth"):
+    # The epoch changes on "Sign out everywhere", so old cookies stop working
+    if not request.session.get("auth") or request.session.get("epoch") != security.session_epoch():
         raise LoginRequired()
 
 
@@ -187,17 +205,38 @@ def login_page(request: Request):
     return templates.TemplateResponse(request, "login.html", {"error": None})
 
 
+def _client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
+
 @app.post("/login")
 async def login(request: Request, password: str = Form(...)):
+    ip = _client_ip(request)
+    wait = security.locked_for(ip)
+    if wait:
+        return templates.TemplateResponse(request, "login.html", {
+            "error": "login.locked", "minutes": (wait + 59) // 60}, status_code=429)
     if secrets.compare_digest(password.encode(), config.DASHBOARD_PASSWORD.encode()):
+        security.record_success(ip)
+        request.session.clear()  # start a fresh session
         request.session["auth"] = True
+        request.session["epoch"] = security.session_epoch()
         return RedirectResponse("/", status_code=303)
+    security.record_failure(ip)
     await asyncio.sleep(1.5)  # slow down brute force
     return templates.TemplateResponse(request, "login.html", {"error": "login.error"}, status_code=401)
 
 
 @app.post("/logout")
 def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse("/login", status_code=303)
+
+
+@app.post("/logout-everywhere")
+def logout_everywhere(request: Request):
+    require_login(request)
+    security.sign_out_everywhere()
     request.session.clear()
     return RedirectResponse("/login", status_code=303)
 

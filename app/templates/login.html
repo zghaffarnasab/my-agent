@@ -5,7 +5,7 @@
   <div style="text-align:end;margin-bottom:8px;">{% include "_header_tools.html" %}</div>
   <h1 style="font-size:22px;margin:0 0 4px;">{{ t("app.name") }}</h1>
   <p style="color:var(--muted);margin:0 0 24px;">{{ t("login.prompt") }}</p>
-  {% if error %}<div class="flash error">{{ t(error) }}</div>{% endif %}
+  {% if error %}<div class="flash error">{{ t(error, minutes=minutes) if minutes else t(error) }}</div>{% endif %}
   <form method="post" action="/login">
     <label for="password" style="display:block;font-size:14px;margin-bottom:6px;">{{ t("login.password") }}</label>
     <input id="password" name="password" type="password" required autofocus autocomplete="current-password"

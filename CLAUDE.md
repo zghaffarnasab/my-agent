@@ -88,6 +88,14 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
 - Priority (since 1.18.0): `board_cards.priority` = high (red card) | medium (orange) | low (default, no color); added by
   `COLUMN_MIGRATIONS`. Column order stays manual (drag), priority does not re-sort. Person colors avoid red/orange.
 
+## Login security (since 1.20.0, `app/security.py`)
+- One shared password (`DASHBOARD_PASSWORD`). 5 wrong passwords from one IP in 15 minutes lock that IP for 15 minutes
+  (in memory, so one uvicorn process; a restart clears it). The IP comes from Caddy's `X-Forwarded-For` (`--proxy-headers`).
+- The session cookie (7 days) stores `epoch`; "Sign out everywhere" on Settings (`/logout-everywhere`) changes the
+  `session_epoch` setting, so every old cookie stops working. `require_login` checks it.
+- `/docs`, `/redoc`, `/openapi.json` are off. A middleware adds X-Frame-Options, nosniff, Referrer-Policy, HSTS (https)
+  and refuses non-GET requests whose `Origin` is another site (403). Routes that set their own headers keep them.
+
 ## Filmmaker dashboard pipeline (`pipeline/`)
 - A separate tool in the same repo: fetches official funding/festival pages, extracts funds and events with Claude
   (`pipeline/prompts/`), and stores them as drafts in its OWN Postgres (`pipeline/sql/`, `pipeline/docker-compose.yml`).
