@@ -812,9 +812,10 @@ def _saved_with_images(request: Request, card_id: int, files: list[UploadFile], 
 @app.post("/board/cards")
 def board_create(request: Request, title: str = Form(""), notes: str = Form(""), assignee: str = Form(""),
                  due: str = Form(""), status: str = Form(BoardStatus.TODO), who: str = Form(""),
-                 priority: str = Form("low"), images: list[UploadFile] = File(default=[])):
+                 priority: str = Form("low"), blocked_reason: str = Form(""),
+                 images: list[UploadFile] = File(default=[])):
     require_login(request)
-    fields = board.clean_card(title, notes, assignee, due, priority)
+    fields = board.clean_card(title, notes, assignee, due, priority, blocked_reason)
     card_id = board.create(fields, status) if fields else None
     if card_id:
         _saved_with_images(request, card_id, images, "flash.board_added")
@@ -824,10 +825,10 @@ def board_create(request: Request, title: str = Form(""), notes: str = Form(""),
 @app.post("/board/cards/{card_id}/save")
 def board_save(request: Request, card_id: int, title: str = Form(""), notes: str = Form(""),
                assignee: str = Form(""), due: str = Form(""), status: str = Form(""), who: str = Form(""),
-               priority: str = Form("low"), images: list[UploadFile] = File(default=[]),
-               remove_image: list[int] = Form(default=[])):
+               priority: str = Form("low"), blocked_reason: str = Form(""),
+               images: list[UploadFile] = File(default=[]), remove_image: list[int] = Form(default=[])):
     require_login(request)
-    fields = board.clean_card(title, notes, assignee, due, priority)
+    fields = board.clean_card(title, notes, assignee, due, priority, blocked_reason)
     ok = fields is not None and board.update(card_id, fields, status)
     if ok:
         board.remove_images(card_id, remove_image)

@@ -477,5 +477,8 @@
   "board.field.priority": "Priority",
   "priority.high": "High priority",
   "priority.medium": "Medium priority",
-  "priority.low": "Low priority"
+  "priority.low": "Low priority",
+  "board.blocked": "Blocked",
+  "board.field.blocked_reason": "Waiting on (optional, shown in the Blocked column)",
+  "board.waiting_on": "Waiting on: {reason}"
 }

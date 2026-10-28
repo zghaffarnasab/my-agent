@@ -119,11 +119,13 @@ def seed() -> dict:
         ("Unsubscribe from old newsletters", "Sam", "todo", "", "17 newsletters, list in the shared folder."),
         ("Change the company email address", "Alex", "doing", _day(0), ""),
         ("Review the privacy policy", "Sam", "doing", "", ""),
+        ("Upgrade the shared mailbox", "Alex", "blocked", "", ""),
         ("Turn on the captcha", "Alex", "done", "", ""),
     ]:
         priority = {"Fill the open fields in the terms of service": "high", "Change the company email address": "medium"}
         board.create({"title": title, "assignee": who, "due": due, "notes": notes,
-                      "priority": priority.get(title, "low")}, status)
+                      "priority": priority.get(title, "low"),
+                      "blocked_reason": "Waiting for the provider's invoice" if status == "blocked" else ""}, status)
     return ids
 
 

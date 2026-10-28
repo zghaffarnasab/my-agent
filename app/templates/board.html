@@ -29,8 +29,12 @@
 .card-form .actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 @media (max-width: 720px) { .card-form { grid-template-columns: 1fr 1fr; } .card-form .title-field { grid-column: 1 / -1; } }
 
-.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
-@media (max-width: 820px) { .board { grid-template-columns: 1fr; } }
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
+@media (max-width: 1060px) { .board { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .board { grid-template-columns: 1fr; } }
+.col.col-blocked { background: color-mix(in srgb, var(--wait-bg) 45%, var(--surface-2)); }
+.col.col-blocked h2 { color: var(--wait); }
+.waiting { font-size: 13px; color: var(--wait); background: var(--wait-bg); border-radius: 8px; padding: 4px 10px; margin: 6px 0 0; overflow-wrap: anywhere; }
 .col { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; min-width: 0; }
 .col h2 { font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 2px 6px 10px; display: flex; gap: 8px; align-items: center; }
 html[lang="fa"] .col h2 { text-transform: none; letter-spacing: 0; font-size: 14px; }
@@ -142,6 +146,10 @@ dialog.pic-view button { position: absolute; inset-block-start: 8px; inset-inlin
     </select>
   </div>
   <div class="wide">
+    <label for="blocked-{{ uid }}">{{ t("board.field.blocked_reason") }}</label>
+    <input type="text" id="blocked-{{ uid }}" name="blocked_reason" maxlength="200" dir="auto" value="{{ card.blocked_reason if card else '' }}">
+  </div>
+  <div class="wide">
     <label for="notes-{{ uid }}">{{ t("board.field.notes") }}</label>
     <textarea id="notes-{{ uid }}" name="notes" maxlength="4000" dir="auto">{{ card.notes if card else '' }}</textarea>
   </div>
@@ -185,7 +193,7 @@ dialog.pic-view button { position: absolute; inset-block-start: 8px; inset-inlin
 <div class="board" id="board" data-who="{{ who }}">
   {% for s in statuses %}
   {% set cards = columns[s] %}
-  <section class="col" aria-labelledby="col-{{ s }}">
+  <section class="col col-{{ s }}" aria-labelledby="col-{{ s }}">
     <h2 id="col-{{ s }}">{{ t("board." ~ s) }}<span class="n">{{ cards | length }}</span></h2>
     <ul class="cards" data-status="{{ s }}">
       <li class="empty">{{ t("board.empty_column") }}</li>
@@ -200,6 +208,7 @@ dialog.pic-view button { position: absolute; inset-block-start: 8px; inset-inlin
           {% endif %}
         </div>
         <p class="card-title" dir="auto">{{ card.title }}</p>
+        {% if s == "blocked" and card.blocked_reason %}<p class="waiting"><span dir="auto">{{ t("board.waiting_on", reason=card.blocked_reason) }}</span></p>{% endif %}
         {% if card.notes %}<p class="card-notes" dir="auto">{{ card.notes }}</p>{% endif %}
         {% if images.get(card.id) %}
         <ul class="pics" aria-label="{{ t('board.field.images') }}">

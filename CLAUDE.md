@@ -76,7 +76,7 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
   It uses a temporary database and fake Gmail/Calendar/Claude; never point it at real data.
 
 ## Task board (since 1.15.0)
-- `/board` (`app/board.py`, `board.html`, `_board.js`): to-dos in three columns (`BoardStatus`: todo | doing | done),
+- `/board` (`app/board.py`, `board.html`, `_board.js`): to-dos in four columns (`BoardStatus`: todo | doing | blocked | done; blocked since 1.19.0),
   table `board_cards` in the app database, not linked to emails. Each card has one `assignee` from the names typed on
   the Settings page (settings key `board_people`, comma-separated, max 6; never hardcode real names). A person's color is
   their place in that list. `?who=<name>` filters the board.
@@ -87,6 +87,8 @@ Deployed on AWS EC2 (Ubuntu, Docker Compose, Caddy for HTTPS). The live URL is i
   Served by `/board/images/{id}` (login, `nosniff`, `CSP: sandbox`). Paste/drop into the form adds files to its file input.
 - Priority (since 1.18.0): `board_cards.priority` = high (red card) | medium (orange) | low (default, no color); added by
   `COLUMN_MIGRATIONS`. Column order stays manual (drag), priority does not re-sort. Person colors avoid red/orange.
+- Blocked (since 1.19.0): `board_cards.blocked_reason` ("waiting on ...", max 200), shown only in the Blocked column;
+  dropping a card there opens its form at that field.
 
 ## Filmmaker dashboard pipeline (`pipeline/`)
 - A separate tool in the same repo: fetches official funding/festival pages, extracts funds and events with Claude
