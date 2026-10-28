@@ -139,6 +139,13 @@
     var status = list.dataset.status;
     card.classList.toggle('is-done', status === 'done');
     counts();
+    // A card put in Blocked opens its form at the "waiting on" field, so the reason is written straight away.
+    var details = card.querySelector('details');
+    var reason = card.querySelector('input[name=blocked_reason]');
+    if (status === 'blocked' && details && reason && !reason.value) {
+      details.open = true;
+      reason.focus();
+    }
     var body = new URLSearchParams({ status: status, before: next && next.dataset.id ? next.dataset.id : '', who: who });
     fetch('/board/cards/' + card.dataset.id + '/move', {
       method: 'POST', credentials: 'same-origin', body: body,

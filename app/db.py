@@ -150,8 +150,9 @@ class Setting(Base):
 class BoardStatus:
     TODO = "todo"
     DOING = "doing"
+    BLOCKED = "blocked"          # waiting on someone or something (blocked_reason says what)
     DONE = "done"
-    ALL = (TODO, DOING, DONE)    # the board's columns, in order
+    ALL = (TODO, DOING, BLOCKED, DONE)    # the board's columns, in order
     PRIORITIES = ("high", "medium", "low")
 
 
@@ -166,6 +167,7 @@ class BoardCard(Base):
     status: Mapped[str] = mapped_column(String(16), default=BoardStatus.TODO, index=True)
     due: Mapped[str] = mapped_column(String(10), default="")                    # YYYY-MM-DD, empty = no due date
     priority: Mapped[str] = mapped_column(String(8), default="low")             # high (red) | medium (orange) | low (no color)
+    blocked_reason: Mapped[str] = mapped_column(String(200), default="")        # "waiting on ...", shown in the Blocked column
     position: Mapped[int] = mapped_column(Integer, default=0)                   # order inside its column
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
@@ -202,6 +204,7 @@ COLUMN_MIGRATIONS = [
     ("tasks", "is_urgent", "BOOLEAN NOT NULL DEFAULT {false}"),                       # 1.14.0
     ("tasks", "urgent_reason", "TEXT NOT NULL DEFAULT ''"),
     ("board_cards", "priority", "VARCHAR(8) NOT NULL DEFAULT 'low'"),                 # 1.18.0
+    ("board_cards", "blocked_reason", "VARCHAR(200) NOT NULL DEFAULT ''"),            # 1.19.0
 ]
 
 

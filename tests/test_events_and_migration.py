@@ -73,7 +73,7 @@ def test_migration_adds_every_new_column_keeps_data_and_is_repeatable(tmp_path, 
     # old rows keep their status and text; the new flags start as "false"/empty, so Needs-reply counts do not change
     assert [tuple(t) for t in tasks] == [(1, "pending", "My draft", "", 0, 0, 0, ""), (2, "skipped", "", "", 0, 0, 0, "")]
     with old.connect() as c:   # cards from before 1.18.0 start with low priority (no color)
-        assert tuple(c.execute(text("SELECT title, status, priority FROM board_cards")).one()) == ("Old card", "doing", "low")
+        assert tuple(c.execute(text("SELECT title, status, priority, blocked_reason FROM board_cards")).one()) == ("Old card", "doing", "low", "")
 
 
 def test_migration_skips_tables_that_do_not_exist_yet(tmp_path, monkeypatch):

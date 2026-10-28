@@ -68,12 +68,14 @@ def test_step_moves_between_columns_and_sets_done_time(client, people):
     card_id = _add(client, "Write the plan")
     client.post(f"/board/cards/{card_id}/step", data={"direction": "1"})
     client.post(f"/board/cards/{card_id}/step", data={"direction": "1"})
+    assert _cards()["Write the plan"].status == "blocked"
+    client.post(f"/board/cards/{card_id}/step", data={"direction": "1"})
     card = _cards()["Write the plan"]
     assert card.status == "done" and card.done_at is not None
     client.post(f"/board/cards/{card_id}/step", data={"direction": "1"})   # already last: stays
     client.post(f"/board/cards/{card_id}/step", data={"direction": "-1"})
     card = _cards()["Write the plan"]
-    assert card.status == "doing" and card.done_at is None
+    assert card.status == "blocked" and card.done_at is None
 
 
 def test_drag_and_drop_move_orders_the_column(client, people):
@@ -203,3 +205,14 @@ def test_priority_colors_the_card_and_defaults_to_low(client, people):
     assert "High priority" in page and "Medium priority" in page
     client.post(f"/board/cards/{cards['Soon'].id}/save", data={"title": "Soon", "assignee": "Alex", "priority": "low"})
     assert _cards()["Soon"].priority == "low"
+
+
+def test_blocked_column_shows_what_the_task_waits_on(client, people):
+    card_id = _add(client, "Sign the contract", blocked_reason="  Waiting for   the lawyer ")
+    assert _cards()["Sign the contract"].blocked_reason == "Waiting for the lawyer"
+    page = client.get("/board").text
+    assert 'data-status="blocked"' in page and "Waiting on:" not in page   # still in To do: reason not shown
+    client.post(f"/board/cards/{card_id}/move", data={"status": "blocked"}, headers=FETCH)
+    page = client.get("/board").text.replace("⁨", "").replace("⁩", "")
+    assert "Waiting on: Waiting for the lawyer" in page
+    assert board.open_counts() == {"Alex": 1}   # blocked work is still unfinished work

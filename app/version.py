@@ -8,9 +8,29 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.18.0"
+VERSION = "1.19.0"
 
 CHANGELOG = [
+    {
+        "version": "1.19.0",
+        "date": "2026-10-28",
+        "title": {
+            "en": "A Blocked column on the task board",
+            "fa": "ستون «مسدود» در برد تسک‌ها",
+        },
+        "changes": {
+            "en": [
+                "New column \"Blocked\" between In progress and Done, for tasks that wait on someone or something.",
+                "Write what the task is waiting on (for example \"waiting for approval\"); it shows on the card in the Blocked column. When you drag a card there, its form opens at that field.",
+                "Blocked tasks still count as unfinished in the buttons at the top.",
+            ],
+            "fa": [
+                "ستون تازه‌ی «مسدود» بین «در حال انجام» و «انجام شد»، برای تسک‌هایی که منتظر کسی یا چیزی هستند.",
+                "بنویس تسک منتظر چیست (مثلاً «منتظر تأیید»)؛ در ستون «مسدود» روی کارت دیده می‌شود. وقتی کارت را به آنجا بکشی، فرمش روی همین فیلد باز می‌شود.",
+                "تسک‌های مسدود در دکمه‌های بالای صفحه هنوز جزو کارهای ناتمام شمرده می‌شوند.",
+            ],
+        },
+    },
     {
         "version": "1.18.0",
         "date": "2026-10-28",

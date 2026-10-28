@@ -477,5 +477,8 @@
   "board.field.priority": "اولویت",
   "priority.high": "اولویت بالا",
   "priority.medium": "اولویت متوسط",
-  "priority.low": "اولویت پایین"
+  "priority.low": "اولویت پایین",
+  "board.blocked": "مسدود",
+  "board.field.blocked_reason": "منتظر چی/کی؟ (اختیاری، در ستون «مسدود» دیده می‌شود)",
+  "board.waiting_on": "منتظر: {reason}"
 }
