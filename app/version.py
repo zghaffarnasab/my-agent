@@ -8,9 +8,27 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.17.0"
+VERSION = "1.18.0"
 
 CHANGELOG = [
+    {
+        "version": "1.18.0",
+        "date": "2026-10-28",
+        "title": {
+            "en": "Priorities on the task board",
+            "fa": "اولویت در برد تسک‌ها",
+        },
+        "changes": {
+            "en": [
+                "Every task has a priority: high tasks are red, medium tasks are orange, and low tasks keep the plain look.",
+                "Choose the priority when you add or edit a task. Existing tasks start as low priority.",
+            ],
+            "fa": [
+                "هر تسک اولویت دارد: اولویت بالا قرمز، اولویت متوسط نارنجی، و اولویت پایین مثل قبل بی‌رنگ.",
+                "اولویت را موقع ساختن یا ویرایش تسک انتخاب کن. تسک‌های قبلی با اولویت پایین شروع می‌کنند.",
+            ],
+        },
+    },
     {
         "version": "1.17.0",
         "date": "2026-10-28",

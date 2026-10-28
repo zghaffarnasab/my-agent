@@ -189,3 +189,17 @@ def test_pictures_need_login(client, people):
     image_id = _images(card_id)[0]
     r = TestClient(main.app).get(f"/board/images/{image_id}", follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/login"
+
+
+def test_priority_colors_the_card_and_defaults_to_low(client, people):
+    _add(client, "Urgent one", priority="high")
+    _add(client, "Soon", priority="medium")
+    _add(client, "Whenever")
+    _add(client, "Bogus", priority="extreme")
+    cards = _cards()
+    assert [cards[n].priority for n in ("Urgent one", "Soon", "Whenever", "Bogus")] == ["high", "medium", "low", "low"]
+    page = client.get("/board").text
+    assert f'id="card-{cards["Urgent one"].id}"' in page and "prio-high" in page and "prio-medium" in page
+    assert "High priority" in page and "Medium priority" in page
+    client.post(f"/board/cards/{cards['Soon'].id}/save", data={"title": "Soon", "assignee": "Alex", "priority": "low"})
+    assert _cards()["Soon"].priority == "low"

@@ -473,5 +473,9 @@
   "board.remove_image": "حذف",
   "board.image_alt": "عکس {n}",
   "board.close": "بستن",
-  "flash.board_images_skipped": "ذخیره شد، ولی {n} فایل اضافه نشد: فقط عکس PNG، JPEG، GIF یا WebP تا ۵ مگابایت، و حداکثر ۱۰ عکس برای هر تسک."
+  "flash.board_images_skipped": "ذخیره شد، ولی {n} فایل اضافه نشد: فقط عکس PNG، JPEG، GIF یا WebP تا ۵ مگابایت، و حداکثر ۱۰ عکس برای هر تسک.",
+  "board.field.priority": "اولویت",
+  "priority.high": "اولویت بالا",
+  "priority.medium": "اولویت متوسط",
+  "priority.low": "اولویت پایین"
 }

@@ -473,5 +473,9 @@
   "board.remove_image": "Remove",
   "board.image_alt": "Picture {n}",
   "board.close": "Close",
-  "flash.board_images_skipped": "Saved, but {n} file(s) were not added: only PNG, JPEG, GIF or WebP pictures up to 5 MB, and at most 10 per task."
+  "flash.board_images_skipped": "Saved, but {n} file(s) were not added: only PNG, JPEG, GIF or WebP pictures up to 5 MB, and at most 10 per task.",
+  "board.field.priority": "Priority",
+  "priority.high": "High priority",
+  "priority.medium": "Medium priority",
+  "priority.low": "Low priority"
 }

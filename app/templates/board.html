@@ -2,9 +2,9 @@
 {% block title %}{{ t("board.title") }}{% endblock %}
 {% block head %}<style>{% include "_film_style.css" %}
 /* One color per person, in Settings order (.who-0 ... .who-5). */
-:root { --p0: #2A4A7F; --p1: #B04A22; --p2: #2B6539; --p3: #7A3E8E; --p4: #8A5A10; --p5: #5A5F66; }
+:root { --p0: #2A4A7F; --p1: #1D7373; --p2: #2B6539; --p3: #7A3E8E; --p4: #8A5A10; --p5: #5A5F66; }
 @media (prefers-color-scheme: dark) {
-  :root { --p0: #8FAEE6; --p1: #EE9A72; --p2: #8FCB9C; --p3: #CDA2DB; --p4: #E3B565; --p5: #A9AFB6; }
+  :root { --p0: #8FAEE6; --p1: #7CCBC9; --p2: #8FCB9C; --p3: #CDA2DB; --p4: #E3B565; --p5: #A9AFB6; }
 }
 .who-0 { --who: var(--p0); } .who-1 { --who: var(--p1); } .who-2 { --who: var(--p2); }
 .who-3 { --who: var(--p3); } .who-4 { --who: var(--p4); } .who-5 { --who: var(--p5); }
@@ -18,7 +18,7 @@
 .new-card > summary::-webkit-details-marker { display: none; }
 .new-card > summary::before { content: "+"; font-size: 18px; line-height: 1; color: var(--brand); }
 .new-card[open] > summary { border-bottom: 1px solid var(--line); }
-.card-form { padding: 14px 16px 16px; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px 12px; align-items: end; }
+.card-form { padding: 14px 16px 16px; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 10px 12px; align-items: end; }
 .card-form .wide { grid-column: 1 / -1; }
 .card-form label { display: block; font-size: 12px; color: var(--muted); margin: 0 0 4px; }
 .card-form input, .card-form select, .card-form textarea { width: 100%; font: inherit; font-size: 14px; padding: 7px 10px;
@@ -72,6 +72,17 @@ html[lang="fa"] .col h2 { text-transform: none; letter-spacing: 0; font-size: 14
 .card .card-form { padding: 10px 0 0; grid-template-columns: 1fr 1fr; }
 .card .card-form .title-field { grid-column: 1 / -1; }
 .board-msg { margin: 0 0 12px; }
+/* Priority: high = red, medium = orange, low = no color. The owner keeps the colored edge on the card's start side. */
+:root { --orange: #B4570B; --orange-bg: #FBEBDA; }
+@media (prefers-color-scheme: dark) { :root { --orange: #F0A35E; --orange-bg: #3A2A18; } }
+.card.prio-high { background: color-mix(in srgb, var(--err-bg) 55%, var(--surface)); border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
+.card.prio-medium { background: color-mix(in srgb, var(--orange-bg) 55%, var(--surface)); border-color: color-mix(in srgb, var(--orange) 45%, var(--line)); }
+.card.prio-high, .card.prio-medium { border-inline-start-color: var(--who); }
+.card-who { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.prio { font-size: 11px; font-weight: 600; border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+.prio-high .prio { background: var(--err-bg); color: var(--danger); }
+.prio-medium .prio { background: var(--orange-bg); color: var(--orange); }
+.card.is-done.prio-high, .card.is-done.prio-medium { background: var(--surface); }
 .pics { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .pics img { display: block; width: 64px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); background: var(--neutral-bg); }
 .pics a:hover img { border-color: var(--line-strong); }
@@ -124,6 +135,12 @@ dialog.pic-view button { position: absolute; inset-block-start: 8px; inset-inlin
       {% for s in statuses %}<option value="{{ s }}"{% if s == (card.status if card else status) %} selected{% endif %}>{{ t("board." ~ s) }}</option>{% endfor %}
     </select>
   </div>
+  <div>
+    <label for="priority-{{ uid }}">{{ t("board.field.priority") }}</label>
+    <select id="priority-{{ uid }}" name="priority">
+      {% for p in priorities %}<option value="{{ p }}"{% if p == (card.priority if card else "low") %} selected{% endif %}>{{ t("priority." ~ p) }}</option>{% endfor %}
+    </select>
+  </div>
   <div class="wide">
     <label for="notes-{{ uid }}">{{ t("board.field.notes") }}</label>
     <textarea id="notes-{{ uid }}" name="notes" maxlength="4000" dir="auto">{{ card.notes if card else '' }}</textarea>
@@ -173,9 +190,9 @@ dialog.pic-view button { position: absolute; inset-block-start: 8px; inset-inlin
     <ul class="cards" data-status="{{ s }}">
       <li class="empty">{{ t("board.empty_column") }}</li>
       {% for card in cards %}
-      <li class="card who-{{ color_of(card.assignee) }}{% if s == 'done' %} is-done{% endif %}" id="card-{{ card.id }}" data-id="{{ card.id }}" draggable="true">
+      <li class="card who-{{ color_of(card.assignee) }} prio-{{ card.priority or 'low' }}{% if s == 'done' %} is-done{% endif %}" id="card-{{ card.id }}" data-id="{{ card.id }}" draggable="true">
         <div class="card-top">
-          {{ person(card.assignee) }}
+          <span class="card-who">{{ person(card.assignee) }}{% if card.priority in ("high", "medium") %}<span class="prio">{{ t("priority." ~ card.priority) }}</span>{% endif %}</span>
           {% if card.due %}
             {% if s != "done" and card.due < today %}<span class="due late">{{ t("board.overdue", date=card.due) }}</span>
             {% elif s != "done" and card.due == today %}<span class="due today">{{ t("board.due_today") }}</span>
