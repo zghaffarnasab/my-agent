@@ -38,4 +38,10 @@
 
   <div style="margin-top:20px;"><button class="btn-primary" type="submit">{{ t("settings.save") }}</button></div>
 </form>
+
+<form class="box" method="post" action="/logout-everywhere" style="margin-top:20px;">
+  <label>{{ t("settings.security") }}</label>
+  <p class="help">{{ t("settings.security_help") }}</p>
+  <div style="margin-top:14px;"><button type="submit">{{ t("settings.logout_everywhere") }}</button></div>
+</form>
 {% endblock %}

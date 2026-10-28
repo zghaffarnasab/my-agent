@@ -8,9 +8,31 @@ Numbering: MAJOR.MINOR.PATCH
   - MAJOR (1.x -> 2.0.0): big redesigns or changes that need extra setup
 """
 
-VERSION = "1.18.0"
+VERSION = "1.20.0"
 
 CHANGELOG = [
+    {
+        "version": "1.20.0",
+        "date": "2026-10-28",
+        "title": {
+            "en": "Stronger login security",
+            "fa": "امنیت بیشتر برای ورود",
+        },
+        "changes": {
+            "en": [
+                "After 5 wrong passwords from the same address, logging in from there is locked for 15 minutes.",
+                "New \"Sign out everywhere\" button on the Settings page. A login now lasts 7 days instead of 14.",
+                "The automatic API pages (/docs, /openapi.json) are switched off, so the app's address list is no longer public.",
+                "Safer browser headers (no framing by other sites, HTTPS only), and form posts from other websites are refused.",
+            ],
+            "fa": [
+                "بعد از ۵ رمز اشتباه از یک آدرس، ورود از آنجا ۱۵ دقیقه قفل می‌شود.",
+                "دکمه‌ی جدید «خروج از همه‌ی دستگاه‌ها» در صفحه‌ی تنظیمات. هر ورود حالا ۷ روز معتبر است به‌جای ۱۴ روز.",
+                "صفحه‌های خودکار API (/docs و /openapi.json) خاموش شدند و فهرست آدرس‌های برنامه دیگر عمومی نیست.",
+                "هدرهای امن‌تر برای مرورگر (سایت دیگری نمی‌تواند برنامه را داخل خودش نشان دهد، فقط HTTPS) و فرم‌هایی که از سایت‌های دیگر فرستاده شوند رد می‌شوند.",
+            ],
+        },
+    },
     {
         "version": "1.18.0",
         "date": "2026-10-28",
